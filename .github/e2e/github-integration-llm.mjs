@@ -1,6 +1,8 @@
 import { appendFile } from "node:fs/promises";
 import { createServer } from "node:http";
 
+import { sendMessages } from "./messages-fixture.mjs";
+
 const auditPath = process.env.DSH_E2E_GITHUB_AUDIT;
 const expectedKey = process.env.DSH_E2E_FIXTURE_KEY;
 const issueLabel = process.env.DSH_E2E_ISSUE_LABEL;
@@ -27,7 +29,7 @@ async function readJson(request) {
 }
 
 function messageText(body) {
-  return (body.messages ?? [])
+  return [{ content: body.system }, ...(body.messages ?? [])]
     .flatMap((message) => {
       if (typeof message.content === "string") return [message.content];
       if (!Array.isArray(message.content)) return [];
@@ -144,8 +146,12 @@ function fixtureOutput(route, index) {
   throw new Error(`unexpected fixture route: ${route}`);
 }
 
-function sendSse(response, value) {
+function sendSse(response, value, messagesProtocol) {
   const content = JSON.stringify(value);
+  if (messagesProtocol) {
+    sendMessages(response, [{ type: "text", text: content }], true);
+    return;
+  }
   response.writeHead(200, {
     "content-type": "text/event-stream",
     "cache-control": "no-cache",
@@ -166,7 +172,7 @@ const server = createServer((request, response) => {
     return;
   }
   const match =
-    /^\/(label|assignee|github|metadata|checks|native-write|native-checks)\/(?:v1\/)?chat\/completions$/u.exec(
+    /^\/(label|assignee|github|metadata|checks|native-write|native-checks)\/(?:(?:v1\/)?chat\/completions|v1\/messages)$/u.exec(
       request.url ?? "",
     );
   if (request.method !== "POST" || match === null) {
@@ -193,7 +199,11 @@ const server = createServer((request, response) => {
         })}\n`,
         "utf8",
       );
-      sendSse(response, titleRequest ? "Native qualification" : fixtureOutput(route, index));
+      sendSse(
+        response,
+        titleRequest ? "Native qualification" : fixtureOutput(route, index),
+        request.url.endsWith("/v1/messages"),
+      );
     })
     .catch((error) => {
       if (!response.headersSent) response.writeHead(500, { "content-type": "text/plain" });

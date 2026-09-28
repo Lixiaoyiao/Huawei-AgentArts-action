@@ -153,6 +153,21 @@ gh workflow run e2e.yml --ref main \
 
 Harness files and fixtures are checked out at the trusted default-branch SHA. Candidate Action code is checked out separately at the bound candidate SHA. Every checkout sets `persist-credentials: false`, and the workflow verifies that no checkout Git credential remains.
 
+Harness fixtures install from the trusted harness lock. Candidate ecosystem
+tests install from the candidate's own lock with lifecycle scripts disabled and
+run its own test executable; they must never resolve a different DSH runtime
+from the harness checkout. Action and direct-process launches use the bound
+candidate's exact runtime default, without overriding it with the harness
+version. A runtime migration must prepare any needed trusted harness changes
+on `main` before qualifying its migration candidate; the immutable gate and
+main-only environment remain unchanged.
+
+The trusted integrity and GitHub integration providers accept both the existing
+Chat Completions transport and the candidate Messages transport. Messages tool
+results must preserve the issued assistant tool-use identity; a fabricated
+final answer is never execution evidence. These local providers use only dummy
+keys, while the live-provider golden paths retain their existing secret gates.
+
 The golden paths cover:
 
 The deliberately weakened-validator case uses a localhost completion fixture

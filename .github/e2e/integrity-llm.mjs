@@ -1,6 +1,8 @@
 import { appendFile } from "node:fs/promises";
 import { createServer } from "node:http";
 
+import { sendMessages } from "./messages-fixture.mjs";
+
 // This public dummy key must never be replaced with a real provider credential.
 const fixtureKey = "dsh-e2e-integrity-fixture-key";
 const auditPath = process.env.DSH_E2E_INTEGRITY_AUDIT;
@@ -21,7 +23,19 @@ async function readJson(request) {
   return JSON.parse(Buffer.concat(chunks, bytes).toString("utf8"));
 }
 
-function send(response, message, finishReason, stream) {
+function send(response, message, finishReason, stream, messagesProtocol) {
+  if (messagesProtocol) {
+    const content = message.tool_calls
+      ? message.tool_calls.map((call) => ({
+          type: "tool_use",
+          id: call.id,
+          name: call.function.name,
+          input: JSON.parse(call.function.arguments),
+        }))
+      : [{ type: "text", text: message.content }];
+    sendMessages(response, content, stream);
+    return;
+  }
   if (!stream) {
     response.writeHead(200, { "content-type": "application/json" });
     response.end(JSON.stringify({ choices: [{ index: 0, message, finish_reason: finishReason }] }));
@@ -42,7 +56,8 @@ const server = createServer((request, response) => {
     response.writeHead(200).end("ok");
     return;
   }
-  if (request.method !== "POST" || request.url !== "/chat/completions") {
+  const messagesProtocol = request.url === "/v1/messages";
+  if (request.method !== "POST" || (!messagesProtocol && request.url !== "/chat/completions")) {
     request.resume();
     response.writeHead(404).end();
     return;
@@ -56,7 +71,7 @@ const server = createServer((request, response) => {
     .then(async (body) => {
       const messages = body.messages ?? [];
       if (!Array.isArray(messages)) throw new Error("fixture requires messages");
-      if (JSON.stringify(messages).includes(fixtureKey))
+      if (JSON.stringify({ messages, system: body.system }).includes(fixtureKey))
         throw new Error("credential entered model context");
       if (
         !messages.some(
@@ -68,7 +83,11 @@ const server = createServer((request, response) => {
         throw new Error("fixture task identity was absent");
       }
       if (phase === "ready") {
-        if (!(body.tools ?? []).some((tool) => tool.function?.name === "bash")) {
+        if (
+          !(body.tools ?? []).some((tool) =>
+            messagesProtocol ? tool.name === "bash" : tool.function?.name === "bash",
+          )
+        ) {
           throw new Error("the real DSH Bash tool was absent");
         }
         phase = "bash-issued";
@@ -95,10 +114,25 @@ const server = createServer((request, response) => {
           },
           "tool_calls",
           body.stream,
+          messagesProtocol,
         );
         return;
       }
-      const feedback = messages.filter((message) => message.role === "tool");
+      const feedback = messagesProtocol
+        ? messages
+            .filter((message) => message.role === "user" && Array.isArray(message.content))
+            .flatMap((message) => message.content)
+            .filter((block) => block.type === "tool_result")
+            .map((block) => ({ tool_call_id: block.tool_use_id, content: block.content }))
+        : messages.filter((message) => message.role === "tool");
+      if (messagesProtocol) {
+        const issued = messages
+          .filter((message) => message.role === "assistant" && Array.isArray(message.content))
+          .flatMap((message) => message.content)
+          .filter((block) => block.type === "tool_use");
+        if (issued.length !== 1 || issued[0].id !== callId || issued[0].name !== "bash")
+          throw new Error("Messages history did not preserve the single Bash call");
+      }
       if (
         phase !== "bash-issued" ||
         feedback.length !== 1 ||
@@ -123,6 +157,7 @@ const server = createServer((request, response) => {
         },
         "stop",
         body.stream,
+        messagesProtocol,
       );
     })
     .catch(() => {

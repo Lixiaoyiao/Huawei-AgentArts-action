@@ -186,22 +186,32 @@ jobs:
       - name: Install fixture dependencies without lifecycle scripts
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      # Fixtures stay bound to trusted main. Candidate tests must resolve their
+      # own locked runtime instead of inheriting the harness runtime from main.
+      - name: Install exact candidate test dependencies without lifecycle scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix candidate-action --ignore-scripts --no-fund
+          npm ls --prefix candidate-action --all
+
       - name: Deterministic native ecosystem compatibility
         shell: bash
         run: |
           set -euo pipefail
           (
             cd candidate-action
-            ../node_modules/.bin/vitest run test/native-ecosystem.integration.test.ts
+            ./node_modules/.bin/vitest run test/native-ecosystem.integration.test.ts
           )
 
       - name: Strict Profile and official Bundle baseline
         id: strict
         uses: ./candidate-action
         with:
+          # The bound candidate owns its exact runtime default. Do not override
+          # it with the runtime version used by the trusted harness checkout.
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
-          dsh-version: 0.1.1-rc.2
           command: task
           task-access: read
           prompt: Inspect README.md and return one concise sentence describing this action. Do not request unavailable tools.
@@ -241,7 +251,6 @@ jobs:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
           dsh-mode: native
-          dsh-version: 0.1.1-rc.2
           isolation: docker
           command: task
           task-access: read
@@ -314,7 +323,6 @@ jobs:
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
-          dsh-version: 0.1.1-rc.2
           command: task
           task-access: read
           prompt: Call the available MCP echo tool exactly once with marker rc2-mcp-allow. Its response contains an opaque proof that is unavailable before the call. Copy the actual returned proof into taskOutput.proof. Never call hidden or any other tool, and do not invent the proof.
@@ -396,7 +404,6 @@ jobs:
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
-          dsh-version: 0.1.1-rc.2
           command: task
           task-access: read
           prompt: Call the actual DSH runtime web_search tool exactly once with one query, "site:api-docs.deepseek.com context caching". Copy the first source returned by that tool into taskOutput, using its displayed title as title and its absolute URL as url. Do not answer from repository context or memory, and do not invent a source. If the tool returns no source, report blocked. Call no other tool.
@@ -558,7 +565,6 @@ jobs:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
           dsh-mode: native
-          dsh-version: 0.1.1-rc.2
           isolation: docker
           command: task
           task-access: write
@@ -617,7 +623,6 @@ jobs:
           deepseek-api-key: dsh-e2e-integrity-fixture-key
           base-url: ${{ steps.integrity_fixture.outputs.base_url }}
           github-token: ${{ github.token }}
-          dsh-version: 0.1.1-rc.2
           command: task
           task-access: write
           allow-write: "true"
@@ -699,7 +704,6 @@ jobs:
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
-          dsh-version: 0.1.1-rc.2
           command: task
           task-access: write
           allow-write: "true"
@@ -754,7 +758,6 @@ jobs:
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
-          dsh-version: 0.1.1-rc.2
           command: task
           task-access: write
           allow-write: "true"
@@ -800,7 +803,6 @@ jobs:
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           github-token: ${{ github.token }}
-          dsh-version: 0.1.1-rc.2
           command: task
           task-access: write
           allow-write: "true"
@@ -1114,7 +1116,6 @@ jobs:
           env \
             "INPUT_DEEPSEEK-API-KEY=$DEEPSEEK_API_KEY" \
             "INPUT_GITHUB-TOKEN=$GH_TOKEN" \
-            'INPUT_DSH-VERSION=0.1.1-rc.2' \
             'INPUT_COMMAND=task' \
             'INPUT_TASK-ACCESS=read' \
             'INPUT_PROMPT=Wait for the upstream response and do not finish early.' \
@@ -1593,7 +1594,6 @@ jobs:
             if ! env \
               "INPUT_DEEPSEEK-API-KEY=$fixture_key" \
               "INPUT_GITHUB-TOKEN=$GH_TOKEN" \
-              'INPUT_DSH-VERSION=0.1.1-rc.2' \
               'INPUT_PROGRESS-COMMENT=false' \
               'INPUT_TIMEOUT-MINUTES=15' \
               "INPUT_BASE-URL=$origin/$fixture_route" \
