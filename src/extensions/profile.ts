@@ -260,9 +260,6 @@ function controlledRows(
       name: "@deepseek-ai/dsh-sandbox-policy",
       config: { mode, workspaceRoot: options.workerWorkspacePath },
     },
-    ...(enabled.has("workspace.edit")
-      ? [{ id: "tool-str-replace-editor", name: "@deepseek-ai/dsh-tool-str-replace-editor" }]
-      : []),
     ...(enabled.has("native.bash")
       ? [
           {
@@ -353,6 +350,11 @@ export function renderControlledProfilePatch(options: PrepareControlledProfileOp
     ...options.plan.tools.map((tool) => extensionRule(tool)),
   ];
   const entries = [
+    // 0.1.7 no longer ships this row in dsh-base. Cordis id patches only
+    // update existing rows, so retaining the Action editor requires insertion.
+    ...(options.nativeTools.includes("workspace.edit")
+      ? [{ id: "tool-str-replace-editor", name: "@deepseek-ai/dsh-tool-str-replace-editor" }]
+      : []),
     {
       id: "dsh-action-workspace",
       name: loaderModuleSpecifier(options.workspacePluginPath),

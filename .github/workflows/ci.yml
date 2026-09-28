@@ -33,6 +33,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - name: Linux Docker frozen-SHA Validation Integrity regression
+        id: integrity
         timeout-minutes: 10
         shell: bash
         env:
@@ -49,6 +50,9 @@ jobs:
             src assets/dsh package.json package-lock.json
           ./node_modules/.bin/vitest run test/integrity-docker.integration.test.ts
       - name: Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke
+        # Collect the independent native evidence after a controlled failure;
+        # the failed integrity step still fails this job and blocks release.
+        if: ${{ !cancelled() && (success() || steps.integrity.outcome == 'failure') }}
         shell: bash
         env:
           CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}

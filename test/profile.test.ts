@@ -118,7 +118,9 @@ describe("controlled official DSH Profile", () => {
       },
     });
     expect(row("tool-subagent-fork")).toMatchObject({ disabled: true });
-    expect(row("tool-str-replace-editor")).toMatchObject({
+    expect(
+      rows.flatMap(({ insert }) => insert ?? []).find(({ id }) => id === "tool-str-replace-editor"),
+    ).toMatchObject({
       name: "@deepseek-ai/dsh-tool-str-replace-editor",
     });
     for (const id of [
