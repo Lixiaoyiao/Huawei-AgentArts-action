@@ -320,13 +320,16 @@ describe("trusted core E2E workflow", () => {
     expect(integration).not.toContain("secrets.DEEPSEEK_API_KEY");
   });
 
-  it("creates an exact one-file minimal base and head for checks coverage", () => {
+  it("creates a minimal base with an immutable validator and a one-file checks diff", () => {
     const creation = stepBlock(workflow, "Create isolated Issue and draft PR fixtures");
 
     for (const contract of [
       ".github/dsh-e2e-fixtures/checks-",
       "dsh-e2e/checks-base-",
-      '{tree:[{path:$path,mode:"100644",type:"blob",sha:$sha}]}',
+      '{tree:[{path:$path,mode:"100644",type:"blob",sha:$sha},',
+      '{path:".github/dsh-e2e-fixtures/validate-business-file.mjs",mode:"100644",type:"blob",sha:$validator}]}',
+      "--rawfile content .github/e2e/validate-business-file.mjs",
+      '[[ "$validator_blob_sha" == "$(git hash-object .github/e2e/validate-business-file.mjs)" ]]',
       "base_tree:$base",
       "parents:[$parent]",
       'echo "base_tree_sha=$base_tree_sha"',
@@ -451,7 +454,13 @@ describe("trusted core E2E workflow", () => {
     expect(cleanup).toContain(".tree.sha");
     expect(cleanup).toContain(".files | length == 1");
     expect(cleanup).toContain('path == ".github/dsh-e2e-fixtures"');
-    expect(cleanup).toContain(".tree | length == 3");
+    expect(cleanup).toContain(".tree | length == 4");
+    expect(cleanup).toContain(
+      'validator_blob_sha="$(git hash-object .github/e2e/validate-business-file.mjs)"',
+    );
+    expect(cleanup).toContain(
+      'select(.path == ".github/dsh-e2e-fixtures/validate-business-file.mjs" and .mode == "100644" and .type == "blob" and .sha == $validator)',
+    );
     expect(cleanup).toContain("git/blobs/$blob_sha");
     expect(cleanup).toContain(
       'node .github/e2e/fixture-ref.mjs delete "$CHECKS_BRANCH" "$ref_sha"',

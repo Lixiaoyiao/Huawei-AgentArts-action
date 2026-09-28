@@ -68,7 +68,11 @@ export function businessReply(route, index, body, settings) {
       : message.role === "user" && Array.isArray(message.content)
         ? message.content
             .filter((block) => block.type === "tool_result")
-            .map((block) => ({ id: block.tool_use_id, content: block.content }))
+            .map((block) => ({
+              id: block.tool_use_id,
+              content: block.content,
+              failed: block.is_error === true,
+            }))
         : [],
   );
   const issued = messages
@@ -83,13 +87,14 @@ export function businessReply(route, index, body, settings) {
     index !== 2 ||
     feedback.length !== 1 ||
     feedback[0].id !== callId ||
+    feedback[0].failed === true ||
     !JSON.stringify(feedback[0].content).includes(marker) ||
     issued.length !== 1 ||
     issued[0].id !== callId ||
     issued[0].name !== "bash"
   )
     throw new Error("Business fixture requires one matching completed Bash call");
-  output.changes = [{ path, summary: `Validated ${route} fixture content` }];
+  output.changePlan = [{ path, summary: `Validated ${route} fixture content` }];
   return {
     message: { role: "assistant", content: JSON.stringify(output) },
     phase: "bash-observed",
