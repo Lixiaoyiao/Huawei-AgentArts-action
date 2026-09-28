@@ -256,6 +256,17 @@ Graceful cancellation is the verifiable path. `SIGKILL`, runner/host loss, a pro
 
 If Core E2E finds a bug, fix it on the PR, obtain the new head SHA, update the variable, rerun CI, and dispatch Core E2E again. Never use an older candidate run as evidence for the new head.
 
+For an Actions `GITHUB_TOKEN` rate-limit failure, dispatch the independent
+[Actions token rate-limit diagnostic](../.github/workflows/e2e-rate-limit.yml)
+once with `gh workflow run e2e-rate-limit.yml --ref main`. It uses the Actions
+installation token with no repository permissions, checks out no code, and makes
+one `GET /rate_limit` request. The [official endpoint](https://docs.github.com/en/rest/rate-limit/rate-limit)
+does not consume the primary quota; its response headers are authoritative if
+they differ from the body. Record the reported reset time and remaining quota
+before deciding whether another full run is appropriate. A personal token used
+by the local CLI has a separate quota. A successful diagnostic does not qualify any candidate or
+release or replace any Core E2E evidence.
+
 ## Merge and qualify `main`
 
 After candidate CI and pre-merge Core E2E pass:
