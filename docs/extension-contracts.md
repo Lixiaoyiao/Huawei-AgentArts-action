@@ -2,13 +2,13 @@
 
 [README](../README.md) · [Configuration](configuration.md) · [Troubleshooting](troubleshooting.md) · [Security](../SECURITY.md)
 
-## Status in v0.8.2
+## Status in v0.9.0
 
 The controlled extension model introduced in v0.4 remains active unchanged
 through DeepSeek Harness's official extension mechanisms. The Action does not
 define a second plugin system:
 
-- `@deepseek-ai/dsh-mcp-client@0.1.1-rc.2` owns MCP connection, discovery,
+- `@deepseek-ai/dsh-mcp-client@0.1.7-rc.2` owns MCP connection, discovery,
   registration, reconnect, and dispatch.
 - DSH Profile and Bundle manifests own Bundle composition. Cordis owns plugin
   loading and configuration.
@@ -20,7 +20,7 @@ define a second plugin system:
   Controller as its tool-policy owner. Controller orchestration records the
   matching exact requested/effective/denied audit.
 - Experimental `NativeComposition` uses the locked official DSH
-  `0.1.1-rc.2` headless composition without constructing the controlled
+  `0.1.7-rc.2` headless composition without constructing the controlled
   `github-action` grant Profile or its ToolRuntime policy adapter. Its native
   Profile composes configured Bundles as official layers, official MCP client
   rows, and direct Cordis Plugins. DSH owns discovery, registration, the
@@ -38,7 +38,7 @@ Session resume remains deferred. Every outer-loop iteration starts a fresh DSH
 headless process over the same run-scoped `.git`-less workspace. Controlled
 mode also reuses its run-scoped invocation-count and receipt files; native does
 not invent equivalent controlled policy state. The Action boots its controlled Profile through the
-official `@deepseek-ai/dsh-app-boot@0.1.1-rc.2` public API rather than the
+official `@deepseek-ai/dsh-app-boot@0.1.7-rc.2` public API rather than the
 general-purpose CLI path. The standalone workflow installer added in v0.5.2
 remains unchanged. v0.6.0 added Controller-side routing, branch UX, typed GitHub
 operations, and optional task-result validation. v0.7.0 added only internal
@@ -68,7 +68,7 @@ native declares only owners, official loading definitions, and process-level
 network/workspace requirements. A controlled-shaped native configuration fails
 closed instead of being reinterpreted.
 
-The Controller accepts only `@deepseek-ai/dsh@0.1.1-rc.2` and the matching
+The Controller accepts only `@deepseek-ai/dsh@0.1.7-rc.2` and the matching
 official package family. Every directly used DSH package is an exact top-level
 pin, shipped packages are installed from the committed lockfile, and the
 runtime verifies that every installed `@deepseek-ai/dsh*` entry has the audited
@@ -80,7 +80,7 @@ MCP, ToolRuntime, Bash, Web Search, Subagent, receipts, and Docker/path/timeout
 behavior. rc.2's relevant runtime contracts remain compatible with the
 Action's existing inputs, outputs, and permission semantics; the updated DSH
 sandbox also adds its upstream process-namespace hardening. This compatibility
-statement applies only to `0.1.1-rc.2` and is not an approval for later release
+statement applies only to `0.1.7-rc.2` and is not an approval for later release
 candidates.
 
 ## Run-scoped lifecycle and bounded phases
@@ -184,7 +184,7 @@ name never replaces the canonical Action ID as an authorization key.
 ## Native official-ecosystem composition
 
 This section applies only to `dsh-mode: native`. Native prepares a run-scoped
-official Profile over the exact `0.1.1-rc.2` package family. Its manifest keeps
+official Profile over the exact `0.1.7-rc.2` package family. Its manifest keeps
 the locked `@deepseek-ai/dsh-base` and `@deepseek-ai/dsh-headless` layers and
 appends each admitted Bundle package to `dsh.profile.bundles`. Its Cordis patch
 inserts each MCP owner as an official `@deepseek-ai/dsh-mcp-client` row and each
@@ -272,7 +272,7 @@ effective third-party Bundles to `dsh.profile.bundles`.
 
 The generated Cordis patch:
 
-- disables unapproved shell, web, skill, subagent, workflow, and code-runtime
+- disables unapproved shell, web, skill, subagent, workflow, and PTC runtime
   rows from the base Bundle;
 - configures the DSH sandbox and filesystem root for the bound workspace;
 - inserts only effective official MCP and direct plugin rows;
@@ -513,7 +513,7 @@ outer Agent loop. The fixed `result-json` schema-v1 audit envelope remains the
 Controller record; `taskOutput` is data only.
 
 GitHub attachment images remain deferred. The exact audited
-`@deepseek-ai/dsh-headless@0.1.1-rc.2` configuration accepts one `task` string
+`@deepseek-ai/dsh-headless@0.1.7-rc.2` configuration accepts one `task` string
 and constructs one text block, with no supported multimodal input contract.
 The Action therefore removes Markdown image references from untrusted text and
 does not download, mount, or forward attachment bytes through an unofficial
@@ -529,7 +529,7 @@ The Controller validates the returned protocol, operation, paths, and terminal
 state before any validation, publication, or GitHub write.
 
 `SessionStore`, `AgentSessionBinding`, and `AgentSessionHandle` remain reserved
-interfaces only. v0.8.2 does not instantiate a store or expose a resume token.
+interfaces only. v0.9.0 does not instantiate a store or expose a resume token.
 The redacted extension audit digest is included in public task identity and
 output audit data, while the Controller-only complete configuration digest binds
 runtime reuse. Neither digest is a reusable session credential. Any

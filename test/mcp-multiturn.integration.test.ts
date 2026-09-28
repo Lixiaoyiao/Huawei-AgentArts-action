@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { readFile, rm } from "node:fs/promises";
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { createServer, type IncomingMessage, type Server } from "node:http";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
@@ -14,6 +14,7 @@ import { z } from "zod";
 import { mcpPublicToolName, resolveExtensionPlan } from "../src/extensions/plan.js";
 import { prepareControlledProfile } from "../src/extensions/profile.js";
 import { parseMcpConfiguration, parsePluginConfiguration } from "../src/extensions/schema.js";
+import { messageToolResults, sendMessagesSse as sendSse } from "./fixtures/messages-sse.mjs";
 import type { SecurityPolicy } from "../src/security/policy.js";
 
 const execFileAsync = promisify(execFile);
@@ -41,11 +42,12 @@ const trustedRead: SecurityPolicy = {
 };
 
 interface DeepSeekTool {
-  readonly function?: { readonly name?: unknown };
+  readonly name?: unknown;
 }
 
 interface DeepSeekMessage {
   readonly role?: unknown;
+  readonly content?: unknown;
 }
 
 interface DeepSeekRequest {
@@ -173,7 +175,7 @@ describe("fresh official DSH workers share Controller MCP limits", () => {
       );
 
       const firstRequests = llmFixture.requests.filter(
-        (request) => !request.messages?.some((message) => message.role === "tool"),
+        (request) => messageToolResults(request).length === 0,
       );
       expect(firstRequests).toHaveLength(3);
       for (const request of firstRequests) {
@@ -222,7 +224,7 @@ describe("fresh official DSH workers share Controller MCP limits", () => {
 
 function toolNames(request: DeepSeekRequest): string[] {
   return (request.tools ?? [])
-    .map((tool) => tool.function?.name)
+    .map((tool) => tool.name)
     .filter((name): name is string => typeof name === "string")
     .sort();
 }
@@ -235,21 +237,6 @@ async function readJsonRequest(request: IncomingMessage): Promise<DeepSeekReques
     else throw new TypeError("DeepSeek fixture received a non-byte request chunk");
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as DeepSeekRequest;
-}
-
-function sendSse(response: ServerResponse, delta: Record<string, unknown>, finishReason: string) {
-  response.writeHead(200, {
-    "content-type": "text/event-stream",
-    "cache-control": "no-cache",
-    connection: "keep-alive",
-  });
-  response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\n`,
-  );
-  response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: finishReason }], usage: { prompt_tokens: 3, completion_tokens: 3 } })}\n\n`,
-  );
-  response.end("data: [DONE]\n\n");
 }
 
 async function listen(server: Server): Promise<string> {
@@ -273,7 +260,7 @@ async function startDeepSeekFixture(): Promise<{
 }> {
   const requests: DeepSeekRequest[] = [];
   const server = createServer((request, response) => {
-    if (request.method !== "POST" || !request.url?.endsWith("/chat/completions")) {
+    if (request.method !== "POST" || !request.url?.endsWith("/v1/messages")) {
       request.resume();
       response.writeHead(404).end();
       return;
@@ -281,7 +268,7 @@ async function startDeepSeekFixture(): Promise<{
     readJsonRequest(request)
       .then((body) => {
         requests.push(body);
-        const followsTool = body.messages?.some((message) => message.role === "tool") === true;
+        const followsTool = messageToolResults(body).length > 0;
         if (followsTool) {
           sendSse(response, { content: "fixture turn complete" }, "stop");
           return;

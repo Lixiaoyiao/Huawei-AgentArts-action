@@ -94,7 +94,7 @@ jobs:
             --env HOME=/tmp --env npm_config_cache=/tmp/npm-cache \
             --env NODE_OPTIONS=--max-old-space-size=3072 \
             docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \
-            npm ci --no-audit --no-fund --omit=dev --ignore-scripts --loglevel=error
+            npm ci --strict-peer-deps --no-fund --omit=dev --ignore-scripts --loglevel=error
           docker run --rm -i --read-only --cap-drop ALL --security-opt no-new-privileges \
             --user "$run_as" \
             --tmpfs /tmp:rw,nosuid,nodev,size=536870912 \
@@ -106,7 +106,7 @@ jobs:
           import { spawnSync } from "node:child_process";
           import { readFile } from "node:fs/promises";
 
-          const expectedVersion = "0.1.1-rc.2";
+          const expectedVersion = "0.1.7-rc.2";
           const manifest = JSON.parse(await readFile("package.json", "utf8"));
           const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
           const expectedPackages = Object.keys(manifest.dependencies ?? {})
@@ -142,6 +142,8 @@ jobs:
           if (
             typeof appBoot.boot !== "function" ||
             typeof appBoot.loadProfile !== "function" ||
+            typeof appBoot.createRuntimeResolution !== "function" ||
+            typeof appBoot.PluginPackages !== "function" ||
             typeof appBoot.installFailLoud !== "function"
           ) {
             throw new Error("official dsh-app-boot exports are unavailable");
@@ -219,6 +221,7 @@ jobs:
             --mount "type=bind,source=$smoke_dir/home/action-state,target=/dsh-home/action-state" \
             --mount "type=bind,source=$smoke_dir/home/sessions,target=/dsh-home/sessions" \
             --mount "type=bind,source=$smoke_dir/home/attachments,target=/dsh-home/attachments" \
+            --mount "type=bind,source=$smoke_dir/home/storages,target=/dsh-home/storages" \
             --mount "type=bind,source=$runtime_dir,target=/dsh-home/profiles/github-action,readonly" \
             --mount "type=bind,source=$runtime_dir,target=/opt/dsh-action/package,readonly" \
             --workdir /workspace \
@@ -228,14 +231,29 @@ jobs:
             --env "DEEPSEEK_BASE_URL=http://host.docker.internal:$fixture_port" \
             --env "DEEPSEEK_SEARCH_BASE_URL=http://host.docker.internal:$fixture_port" \
             docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \
-            node --expose-internals /opt/dsh-action/package/native-launcher.mjs \
+            node --expose-internals /dsh-home/profiles/github-action/native-launcher.mjs \
             'Use the requested native ecosystem capabilities and return review JSON.' \
             >"$smoke_dir/native.stdout" 2>"$smoke_dir/native.stderr"
 
-          [[ ! -s "$smoke_dir/native.stderr" ]]
-          jq -e '
-            .protocolVersion == 1 and .operation == "review" and
-            .state == "final" and .summary == "native ecosystem booted"
+          node --input-type=module - "$smoke_dir/native.stderr" <<'NODE'
+          import { readFile } from "node:fs/promises";
+          const stderr = await readFile(process.argv[2], "utf8");
+          const diagnostics = stderr.replace(
+            /\(node:\d+\) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\r?\n\(Use `node --trace-warnings \.\.\.` to show where the warning was created\)\r?\n/gu,
+            "",
+          );
+          if (diagnostics !== "") throw new Error(`Unexpected native runtime diagnostic: ${diagnostics}`);
+          NODE
+          jq -s -e '
+            .[0].type == "session" and
+            ([.[] | select(.type == "session")] | length) == 1 and
+            ([.[] | select(.type == "final")] | length) == 1 and
+            all(.[]; .type != "error") and
+            any(.[]; .type == "status" and .phase == "turn_end" and .reason.kind == "completed") and
+            .[-1].type == "final" and
+            (.[-1].text | fromjson |
+              .protocolVersion == 1 and .operation == "review" and
+              .state == "final" and .summary == "native ecosystem booted")
           ' "$smoke_dir/native.stdout" >/dev/null
           jq -s -e '
             length == 1 and .[0].schemaVersion == 1 and
@@ -247,6 +265,8 @@ jobs:
             (.[0].observedTools | index("mcp__fixture__add") != null) and
             (.[0].observedTools | index("native_bundle_echo") != null) and
             (.[0].observedTools | index("native_plugin_echo") != null) and
+            (.[0].observedTools | index("web_fetch") == null) and
+            (.[0].observedTools | index("list_mcp_resources") == null) and
             (.[0].observedTools | index("workspace.read") == null)
           ' "$smoke_dir/home/action-state/native-observed-tools.jsonl" >/dev/null
           jq -s -e '

@@ -210,6 +210,8 @@ export class ControlledComposition implements DshComposition {
           patchPath,
           "--patch",
           toolPolicyPath,
+          "--json",
+          "--",
           options.task,
         ],
         cwd: options.workspacePath,

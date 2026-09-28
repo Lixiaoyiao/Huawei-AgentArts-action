@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { createRequire } from "node:module";
+import { parse } from "yaml";
 
 const require = createRequire(import.meta.url);
 const dshPackage = require.resolve("@deepseek-ai/dsh/package.json");
@@ -13,18 +14,22 @@ const headlessRunner = join(headlessPackage, "..", "lib", "index.js");
 const headlessStartup = join(headlessPackage, "..", "lib", "startup.js");
 const projectRoot = join(import.meta.dirname, "..");
 const nativeLauncher = join(projectRoot, "assets", "dsh", "native-launcher.mjs");
+const controlledLauncher = join(projectRoot, "assets", "dsh", "action-launcher.mjs");
 const dshHome = await mkdtemp(join(tmpdir(), "dsh-action-config-"));
 
 try {
-  const [runnerSource, startupSource, nativeLauncherSource] = await Promise.all([
-    readFile(headlessRunner, "utf8"),
-    readFile(headlessStartup, "utf8"),
-    readFile(nativeLauncher, "utf8"),
-  ]);
+  const [runnerSource, startupSource, nativeLauncherSource, controlledLauncherSource, action] =
+    await Promise.all([
+      readFile(headlessRunner, "utf8"),
+      readFile(headlessStartup, "utf8"),
+      readFile(nativeLauncher, "utf8"),
+      readFile(controlledLauncher, "utf8"),
+      readFile(join(projectRoot, "action.yml"), "utf8"),
+    ]);
   assert.match(
     runnerSource,
-    /const Config = z\.object\(\{ task: z\.string\(\)\.required\(\) \}\);/u,
-    "the audited headless runner must accept only the single text task contract",
+    /const Config = z\.object\(\{\s*task: z\.string\(\),\s*sessionId: z\.string\(\),\s*json: z\.boolean\(\)\s*\}\);/u,
+    "the audited headless runner exposes task, session identity, and JSON projection only",
   );
   assert.match(
     runnerSource,
@@ -39,8 +44,70 @@ try {
   assert.match(
     startupSource,
     /\.argument\(\s*"\[task\.\.\.\]"/u,
-    "the audited headless startup must continue to expose only the task positional",
+    "the audited headless startup must continue to accept the single text task positional",
   );
+  assert.match(
+    startupSource,
+    /\.option\("--json"/u,
+    "the published JSON projection flag is available",
+  );
+  assert.match(
+    startupSource,
+    /\.option\("--session-id <id>"/u,
+    "the upstream adoption option is accounted for",
+  );
+  assert.match(
+    runnerSource,
+    /await agent\.whenIdle\(\)/u,
+    "headless must wait for Agent quiescence",
+  );
+  assert.match(
+    runnerSource,
+    /await sessions\.flush\(agent\.session\)/u,
+    "headless must flush its owned Session before exit",
+  );
+  for (const [mode, launcherSource] of [
+    ["controlled", controlledLauncherSource],
+    ["native", nativeLauncherSource],
+  ]) {
+    assert.match(
+      launcherSource,
+      /args: \["--json", "--", task\]/u,
+      `${mode} must opt into JSON and bind one literal task after the option terminator`,
+    );
+    assert.doesNotMatch(
+      launcherSource,
+      /--session-id|--(?:file|image|attachment)(?:[\s"'=]|$)/u,
+      `${mode} must not opt into resume or attachment entry points`,
+    );
+    for (const row of [
+      "session-telemetry-otel",
+      "session-log-deepseek",
+      "plugin-package-inventory-deepseek",
+    ]) {
+      assert.ok(
+        launcherSource.includes(`{ id: "${row}", disabled: true }`),
+        `${mode} must explicitly suppress ${row}`,
+      );
+    }
+  }
+  const actionInputs = Object.keys(parse(action).inputs);
+  for (const forbidden of [
+    "session-id",
+    "resume",
+    "resume-session",
+    "file",
+    "files",
+    "image",
+    "images",
+    "attachment",
+    "attachments",
+  ]) {
+    assert.ok(
+      !actionInputs.includes(forbidden),
+      `Action must not expose ${forbidden} in this migration`,
+    );
+  }
   assert.match(
     nativeLauncherSource,
     /loadProfile\(NAME, PROFILE, INSTALL_ANCHOR, dshHome\)/u,

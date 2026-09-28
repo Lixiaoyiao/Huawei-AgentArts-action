@@ -3,6 +3,32 @@
 Notable user-facing changes are recorded here. This project follows semantic
 versioning for published action releases.
 
+## [0.9.0] - Pending qualification
+
+- Migrates controlled and native composition to the fixed DSH `0.1.7-rc.2`
+  candidate and Cordis `4.0.4`, with exact lockfile identities. This entry does
+  not claim that CI, trusted E2E, or formal release qualification has passed.
+- Uses official Profile resolution, PluginPackages, Agent/Session lifecycle,
+  Messages transport, and PTC-backed native Workflow. Keeps MCP, Bundle, Plugin,
+  Skills, Subagents, and all existing GitHub business operations.
+- Separates Headless NDJSON transport from strict business-result validation;
+  malformed transport cannot trigger formatting repair, and a result-only
+  repair cannot rerun tasks or tools. Tool budgets, cancellation, and cleanup
+  remain Controller-owned.
+- Disables new session-log and package-inventory uploads, telemetry, and the
+  newly default native HTTP fetch capability. Real Controller credentials stay
+  outside the worker, and typed GitHub writes retain Gateway validation,
+  immediate revalidation, and postcondition checks.
+- Adds only run-scoped Session storage. No cross-run Resume, public file/image
+  input, Agent Teams, Browser/Computer Use, or new GitHub capability is added.
+- Repairs fixable dependency advisories through normal resolution. The fixed
+  upstream Office dependency still contains one moderate `fflate` advisory
+  reported through eight package entries; see the
+  [migration audit](docs/dsh-0.1.7-rc.2-migration.md).
+- Prepares installer `0.3.0` for v0.9.0. Packing must receive the qualified
+  formal Action commit through `DSH_ACTION_RELEASE_SHA`; the existing v0.8.2
+  Action and installer 0.2.1 remain immutable.
+
 ## Installer 0.2.1 - 2026-09-19
 
 - Updated the independently versioned create package to bind generated workflows

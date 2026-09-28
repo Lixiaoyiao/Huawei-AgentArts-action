@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { startDeepSeekProxy } from "../src/dsh/proxy.js";
 import type { DeepSeekProxyHandle } from "../src/dsh/proxy.js";
@@ -12,6 +12,100 @@ afterEach(async () => {
 });
 
 describe("DeepSeek credential proxy", () => {
+  it.each([
+    ["https://api.deepseek.com", "https://api.deepseek.com/anthropic/v1/messages"],
+    ["https://api.deepseek.com/v1", "https://api.deepseek.com/anthropic/v1/messages"],
+    ["https://api.deepseek.com/anthropic/v1", "https://api.deepseek.com/anthropic/v1/messages"],
+    ["https://provider.example/route", "https://provider.example/route/v1/messages"],
+    ["https://provider.example/v1/", "https://provider.example/v1/messages"],
+  ])(
+    "mediates Messages for %s using the API-key provider without attribution leakage",
+    async (baseUrl, expected) => {
+      const upstream = vi.fn<typeof fetch>().mockResolvedValue(
+        new Response('event: message_stop\ndata: {"type":"message_stop"}\n\n', {
+          headers: { "content-type": "text/event-stream" },
+        }),
+      );
+      const handle = await startDeepSeekProxy({
+        apiKey: "real-controller-key",
+        baseUrl,
+        fetchImplementation: upstream,
+      });
+      handles.push(handle);
+      const response = await fetch(`${handle.workerBaseUrl}/v1/messages`, {
+        method: "POST",
+        headers: {
+          "x-api-key": handle.workerToken,
+          "anthropic-version": "2023-06-01",
+          "anthropic-beta": "mid-conversation-tool-changes-2026-07-01",
+          "x-deepseek-harness-user-id": "private-user",
+          "x-deepseek-harness-session-id": "private-session",
+          accept: "text/event-stream",
+        },
+        body: '{"messages":[],"stream":true}',
+      });
+      expect(response.status).toBe(200);
+      expect(await response.text()).toContain("message_stop");
+      expect(upstream.mock.calls[0]?.[0]).toEqual(new URL(expected));
+      const forwarded = upstream.mock.calls[0]?.[1];
+      expect(forwarded?.headers).toMatchObject({
+        authorization: "Bearer real-controller-key",
+        "x-api-key": "real-controller-key",
+        "anthropic-version": "2023-06-01",
+        "anthropic-beta": "mid-conversation-tool-changes-2026-07-01",
+      });
+      expect(JSON.stringify(forwarded)).not.toContain("private-user");
+      expect(JSON.stringify(forwarded)).not.toContain("private-session");
+      expect(JSON.stringify(forwarded)).not.toContain(handle.workerToken);
+      expect(forwarded?.redirect).toBe("error");
+    },
+  );
+
+  it("does not expose Files, model discovery or arbitrary Messages routes", async () => {
+    const upstream = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ content: [] }));
+    const handle = await startDeepSeekProxy({
+      apiKey: "real-controller-key",
+      baseUrl: "https://api.deepseek.com",
+      fetchImplementation: upstream,
+    });
+    handles.push(handle);
+    for (const suffix of [
+      "/v1/files",
+      "/v1/models",
+      "/v1/messages?target=external",
+      "/v1/messages/extra",
+      "/messages",
+    ]) {
+      const response = await fetch(`${handle.workerBaseUrl}${suffix}`, {
+        method: "POST",
+        headers: { authorization: `Bearer ${handle.workerToken}` },
+        body: "{}",
+      });
+      expect(response.status).toBe(404);
+    }
+    for (const headers of [
+      { "x-api-key": "wrong" },
+      { authorization: "Bearer wrong", "x-api-key": handle.workerToken },
+      { authorization: `Bearer ${handle.workerToken}`, "x-api-key": "wrong" },
+    ]) {
+      expect(
+        (
+          await fetch(`${handle.workerBaseUrl}/v1/messages`, {
+            method: "POST",
+            headers,
+            body: "{}",
+          })
+        ).status,
+      ).toBe(401);
+    }
+    expect(upstream).not.toHaveBeenCalled();
+    await fetch(`${handle.workerBaseUrl}/v1/messages`, {
+      method: "POST",
+      headers: { "x-api-key": handle.workerToken, "anthropic-beta": "files-api-2025-04-14" },
+      body: "{}",
+    });
+    expect(upstream.mock.calls[0]?.[1]?.headers).not.toHaveProperty("anthropic-beta");
+  });
   it("rejects non-HTTPS upstream base URLs", async () => {
     await expect(
       startDeepSeekProxy({ apiKey: "real-key", baseUrl: "http://api.example.test" }),

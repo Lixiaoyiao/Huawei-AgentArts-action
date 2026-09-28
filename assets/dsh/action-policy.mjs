@@ -247,7 +247,7 @@ export function apply(ctx, rawConfig) {
   // must not inherit the root JSON envelope.
   ctx.systemPrompt.section({
     name: "dsh-action:root-output-protocol",
-    order: 1_000,
+    order: ctx.systemPrompt.getSectionOrder("DEPLOYMENT_PERSONA_SUFFIX") + 1,
     text: (context) =>
       context.agent?.session?.header?.origin === "subagent"
         ? ""

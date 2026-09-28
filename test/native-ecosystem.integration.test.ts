@@ -1,19 +1,18 @@
 import { execFile } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
-import { healProfilesModuleFallback } from "@deepseek-ai/dsh-app-boot";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { afterEach, describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { messageToolResults, sendMessagesSse as sendSse } from "./fixtures/messages-sse.mjs";
 import { writeNativeProfile } from "../src/dsh/native-composition.js";
 import { resolveNativeExtensionPlan } from "../src/extensions/plan.js";
 import {
@@ -23,8 +22,6 @@ import {
 
 const execFileAsync = promisify(execFile);
 const temporary: string[] = [];
-const require = createRequire(import.meta.url);
-const installAnchor = require.resolve("@deepseek-ai/dsh/package.json");
 
 interface DeepSeekMessage {
   readonly role?: unknown;
@@ -32,7 +29,7 @@ interface DeepSeekMessage {
 }
 
 interface DeepSeekTool {
-  readonly function?: { readonly name?: unknown };
+  readonly name?: unknown;
 }
 
 interface DeepSeekRequest {
@@ -163,23 +160,13 @@ describe("locked rc.2 native ecosystem boot", () => {
     });
     await writeFile(join(actionState, "native-observed-tools.jsonl"), "");
     await writeFile(join(dshHome, ".anonymous-user-id"), "11111111-1111-4111-8111-111111111111\n");
-    await cp(
-      join(process.cwd(), "assets", "dsh", "native-launcher.mjs"),
-      join(profileRoot, "native-launcher.mjs"),
-    );
-
-    // The production installer supplies the same dependency closure under the
-    // Profile package root. This public helper gives the isolated test Profile
-    // that official installation-owned closure without acquiring anything.
-    healProfilesModuleFallback(installAnchor, dshHome);
-
     const llm = await startNativeLlmFixture();
     try {
       const result = await execFileAsync(
         process.execPath,
         [
           "--expose-internals",
-          join(profileRoot, "native-launcher.mjs"),
+          join(process.cwd(), "assets", "dsh", "native-launcher.mjs"),
           "Use the requested native ecosystem capabilities and return review JSON.",
         ],
         {
@@ -201,8 +188,23 @@ describe("locked rc.2 native ecosystem boot", () => {
         },
       );
 
-      expect(result.stderr).toBe("");
-      expect(JSON.parse(result.stdout)).toMatchObject({
+      // The official PTC workflow runtime uses Node's typed-source parser.
+      // Its one known runtime warning is not an application diagnostic.
+      expect(
+        result.stderr.replace(
+          /\(node:\d+\) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\r?\n\(Use `node --trace-warnings \.\.\.` to show where the warning was created\)\r?\n/gu,
+          "",
+        ),
+      ).toBe("");
+      expect(
+        JSON.parse(
+          result.stdout
+            .trim()
+            .split("\n")
+            .map((line) => JSON.parse(line) as { type: string; text?: string })
+            .find(({ type }) => type === "final")?.text ?? "",
+        ),
+      ).toMatchObject({
         protocolVersion: 1,
         operation: "review",
         state: "final",
@@ -213,6 +215,13 @@ describe("locked rc.2 native ecosystem boot", () => {
       );
       expect(rootRequests.length).toBeGreaterThanOrEqual(7);
       const firstTools = toolNames(rootRequests[0]);
+      expect(firstTools).not.toContain("web_fetch");
+      expect(firstTools).not.toContain("list_mcp_resources");
+      expect(firstTools).not.toContain("read_mcp_resource");
+      for (const request of llm.requests) {
+        expect(request).not.toHaveProperty("dsh_session_log");
+        expect(request).not.toHaveProperty("dsh_plugin_packages");
+      }
       for (const name of [
         "skill",
         "subagent",
@@ -261,6 +270,93 @@ describe("locked rc.2 native ecosystem boot", () => {
       ]) {
         expect(observation.observedTools).toContain(name);
       }
+
+      for (const [modulePath, entryId] of [
+        [join(installedBundle, "index.mjs"), "native-ecosystem-bundle-fixture"],
+        [join(installedPlugin, "index.mjs"), "dsh-action-native-plugin-plugin"],
+      ] as const) {
+        const source = await readFile(modulePath, "utf8");
+        const requestCount = llm.requests.length;
+        await writeFile(
+          modulePath,
+          'export const name = "failed-native-fixture"; export function apply() { throw new Error("fixture startup failure"); }\n',
+        );
+        try {
+          await expect(
+            execFileAsync(
+              process.execPath,
+              [
+                "--expose-internals",
+                join(process.cwd(), "assets", "dsh", "native-launcher.mjs"),
+                "Do not execute without the admitted extension.",
+              ],
+              {
+                cwd: workspace,
+                env: {
+                  PATH: process.env.PATH,
+                  SystemRoot: process.env.SystemRoot,
+                  DSH_HOME: dshHome,
+                  DSH_TOOLS_MODE: "native",
+                  DEEPSEEK_API_KEY: "native-fixture-key",
+                  DEEPSEEK_BASE_URL: llm.baseUrl,
+                },
+                timeout: 10_000,
+              },
+            ),
+          ).rejects.toMatchObject({
+            code: 1,
+            stdout: `${JSON.stringify({ type: "error", message: `admitted extension ${entryId} failed to activate` })}\n`,
+          });
+          expect(llm.requests).toHaveLength(requestCount);
+        } finally {
+          await writeFile(modulePath, source);
+        }
+      }
+
+      // Upstream now reports incompatible Bundles as skipped instead of
+      // failing loadProfile. An admitted extension must never disappear while
+      // the remaining Agent silently runs the task without it.
+      const bundleManifestPath = join(installedBundle, "package.json");
+      const bundleManifest = JSON.parse(await readFile(bundleManifestPath, "utf8")) as Record<
+        string,
+        unknown
+      >;
+      await writeFile(
+        bundleManifestPath,
+        JSON.stringify({
+          ...bundleManifest,
+          peerDependencies: { "@deepseek-ai/dsh-tools": "0.0.0" },
+        }),
+      );
+      const requestCount = llm.requests.length;
+      await expect(
+        execFileAsync(
+          process.execPath,
+          [
+            "--expose-internals",
+            join(process.cwd(), "assets", "dsh", "native-launcher.mjs"),
+            "This task must never execute without its admitted Bundle.",
+          ],
+          {
+            cwd: workspace,
+            env: {
+              PATH: process.env.PATH,
+              SystemRoot: process.env.SystemRoot,
+              DSH_HOME: dshHome,
+              DEEPSEEK_API_KEY: "native-fixture-key",
+              DEEPSEEK_BASE_URL: llm.baseUrl,
+            },
+            timeout: 10_000,
+          },
+        ),
+      ).rejects.toMatchObject({
+        code: 1,
+        stdout: "",
+        stderr: expect.stringContaining(
+          "an admitted DSH Profile Bundle failed compatibility or resolution",
+        ) as unknown,
+      });
+      expect(llm.requests).toHaveLength(requestCount);
     } finally {
       await llm.close();
       await httpMcp.close();
@@ -270,7 +366,7 @@ describe("locked rc.2 native ecosystem boot", () => {
 
 function toolNames(request: DeepSeekRequest | undefined): string[] {
   return (request?.tools ?? [])
-    .map((tool) => tool.function?.name)
+    .map((tool) => tool.name)
     .filter((name): name is string => typeof name === "string")
     .sort();
 }
@@ -282,7 +378,13 @@ function lastUserText(request: DeepSeekRequest): string {
 
 function hasUserText(request: DeepSeekRequest, marker: string): boolean {
   return (request.messages ?? []).some(
-    ({ role, content }) => role === "user" && JSON.stringify(content).includes(marker),
+    ({ role, content }) =>
+      role === "user" &&
+      Array.isArray(content) &&
+      content.some(
+        (block: { readonly type?: string; readonly text?: string }) =>
+          block.type === "text" && block.text?.includes(marker),
+      ),
   );
 }
 
@@ -294,21 +396,6 @@ async function readJsonRequest(request: IncomingMessage): Promise<DeepSeekReques
     else throw new TypeError("DeepSeek fixture received a non-byte request chunk");
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as DeepSeekRequest;
-}
-
-function sendSse(response: ServerResponse, delta: Record<string, unknown>, finishReason: string) {
-  response.writeHead(200, {
-    "content-type": "text/event-stream",
-    "cache-control": "no-cache",
-    connection: "keep-alive",
-  });
-  response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\n`,
-  );
-  response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: finishReason }], usage: { prompt_tokens: 3, completion_tokens: 3 } })}\n\n`,
-  );
-  response.end("data: [DONE]\n\n");
 }
 
 function sendToolCall(
@@ -340,7 +427,7 @@ async function startNativeLlmFixture(): Promise<{
 }> {
   const requests: DeepSeekRequest[] = [];
   const server = createServer((request, response) => {
-    if (request.method !== "POST" || !request.url?.endsWith("/chat/completions")) {
+    if (request.method !== "POST" || !request.url?.endsWith("/v1/messages")) {
       request.resume();
       response.writeHead(404).end();
       return;
@@ -356,7 +443,7 @@ async function startNativeLlmFixture(): Promise<{
           sendSse(response, { content: "CHILD_NATIVE_MARKER_OK" }, "stop");
           return;
         }
-        const results = body.messages?.filter(({ role }) => role === "tool").length ?? 0;
+        const results = messageToolResults(body).length;
         switch (results) {
           case 0:
             sendToolCall(response, results, "skill", { name: "native-dsh" });

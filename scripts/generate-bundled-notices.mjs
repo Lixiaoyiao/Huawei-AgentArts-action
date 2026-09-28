@@ -96,9 +96,10 @@ const output = [
   "The Marketplace `dist/` bundle statically includes the dependency modules",
   "reported by the committed NCC source maps. The corresponding notices follow.",
   "",
-  "DeepSeek Harness and its official MCP/Profile runtime packages are installed",
-  "from `package-lock.json` inside the Controller-created Docker runtime. They are",
-  "not statically copied into `dist/` and are intentionally excluded here.",
+  "The DSH worker runtime is installed from `package-lock.json` in the",
+  "Controller-created Docker runtime. Controller imports of DSH boot helpers",
+  "and their dependencies are listed below whenever the NCC source maps include",
+  "them; separate worker-only packages are not part of these static notices.",
   "",
   ...entries.flatMap((entry) => [
     `## ${entry.name}@${entry.version}`,

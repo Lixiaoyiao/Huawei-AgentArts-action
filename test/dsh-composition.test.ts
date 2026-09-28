@@ -224,6 +224,7 @@ describe("ControlledComposition", () => {
         "- id: tool-fs\n  disabled: true\n\n- id: tool-fs-search\n  disabled: true\n\n- id: tool-str-replace-editor\n  disabled: true\n",
       );
       expect(prepared.launchPlan.args.at(-1)).toBe("review packet");
+      expect(prepared.launchPlan.args.slice(-3)).toEqual(["--json", "--", "review packet"]);
       expect(composition.id).toBe("github-action-controlled");
       expect(PRODUCTION_DSH_COMPOSITION.toolPolicyOwner).toBe(composition.toolPolicyOwner);
       expect(composition.toolPolicyOwner).toBe("controller");
@@ -280,7 +281,7 @@ describe("ControlledComposition", () => {
         command: "node",
         args: [
           "--expose-internals",
-          "/opt/dsh-action/package/action-launcher.mjs",
+          "/dsh-home/profiles/github-action/action-launcher.mjs",
           "review packet",
         ],
         workdir: "/tmp",
@@ -420,7 +421,7 @@ describe("NativeComposition", () => {
         command: "node",
         args: [
           "--expose-internals",
-          "/opt/dsh-action/package/native-launcher.mjs",
+          "/dsh-home/profiles/github-action/native-launcher.mjs",
           "review packet",
         ],
         workdir: "/workspace",

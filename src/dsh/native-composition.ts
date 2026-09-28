@@ -6,11 +6,7 @@ import { PROFILE_TEMPLATES } from "@deepseek-ai/dsh-app-boot";
 
 import { resolveInstalledPluginModuleSpecifiers } from "../extensions/profile.js";
 import type { NativeExtensionPlan } from "../extensions/plan.js";
-import {
-  CONTAINER_PACKAGE_ROOT,
-  CONTAINER_PROFILE_ROOT,
-  CONTAINER_WORKSPACE,
-} from "./docker-policy.js";
+import { CONTAINER_PROFILE_ROOT, CONTAINER_WORKSPACE } from "./docker-policy.js";
 import { DshConfigurationError, DshIsolationUnavailableError } from "./errors.js";
 import type {
   DshComposition,
@@ -30,7 +26,7 @@ const NATIVE_OBSERVATION_FILENAME = "native-observed-tools.jsonl";
 const NATIVE_PROFILE_BUNDLES = ["@deepseek-ai/dsh-base", "@deepseek-ai/dsh-headless"] as const;
 const MAX_OBSERVATION_BYTES = 1024 * 1024;
 const TOOL_NAME = /^[A-Za-z0-9_-]{1,128}$/u;
-const CONTAINER_NATIVE_LAUNCHER = `${CONTAINER_PACKAGE_ROOT}/${NATIVE_LAUNCHER_FILENAME}`;
+const CONTAINER_NATIVE_LAUNCHER = `${CONTAINER_PROFILE_ROOT}/${NATIVE_LAUNCHER_FILENAME}`;
 
 interface NativeObservationRow {
   readonly schemaVersion: 1;
@@ -39,7 +35,7 @@ interface NativeObservationRow {
 }
 
 function assertNativeProfileTemplate(): readonly string[] {
-  const template = PROFILE_TEMPLATES[NATIVE_TEMPLATE_NAME];
+  const template = PROFILE_TEMPLATES[NATIVE_TEMPLATE_NAME]?.bundles;
   if (
     template?.length !== NATIVE_PROFILE_BUNDLES.length ||
     !template.every((name, index) => name === NATIVE_PROFILE_BUNDLES[index])

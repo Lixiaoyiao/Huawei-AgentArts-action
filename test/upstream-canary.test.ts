@@ -4,8 +4,6 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { DSH_VERSION } from "../src/release.js";
-
 const script = fileURLToPath(new URL("../scripts/upstream-canary.mjs", import.meta.url));
 
 function invoke(name: string, ...args: readonly unknown[]): unknown {
@@ -27,6 +25,8 @@ function inventory(...versions: readonly string[]): object {
   return { versions: Object.fromEntries(versions.map((version) => [version, { version }])) };
 }
 
+// Synthetic registry snapshots stay independent of the production pin.
+const audited = "0.1.1-rc.2";
 const candidate = "0.1.5-rc.2";
 const graph = {
   "@deepseek-ai/dsh": {
@@ -81,7 +81,7 @@ describe("DSH upstream compatibility canary", () => {
   it("selects the newest stable and RC despite unordered inventory, alpha builds, and stale tags", () => {
     const published = {
       ...inventory(
-        DSH_VERSION,
+        audited,
         "0.1.2-alpha.2",
         "0.1.6-rc.2",
         "0.1.5",
@@ -91,7 +91,7 @@ describe("DSH upstream compatibility canary", () => {
       ),
       "dist-tags": { latest: "0.1.3", next: "0.1.2-alpha.2" },
     };
-    expect(invoke("selectCandidates", published, DSH_VERSION)).toEqual({
+    expect(invoke("selectCandidates", published, audited)).toEqual({
       stable: "0.1.5",
       rc: "0.1.6-rc.10",
     });
@@ -101,8 +101,8 @@ describe("DSH upstream compatibility canary", () => {
     expect(
       invoke(
         "selectCandidates",
-        inventory(DSH_VERSION, "0.1.2-alpha.2", "0.1.5-rc.1", candidate),
-        DSH_VERSION,
+        inventory(audited, "0.1.2-alpha.2", "0.1.5-rc.1", candidate),
+        audited,
       ),
     ).toEqual({ stable: null, rc: candidate });
   });
@@ -124,23 +124,23 @@ describe("DSH upstream compatibility canary", () => {
         "selectCandidates",
         {
           versions: {
-            [DSH_VERSION]: {},
+            [audited]: {},
             "0.1.5": {},
             "0.1.5-rc.9": {},
             "0.1.6-rc.1": { deprecated: "withdrawn candidate" },
             "0.1.7": { deprecated: "withdrawn release" },
           },
         },
-        DSH_VERSION,
+        audited,
       ),
     ).toEqual({ stable: "0.1.5", rc: null });
     expect(
-      invoke("selectCandidates", inventory(DSH_VERSION, "0.1.0", "0.1.2-alpha.2"), DSH_VERSION),
+      invoke("selectCandidates", inventory(audited, "0.1.0", "0.1.2-alpha.2"), audited),
     ).toEqual({ stable: null, rc: null });
   });
 
   it("fails selection explicitly when the audited production package cannot be verified", () => {
-    expect(() => invoke("selectCandidates", inventory(candidate), DSH_VERSION)).toThrow(
+    expect(() => invoke("selectCandidates", inventory(candidate), audited)).toThrow(
       "The audited DSH version is absent",
     );
   });
@@ -148,12 +148,12 @@ describe("DSH upstream compatibility canary", () => {
   it("builds a complete isolated DSH and Cordis candidate without changing production or invoking its scripts", () => {
     const production = {
       dependencies: {
-        "@deepseek-ai/dsh": DSH_VERSION,
+        "@deepseek-ai/dsh": audited,
         "@deepseek-ai/cordis": "4.0.1",
         "@deepseek-ai/cordis-plugin-group": "1.0.1",
         zod: "4.4.3",
       },
-      devDependencies: { "@deepseek-ai/dsh-agent": DSH_VERSION, vitest: "4.1.10" },
+      devDependencies: { "@deepseek-ai/dsh-agent": audited, vitest: "4.1.10" },
       scripts: { preinstall: "must not run", check: "must not run" },
     };
     const before = JSON.stringify(production);
@@ -182,7 +182,7 @@ describe("DSH upstream compatibility canary", () => {
     expect(() =>
       invoke(
         "candidateManifest",
-        { dependencies: { "@deepseek-ai/dsh-missing": DSH_VERSION } },
+        { dependencies: { "@deepseek-ai/dsh-missing": audited } },
         candidate,
         graph,
         {},
@@ -195,7 +195,7 @@ describe("DSH upstream compatibility canary", () => {
         candidate,
         {
           ...graph,
-          "@deepseek-ai/dsh-old": { name: "@deepseek-ai/dsh-old", version: DSH_VERSION },
+          "@deepseek-ai/dsh-old": { name: "@deepseek-ai/dsh-old", version: audited },
         },
         {},
       ),
@@ -219,7 +219,7 @@ describe("DSH upstream compatibility canary", () => {
         {
           packages: {
             ...packages,
-            "node_modules/plugin/node_modules/@deepseek-ai/dsh-agent": { version: DSH_VERSION },
+            "node_modules/plugin/node_modules/@deepseek-ai/dsh-agent": { version: audited },
           },
         },
         candidate,

@@ -28,6 +28,7 @@ import { buildDshPrompt, DEFAULT_MAX_PROMPT_BYTES, WINDOWS_MAX_PROMPT_BYTES } fr
 import { startDeepSeekProxy } from "./proxy.js";
 import type { DeepSeekProxyHandle, DeepSeekProxyOptions } from "./proxy.js";
 import { parseDshOutput } from "./schema.js";
+import { headlessResultText } from "./headless-output.js";
 import { repairDshOutput } from "./output-repair.js";
 import type { TaskOutputSchema } from "./task-output.js";
 import type { DshOperation, DshOutput } from "./schema.js";
@@ -680,17 +681,14 @@ export async function runDsh(
             redactKnownSecrets(processResult.stderr.trim(), workerSecrets),
           );
         }
+        const resultText = headlessResultText(processResult.stdout, workerSecrets);
         try {
-          output = parseDshOutput(
-            processResult.stdout,
-            request.operation,
-            request.taskOutputSchema,
-          );
+          output = parseDshOutput(resultText, request.operation, request.taskOutputSchema);
           assertNoSecretOutput("stdout", JSON.stringify(output), workerSecrets);
         } catch (error: unknown) {
           if (!(error instanceof DshMalformedOutputError)) throw error;
           output = await repairDshOutput({
-            raw: processResult.stdout,
+            raw: resultText,
             originalError: error,
             operation: request.operation,
             ...(request.taskOutputSchema === undefined

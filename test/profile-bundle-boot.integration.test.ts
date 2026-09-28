@@ -1,6 +1,6 @@
 import { execFile } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { createServer, type IncomingMessage, type Server } from "node:http";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -15,6 +15,7 @@ import {
   resolveInstalledPluginModuleSpecifiers,
 } from "../src/extensions/profile.js";
 import { parseMcpConfiguration, parsePluginConfiguration } from "../src/extensions/schema.js";
+import { messageToolResults, sendMessagesSse as sendSse } from "./fixtures/messages-sse.mjs";
 import type { SecurityPolicy } from "../src/security/policy.js";
 
 const PACKAGE_NAME = "@dsh-action/official-profile-bundle";
@@ -48,11 +49,12 @@ const trustedRead: SecurityPolicy = {
 };
 
 interface DeepSeekTool {
-  readonly function?: { readonly name?: unknown };
+  readonly name?: unknown;
 }
 
 interface DeepSeekMessage {
   readonly role?: unknown;
+  readonly content?: unknown;
 }
 
 interface DeepSeekRequest {
@@ -219,6 +221,10 @@ describe("official rc.2 Profile package extension boot", () => {
 
         expect(llmFixture.requests).toHaveLength(3);
         for (const request of llmFixture.requests) {
+          expect(request).not.toHaveProperty("dsh_session_log");
+          expect(request).not.toHaveProperty("dsh_plugin_packages");
+        }
+        for (const request of llmFixture.requests) {
           expect(toolNames(request)).toEqual([ALLOWED_TOOL]);
         }
         const transcript = JSON.stringify(llmFixture.requests);
@@ -261,7 +267,7 @@ describe("official rc.2 Profile package extension boot", () => {
 
 function toolNames(request: DeepSeekRequest): string[] {
   return (request.tools ?? [])
-    .map((tool) => tool.function?.name)
+    .map((tool) => tool.name)
     .filter((name): name is string => typeof name === "string")
     .sort();
 }
@@ -276,21 +282,6 @@ async function readJsonRequest(request: IncomingMessage): Promise<DeepSeekReques
   return JSON.parse(Buffer.concat(chunks).toString("utf8")) as DeepSeekRequest;
 }
 
-function sendSse(response: ServerResponse, delta: Record<string, unknown>, finishReason: string) {
-  response.writeHead(200, {
-    "content-type": "text/event-stream",
-    "cache-control": "no-cache",
-    connection: "keep-alive",
-  });
-  response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\n`,
-  );
-  response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: finishReason }], usage: { prompt_tokens: 3, completion_tokens: 3 } })}\n\n`,
-  );
-  response.end("data: [DONE]\n\n");
-}
-
 async function startDeepSeekFixture(): Promise<{
   readonly baseUrl: string;
   readonly requests: DeepSeekRequest[];
@@ -298,7 +289,7 @@ async function startDeepSeekFixture(): Promise<{
 }> {
   const requests: DeepSeekRequest[] = [];
   const server = createServer((request, response) => {
-    if (request.method !== "POST" || !request.url?.endsWith("/chat/completions")) {
+    if (request.method !== "POST" || !request.url?.endsWith("/v1/messages")) {
       request.resume();
       response.writeHead(404).end();
       return;
@@ -306,7 +297,7 @@ async function startDeepSeekFixture(): Promise<{
     readJsonRequest(request)
       .then((body) => {
         requests.push(body);
-        const toolResults = body.messages?.filter((message) => message.role === "tool").length ?? 0;
+        const toolResults = messageToolResults(body).length;
         if (toolResults === 0) {
           sendSse(
             response,

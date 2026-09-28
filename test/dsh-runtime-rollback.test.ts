@@ -33,7 +33,7 @@ describe("DSH runtime creation rollback", () => {
     filesystem.rm.mockResolvedValue(undefined);
 
     await expect(createDshRuntime(temporaryDirectory)).rejects.toBe(failure);
-    expect(filesystem.mkdir).toHaveBeenCalledTimes(5);
+    expect(filesystem.mkdir).toHaveBeenCalledTimes(6);
     expect(filesystem.rm).toHaveBeenCalledWith(root, { force: true, recursive: true });
   });
 });

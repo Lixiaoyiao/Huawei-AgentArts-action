@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { runDsh } from "../src/dsh/runner.js";
+import { DSH_VERSION } from "../src/release.js";
 import {
   enforceValidationIntegrity,
   inspectValidationIntegrity,
@@ -131,7 +132,7 @@ describe.skipIf(process.env.DSH_E2E_INTEGRITY_DOCKER !== "1")(
             apiKey: fixtureKey,
             baseUrl: fixture.baseUrl,
             webSearchBaseUrl: fixture.baseUrl,
-            dshVersion: "0.1.1-rc.2",
+            dshVersion: DSH_VERSION,
             containerImage,
             nativeTools: ["workspace.edit", "native.bash"],
           },

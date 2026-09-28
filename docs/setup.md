@@ -36,11 +36,11 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 The installer creates `.github/workflows/` when necessary and refuses to
 overwrite an existing target workflow. It does not add `DEEPSEEK_API_KEY`,
-commit or push changes, or open a pull request. Installer v0.2.1 is built only
-after the formal v0.8.2 tag, GitHub Release, and release canary agree; its
-workflows pin immutable commit
-`8d336a00c4977634f95e12c94045f3f4fada68c5`, not a candidate SHA, floating tag,
-or branch.
+commit or push changes, or open a pull request. Installer v0.3.0 is built only
+after the formal v0.9.0 tag, GitHub Release, and release canary agree; its
+workflows pin the immutable commit verified from that release and supplied as
+`DSH_ACTION_RELEASE_SHA` at pack time. A candidate SHA, floating tag, or branch
+cannot substitute for that release binding.
 
 After the installer succeeds:
 
@@ -81,22 +81,20 @@ The default `github-token` is `${{ github.token }}` and is also Controller-only.
 The examples use the current release tag for readability:
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@v0.8.2
+uses: Lixiaoyiao/deepseek-harness-action@v0.9.0
 ```
 
 For production, replace the tag with the full immutable commit SHA published
-for that release. The independently versioned installer v0.2.1 generates workflows bound to the formal v0.8.2 commit:
-
-```yaml
-uses: Lixiaoyiao/deepseek-harness-action@8d336a00c4977634f95e12c94045f3f4fada68c5
-```
+for that release. The independently versioned installer v0.3.0 generates
+workflows bound to the formal v0.9.0 commit. Obtain that exact SHA from the
+published release; source preparation does not establish a release identity.
 
 Do not use `main`, `latest`, a version range, a candidate SHA, or another
 floating ref. Keep `dsh-version` at the Action's audited exact value:
 
 ```yaml
 with:
-  dsh-version: 0.1.1-rc.2
+  dsh-version: 0.1.7-rc.2
 ```
 
 The Action rejects a different DSH version until that package family and its Profile/tool surface have been reviewed and released together.
@@ -132,10 +130,10 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.8.2
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.0
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
-          dsh-version: 0.1.1-rc.2
+          dsh-version: 0.1.7-rc.2
 ```
 
 `pull_request_target` can access secrets and a privileged token, so this workflow checks out only the immutable trusted base SHA. The Action obtains the pull request diff and changed-file context through GitHub APIs; it does not check out or execute the fork revision. Preserve `persist-credentials: false`.
@@ -209,7 +207,7 @@ The Docker image is executable worker code. Writes and extensions require a full
 After the first run, check that:
 
 1. Checkout reports `persist-credentials: false` and the expected trusted SHA.
-2. The Action resolves `dsh-version` to `0.1.1-rc.2`.
+2. The Action resolves `dsh-version` to `0.1.7-rc.2`.
 3. A read-only review reports no workspace write capability.
 4. Only the intended Controller-owned summary comment and inline findings appear.
 5. The step summary and `result-json` show the expected operation, permission profile, effective tools, and network path.

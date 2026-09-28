@@ -1,4 +1,5 @@
 import { createServer } from "node:http";
+import { sendMessagesSse } from "./messages-sse.mjs";
 
 const responseText = JSON.stringify({
   protocolVersion: 1,
@@ -9,24 +10,13 @@ const responseText = JSON.stringify({
 });
 
 const server = createServer((request, response) => {
-  if (request.method !== "POST" || !request.url?.endsWith("/chat/completions")) {
+  if (request.method !== "POST" || !request.url?.endsWith("/v1/messages")) {
     response.writeHead(404).end();
     return;
   }
   request.resume();
   request.once("end", () => {
-    response.writeHead(200, {
-      "content-type": "text/event-stream",
-      "cache-control": "no-cache",
-      connection: "keep-alive",
-    });
-    response.write(
-      `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: responseText }, finish_reason: null }] })}\n\n`,
-    );
-    response.write(
-      `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content: "" }, finish_reason: "stop" }], usage: { prompt_tokens: 3, completion_tokens: 3 } })}\n\n`,
-    );
-    response.end("data: [DONE]\n\n");
+    sendMessagesSse(response, { content: responseText }, "stop");
   });
 });
 

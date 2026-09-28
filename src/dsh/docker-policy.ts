@@ -64,13 +64,16 @@ function validContainerImageReference(containerImage: string, requireDigest: boo
 export const CONTAINER_WORKSPACE = "/workspace";
 export const CONTAINER_DSH_HOME = "/dsh-home";
 export const CONTAINER_PACKAGE_ROOT = "/opt/dsh-action/package";
-export const CONTAINER_LAUNCHER = `${CONTAINER_PACKAGE_ROOT}/action-launcher.mjs`;
 export const CONTAINER_PROFILE_ROOT = `${CONTAINER_DSH_HOME}/profiles/${CONTROLLED_PROFILE_NAME}`;
+// Launch and resolve every runtime peer from the same mount path. Node cannot
+// deduplicate two bind-mount aliases by realpath, even when their bytes match.
+export const CONTAINER_LAUNCHER = `${CONTAINER_PROFILE_ROOT}/action-launcher.mjs`;
 export const CONTAINER_POLICY_PLUGIN = "/opt/dsh-action/action-policy.mjs";
 export const CONTAINER_WORKSPACE_PLUGIN = "/opt/dsh-action/action-workspace.mjs";
 export const CONTAINER_ACTION_STATE = `${CONTAINER_DSH_HOME}/action-state`;
 export const CONTAINER_SESSIONS = `${CONTAINER_DSH_HOME}/sessions`;
 export const CONTAINER_ATTACHMENTS = `${CONTAINER_DSH_HOME}/attachments`;
+export const CONTAINER_STORAGES = `${CONTAINER_DSH_HOME}/storages`;
 export const CONTAINER_STATE = `${CONTAINER_ACTION_STATE}/tool-counts.json`;
 export const CONTAINER_AUDIT = `${CONTAINER_ACTION_STATE}/tool-receipts.jsonl`;
 
@@ -195,6 +198,8 @@ export function dockerWorkerSpec(options: DockerWorkerSpecOptions): DshProcessSp
     `${join(options.dshHome, "sessions")}:${CONTAINER_SESSIONS}:rw`,
     "--volume",
     `${join(options.dshHome, "attachments")}:${CONTAINER_ATTACHMENTS}:rw`,
+    "--volume",
+    `${join(options.dshHome, "storages")}:${CONTAINER_STORAGES}:rw`,
     "--volume",
     `${options.packageRoot}:${CONTAINER_PACKAGE_ROOT}:ro`,
     "--workdir",
