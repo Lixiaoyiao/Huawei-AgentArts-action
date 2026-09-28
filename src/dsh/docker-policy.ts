@@ -132,6 +132,7 @@ function containerEnvironment(
     DSH_PERMISSION_MODE: workspaceWrite ? "workspace-write" : "read-only",
     DSH_TELEMETRY_DISABLED: "1",
     DSH_TOOLS_MODE: "native",
+    NARB_DISABLE_NATIVE_CACHE: "1",
     DEEPSEEK_API_KEY: proxy.workerToken,
     DEEPSEEK_BASE_URL: proxy.workerBaseUrl,
     ...(proxy.workerWebSearchBaseUrl === undefined
@@ -187,7 +188,7 @@ export function dockerWorkerSpec(options: DockerWorkerSpecOptions): DshProcessSp
     "--add-host",
     `host.docker.internal:${options.hostGateway}`,
     "--tmpfs",
-    "/tmp:rw,nosuid,nodev,size=536870912",
+    "/tmp:rw,noexec,nosuid,nodev,size=536870912",
     "--volume",
     `${options.workspace}:${CONTAINER_WORKSPACE}:${options.workspaceWrite ? "rw" : "ro"}`,
     "--volume",

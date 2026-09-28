@@ -92,6 +92,9 @@ export function buildDshWorkerEnvironment(options: DshWorkerEnvironmentOptions):
     DSH_PERMISSION_MODE: options.permissionMode,
     DSH_TELEMETRY_DISABLED: "1",
     DSH_TOOLS_MODE: "native",
+    // Load the exact installed addon directly; Docker's temporary filesystem
+    // is non-executable and must not become a native-library cache.
+    NARB_DISABLE_NATIVE_CACHE: "1",
     DEEPSEEK_API_KEY: options.proxyToken,
     DEEPSEEK_BASE_URL: options.proxyBaseUrl,
   });

@@ -170,6 +170,37 @@ package relative to the previous lock. The existing platform/native helpers
 still require review as executable dependencies; this observation does not
 make acquisition offline or third-party extension code sandboxed.
 
+### Native module cache and hardened temporary storage
+
+The first Linux Docker candidate failed during official `PluginPackages`
+initialization with `No usable native binding found for
+node-addon-require-builtin-linux-x64-gnu (auto)`. This resolver loads
+`node-addon-require-builtin@0.1.6` even when Node uses `--expose-internals`.
+The locked, published Linux optional package contains its N-API 9 binary;
+no lifecycle script, source rebuild, runtime version change, or unpublished
+patch is needed to obtain it.
+
+The published `node-addon-native-custom-loader@0.1.6` normally copies that
+binary into a temporary cache before loading it. The Action's Docker temporary
+filesystem is non-executable. A cached `.node` library on that mount can be
+rejected by the dynamic linker, and this loader does not retry the original
+package path after such a cache-load failure. The Action now fixes the
+loader's published `NARB_DISABLE_NATIVE_CACHE=1` setting in its host and Docker
+worker environments; it is not inherited from ambient input. This loads the
+same integrity-locked binary directly from the read-only installed package.
+The Docker worker and standalone smoke explicitly retain `noexec` on `/tmp`;
+the fix does not grant executable temporary storage or weaken isolation.
+
+The secretless CI smoke reuses its already installed runtime, selected Node
+image, and read-only Profile mount for two bounded child probes. It records
+selected native-load attempt fields and the actual `/tmp` mount flags for the
+default cache, without requiring that the diagnostic fail on every system.
+The disabled-cache probe must succeed from the installed optional-package
+binary under `node_modules` before the real native ecosystem smoke runs.
+These probe results distinguish a confirmed cache/noexec failure from another
+native-loading failure; the original aggregate error alone is not proof of
+the kernel-level cause.
+
 ## Dependency verification and residual advisory
 
 The following commands completed with peer validation and audit enabled:

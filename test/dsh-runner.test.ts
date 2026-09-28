@@ -2526,6 +2526,11 @@ describe("runDsh", () => {
     expect(captured?.args).toContain("--read-only");
     expect(captured?.args).toContain("--user");
     expect(captured?.args).toContain("no-new-privileges");
+    expect(captured?.args).toContain("/tmp:rw,noexec,nosuid,nodev,size=536870912");
+    expect(captured?.args).toContain("NARB_DISABLE_NATIVE_CACHE=1");
+    expect(captured?.args.some((argument) => argument.startsWith("NARB_NATIVE_CACHE_DIR="))).toBe(
+      false,
+    );
     expect(captured?.args).toContain(PINNED_NODE_IMAGE);
     expect(captured?.env).not.toHaveProperty("GITHUB_TOKEN");
     expect(captured?.env).not.toHaveProperty("GH_TOKEN");

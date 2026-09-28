@@ -98,14 +98,68 @@ jobs:
             npm ci --strict-peer-deps --no-fund --omit=dev --ignore-scripts --loglevel=error
           docker run --rm -i --read-only --cap-drop ALL --security-opt no-new-privileges \
             --user "$run_as" \
-            --tmpfs /tmp:rw,nosuid,nodev,size=536870912 \
+            --network none \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \
             --mount "type=bind,source=$runtime_dir,target=/opt/dsh-action/package,readonly" \
+            --mount "type=bind,source=$runtime_dir,target=/dsh-home/profiles/github-action,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/assets/dsh,target=/opt/dsh-action/assets,readonly" \
-            --workdir /opt/dsh-action/package \
+            --workdir /dsh-home/profiles/github-action \
             docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \
             node --input-type=module <<'NODE'
           import { spawnSync } from "node:child_process";
           import { readFile } from "node:fs/promises";
+
+          // Reuse this exact installation and hardened container. The default
+          // cache probe is diagnostic; direct loading from the immutable
+          // package is a required compatibility gate, with no credentials.
+          const nativeProbe = `
+            import { createRequire } from "node:module";
+            const require = createRequire(import.meta.url);
+            const attempts = (error, depth = 0) => ({
+              message: String(error?.message ?? "unknown native load failure").slice(0, 2048),
+              ...(depth < 3 && Array.isArray(error?.attempts) ? {
+                attempts: error.attempts.slice(0, 8).map((attempt) => ({
+                  source: attempt.source, path: attempt.path, loadPath: attempt.loadPath,
+                  backend: attempt.backend, abi: attempt.abi, ...attempts(attempt, depth + 1),
+                })),
+              } : {}),
+            });
+            try {
+              const addon = require("node-addon-require-builtin");
+              const info = addon.getBindingInfo();
+              const internals = addon.requireBuiltin("internal/modules/esm/loader");
+              if (typeof internals.getOrInitializeCascadedLoader !== "function") throw new Error("Node ESM internals unavailable");
+              console.log(JSON.stringify({ ok: true, ...info }));
+            } catch (error) {
+              console.log(JSON.stringify({ ok: false, ...attempts(error) }));
+              process.exitCode = 1;
+            }
+          `;
+          const probe = (disableCache) => {
+            const child = spawnSync(process.execPath, ["--expose-internals", "--input-type=module", "-e", nativeProbe], {
+              cwd: process.cwd(), encoding: "utf8", timeout: 10000, maxBuffer: 65536,
+              env: { PATH: process.env.PATH, HOME: "/tmp", ...(disableCache ? { NARB_DISABLE_NATIVE_CACHE: "1" } : {}) },
+            });
+            if (child.error || child.signal !== null || ![0, 1].includes(child.status)) throw new Error("Native binding probe did not complete");
+            return { exitCode: child.status, ...JSON.parse(child.stdout) };
+          };
+          const defaultCache = probe(false);
+          const immutablePackage = probe(true);
+          const nativeAddonVersion = JSON.parse(await readFile("node_modules/node-addon-require-builtin/package.json", "utf8")).version;
+          const defaultEvidence = JSON.stringify(defaultCache);
+          const tmpMount = (await readFile("/proc/mounts", "utf8")).split("\n").find((line) => line.split(" ")[1] === "/tmp");
+          if (!tmpMount?.split(" ")[3]?.split(",").includes("noexec")) throw new Error("Worker temporary filesystem must remain noexec");
+          console.log(JSON.stringify({
+            node: process.version, nodeAbi: process.versions.modules, nativeAddonVersion, tmpMount,
+            defaultCacheFailureObserved: defaultCache.ok === false,
+            cacheNoexecFailureObserved: defaultCache.ok === false && defaultEvidence.includes('"loadPath":"/tmp/') && /failed to map segment|permission denied|operation not permitted/iu.test(defaultEvidence),
+            defaultCache, immutablePackage,
+          }));
+          if (!immutablePackage.ok || immutablePackage.exitCode !== 0 ||
+              immutablePackage.bindingSource !== "optional-package" ||
+              !immutablePackage.bindingPath.startsWith(process.cwd() + "/node_modules/")) {
+            throw new Error("Pinned native binding must load directly from the read-only package");
+          }
 
           const expectedVersion = "0.1.7-rc.2";
           const manifest = JSON.parse(await readFile("package.json", "utf8"));
@@ -216,7 +270,7 @@ jobs:
           docker run --rm --init --read-only --cap-drop ALL --security-opt no-new-privileges \
             --pids-limit 256 --memory 2g --cpus 2 --user "$run_as" \
             --network "$smoke_network" --add-host "host.docker.internal:$smoke_gateway" \
-            --tmpfs /tmp:rw,nosuid,nodev,size=536870912 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \
             --mount "type=bind,source=$smoke_dir/workspace,target=/workspace,readonly" \
             --mount "type=bind,source=$smoke_dir/home,target=/dsh-home,readonly" \
             --mount "type=bind,source=$smoke_dir/home/action-state,target=/dsh-home/action-state" \
@@ -229,6 +283,7 @@ jobs:
             --env CI=true --env HOME=/dsh-home --env DSH_HOME=/dsh-home \
             --env DSH_PERMISSION_MODE=read-only --env DSH_TELEMETRY_DISABLED=1 \
             --env DSH_TOOLS_MODE=native --env DEEPSEEK_API_KEY=fixture-worker-token \
+            --env NARB_DISABLE_NATIVE_CACHE=1 \
             --env "DEEPSEEK_BASE_URL=http://host.docker.internal:$fixture_port" \
             --env "DEEPSEEK_SEARCH_BASE_URL=http://host.docker.internal:$fixture_port" \
             docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \

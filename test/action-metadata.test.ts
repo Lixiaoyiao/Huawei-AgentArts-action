@@ -133,6 +133,11 @@ describe("Marketplace action metadata", () => {
     expect(ci).toContain("native-ecosystem-llm-server.mjs");
     expect(ci).toContain("/dsh-home/profiles/github-action,readonly");
     expect(ci).toContain("/dsh-home/storages");
+    expect(ci).toContain("--env NARB_DISABLE_NATIVE_CACHE=1");
+    expect(ci).toContain("/tmp:rw,noexec,nosuid,nodev,size=536870912");
+    expect(ci).toContain("const defaultCache = probe(false)");
+    expect(ci).toContain("const immutablePackage = probe(true)");
+    expect(ci).toContain("Pinned native binding must load directly from the read-only package");
     expect(ci).toContain('.[-1].type == "final"');
     expect(ci).toContain(".[-1].text | fromjson");
     expect(ci).toContain('index("web_fetch") == null');
