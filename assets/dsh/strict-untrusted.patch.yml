@@ -1,4 +1,4 @@
-# DSH 0.1.1-rc.2 stock-headless composition overlay.
+# DSH 0.1.7-rc.2 stock-headless composition overlay.
 # Untrusted jobs receive a controller-built context packet and no model tools.
 - id: sandbox-policy
   config:
@@ -80,7 +80,7 @@
 - id: tool-subagent-report
   disabled: true
 
-- id: workflow-worker-thread
+- id: workflow-ptc
   disabled: true
 
 - id: tool-workflow
@@ -98,5 +98,21 @@
 - id: tool-web
   disabled: true
 
-- id: code-runtime
+- id: ptc-runtime
+  disabled: true
+
+# New upstream defaults must not expand Action data disclosure or network tools.
+- id: session-log-deepseek
+  disabled: true
+
+- id: plugin-package-inventory-deepseek
+  disabled: true
+
+- id: session-telemetry-otel
+  disabled: true
+
+- id: web-fetch-http
+  disabled: true
+
+- id: mcp-resources
   disabled: true

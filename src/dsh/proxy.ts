@@ -90,6 +90,22 @@ function makeUpstreamUrl(base: URL, rawPath: string): URL | null {
   return target;
 }
 
+/** Only the published Messages endpoint is mediated; Files and discovery stay closed. */
+function makeMessagesUpstreamUrl(base: URL, rawPath: string): URL | null {
+  if (rawPath !== "/v1/messages") return null;
+  const target = new URL(base);
+  let path = target.pathname.replace(/\/+$/u, "");
+  // Preserve the existing public Action default and its documented /v1 alias.
+  // Other providers must supply their own Messages-compatible root explicitly.
+  if (target.origin === "https://api.deepseek.com" && (path === "" || path === "/v1")) {
+    path = "/anthropic/v1";
+  }
+  target.pathname = `${path.endsWith("/v1") ? path : `${path}/v1`}/messages`;
+  target.search = "";
+  target.hash = "";
+  return target;
+}
+
 const WORKER_WEB_SEARCH_PATH = "/anthropic/v1/messages";
 
 function makeWebSearchUpstreamUrl(base: URL, rawPath: string): URL | null {
@@ -158,11 +174,13 @@ interface ProxyRuntime {
 }
 
 interface RoutedUpstream {
-  readonly kind: "chat" | "web-search";
+  readonly kind: "chat" | "messages" | "web-search";
   readonly target: URL;
 }
 
 function routeUpstream(runtime: ProxyRuntime, rawPath: string): RoutedUpstream | null {
+  const messages = makeMessagesUpstreamUrl(runtime.base, rawPath);
+  if (messages !== null) return { kind: "messages", target: messages };
   const chat = makeUpstreamUrl(runtime.base, rawPath);
   if (chat !== null) return { kind: "chat", target: chat };
   if (runtime.webSearchBase === undefined) return null;
@@ -181,12 +199,18 @@ function upstreamHeaders(
     "content-type": request.headers["content-type"] ?? "application/json",
     "user-agent": "dsh-action-credential-proxy/1",
   };
-  if (kind === "web-search") {
+  if (kind === "web-search" || kind === "messages") {
     // Replace both credential forms. Never forward worker-provided provider
     // credentials or any header outside this explicit Anthropic allowlist.
     headers["x-api-key"] = runtime.apiKey;
     const anthropicVersion = request.headers["anthropic-version"];
     if (typeof anthropicVersion === "string") headers["anthropic-version"] = anthropicVersion;
+    if (
+      kind === "messages" &&
+      request.headers["anthropic-beta"] === "mid-conversation-tool-changes-2026-07-01"
+    ) {
+      headers["anthropic-beta"] = "mid-conversation-tool-changes-2026-07-01";
+    }
   }
   return headers;
 }
@@ -200,13 +224,21 @@ async function handleRequest(
     replyJson(response, 405, "method_not_allowed");
     return;
   }
+  const routed = routeUpstream(runtime, request.url ?? "");
   const authorization: string | undefined = request.headers.authorization;
-  if (!authorized(authorization, runtime.token)) {
+  const apiKey = request.headers["x-api-key"];
+  const authenticated =
+    routed?.kind === "messages"
+      ? (authorization !== undefined || typeof apiKey === "string") &&
+        (authorization === undefined || authorized(authorization, runtime.token)) &&
+        (apiKey === undefined ||
+          (typeof apiKey === "string" && authorized(`Bearer ${apiKey}`, runtime.token)))
+      : authorized(authorization, runtime.token);
+  if (!authenticated) {
     replyJson(response, 401, "unauthorized");
     return;
   }
 
-  const routed = routeUpstream(runtime, request.url ?? "");
   if (routed === null) {
     replyJson(response, 404, "endpoint_not_allowed");
     return;

@@ -21,6 +21,16 @@ The interoperability fixtures in `test/mcp-official.test.ts` and
 `packages/mcp/mcp-client/tests/mcp-client.e2e.ts` and
 `packages/mcp/mcp-client/tests/fixture-server.ts`.
 
+The v0.9.0 runtime migration consumes the published DeepSeek Harness
+`0.1.7-rc.2` package family at upstream release commit
+`477b4f420553e8a52c2fbccc464d7561b239c443`. The worker runtime is installed from
+the committed lockfile. Controller imports of DSH boot helpers and their
+dependencies are separately included in the static NCC bundle and listed in
+[`BUNDLED_DEPENDENCIES.md`](BUNDLED_DEPENDENCIES.md).
+The exact dependency graph, upstream contract changes, and residual dependency
+advisory are documented in
+[`docs/dsh-0.1.7-rc.2-migration.md`](docs/dsh-0.1.7-rc.2-migration.md).
+
 ## Claude Code Action
 
 MIT License

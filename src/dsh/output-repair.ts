@@ -14,7 +14,7 @@ import type { TaskOutputSchema } from "./task-output.js";
 const MAX_REPAIR_REQUEST_BYTES = 96 * 1024;
 const MAX_REPAIR_MS = 60_000;
 // The official locked rc.2 dsh-base Agent default, not a separate model selection input.
-const REPAIR_MODEL = "deepseek-v4-flash";
+const REPAIR_MODEL = "deepseek-flash";
 
 interface RepairOptions {
   readonly raw: string;

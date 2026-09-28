@@ -116,7 +116,7 @@ describe("Marketplace action metadata", () => {
       "utf8",
     );
     expect(ci).toContain("cp package.json package-lock.json");
-    expect(ci).toContain("npm ci --no-audit --no-fund --omit=dev --ignore-scripts");
+    expect(ci).toContain("npm ci --strict-peer-deps --no-fund --omit=dev --ignore-scripts");
     expect(ci).toContain(`const expectedVersion = "${DSH_VERSION}"`);
     expect(ci).toContain("Object.keys(manifest.dependencies ?? {})");
     expect(ci).toContain('await import("@deepseek-ai/dsh-app-boot")');
@@ -132,6 +132,16 @@ describe("Marketplace action metadata", () => {
     expect(ci).toContain("prepare-native-ecosystem-profile.mjs");
     expect(ci).toContain("native-ecosystem-llm-server.mjs");
     expect(ci).toContain("/dsh-home/profiles/github-action,readonly");
+    expect(ci).toContain("/dsh-home/storages");
+    expect(ci).toContain("--env NARB_DISABLE_NATIVE_CACHE=1");
+    expect(ci).toContain("/tmp:rw,noexec,nosuid,nodev,size=536870912");
+    expect(ci).toContain("const defaultCache = probe(false)");
+    expect(ci).toContain("const immutablePackage = probe(true)");
+    expect(ci).toContain("Pinned native binding must load directly from the read-only package");
+    expect(ci).toContain('.[-1].type == "final"');
+    expect(ci).toContain(".[-1].text | fromjson");
+    expect(ci).toContain('index("web_fetch") == null');
+    expect(ci).toContain('index("list_mcp_resources") == null');
     expect(ci).toContain("native frozen-SHA ecosystem Docker smoke ok");
     expect(ci).toContain('"ctx.tools.schemas(agent)"');
     expect(ci).toContain('has("effectiveTools") | not');
@@ -205,7 +215,7 @@ describe("Marketplace action metadata", () => {
     }
   });
 
-  it("binds the v0.8.2 canary to the formal release and runs both read-only modes", async () => {
+  it("binds the v0.9.0 canary to the formal release and runs both read-only modes", async () => {
     const canary = await readFile(
       new URL("../.github/workflows/release-canary.yml", import.meta.url),
       "utf8",
@@ -267,8 +277,27 @@ describe("Marketplace action metadata", () => {
     expect(generator).toContain("packagePathFromSource");
     expect(generator).not.toMatch(/Object\.entries\(lock\.packages\).*metadata\.dev/su);
     expect(notices).toContain("reported by the committed NCC source maps");
-    expect(notices).toContain("installed\nfrom `package-lock.json`");
+    expect(notices).toContain("worker runtime is installed from `package-lock.json`");
+    const maps = (await readdir(new URL("../dist/", import.meta.url))).filter((file) =>
+      file.endsWith(".js.map"),
+    );
+    const sources = (
+      await Promise.all(
+        maps.map(async (file) => {
+          const map = JSON.parse(
+            await readFile(new URL(`../dist/${file}`, import.meta.url), "utf8"),
+          ) as { sources: string[] };
+          return map.sources;
+        }),
+      )
+    ).flat();
+    for (const name of ["@deepseek-ai/dsh-app-boot", "@deepseek-ai/cordis"]) {
+      expect(sources.some((source) => source.includes(`/node_modules/${name}/`))).toBe(true);
+      expect(notices).toContain(`## ${name}@`);
+    }
     expect(notices).not.toContain("## @deepseek-ai/dsh@");
+    expect(notices).not.toContain("## @deepseek-ai/dsh-headless@");
+    expect(notices).not.toContain("## @deepseek-ai/dsh-session-telemetry-otel@");
   });
 
   it("never executes the pull request revision before loading the DeepSeek secret", async () => {
@@ -332,7 +361,7 @@ describe("Marketplace action metadata", () => {
     }
   });
 
-  it("ships the v0.8.2 task example with the standard coding profile", async () => {
+  it("ships the v0.9.0 task example with the standard coding profile", async () => {
     const example = await readFile(
       new URL("../examples/task-automation.yml", import.meta.url),
       "utf8",
@@ -346,7 +375,7 @@ describe("Marketplace action metadata", () => {
     expect(example).toContain("test-commands:");
   });
 
-  it("ships a fail-closed v0.8.2 GitHub integration example", async () => {
+  it("ships a fail-closed v0.9.0 GitHub integration example", async () => {
     const example = await readFile(
       new URL("../examples/github-integration.yml", import.meta.url),
       "utf8",

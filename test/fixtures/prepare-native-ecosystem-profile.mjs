@@ -20,6 +20,7 @@ for (const directory of [
   join(home, "action-state"),
   join(home, "sessions"),
   join(home, "attachments"),
+  join(home, "storages"),
   join(workspace, ".dsh", "skills", "native-dsh"),
   join(workspace, ".agents", "skills", "native-agents"),
   join(installedBundle, ".."),

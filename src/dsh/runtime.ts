@@ -294,6 +294,7 @@ export async function createDshRuntime(temporaryDirectory = tmpdir()): Promise<D
       join(dshHome, "action-state"),
       join(dshHome, "sessions"),
       join(dshHome, "attachments"),
+      join(dshHome, "storages"),
     ].map((directory) => mkdir(directory, { recursive: true, mode: 0o700 })),
   );
   const failed = directoryResults.find(

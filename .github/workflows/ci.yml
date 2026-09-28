@@ -33,6 +33,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - name: Linux Docker frozen-SHA Validation Integrity regression
+        id: integrity
         timeout-minutes: 10
         shell: bash
         env:
@@ -49,6 +50,9 @@ jobs:
             src assets/dsh package.json package-lock.json
           ./node_modules/.bin/vitest run test/integrity-docker.integration.test.ts
       - name: Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke
+        # Collect the independent native evidence after a controlled failure;
+        # the failed integrity step still fails this job and blocks release.
+        if: ${{ !cancelled() && (success() || steps.integrity.outcome == 'failure') }}
         shell: bash
         env:
           CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -95,19 +99,73 @@ jobs:
             --env HOME=/tmp --env npm_config_cache=/tmp/npm-cache \
             --env NODE_OPTIONS=--max-old-space-size=3072 \
             docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \
-            npm ci --no-audit --no-fund --omit=dev --ignore-scripts --loglevel=error
+            npm ci --strict-peer-deps --no-fund --omit=dev --ignore-scripts --loglevel=error
           docker run --rm -i --read-only --cap-drop ALL --security-opt no-new-privileges \
             --user "$run_as" \
-            --tmpfs /tmp:rw,nosuid,nodev,size=536870912 \
+            --network none \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \
             --mount "type=bind,source=$runtime_dir,target=/opt/dsh-action/package,readonly" \
+            --mount "type=bind,source=$runtime_dir,target=/dsh-home/profiles/github-action,readonly" \
             --mount "type=bind,source=$GITHUB_WORKSPACE/assets/dsh,target=/opt/dsh-action/assets,readonly" \
-            --workdir /opt/dsh-action/package \
+            --workdir /dsh-home/profiles/github-action \
             docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \
             node --input-type=module <<'NODE'
           import { spawnSync } from "node:child_process";
           import { readFile } from "node:fs/promises";
 
-          const expectedVersion = "0.1.1-rc.2";
+          // Reuse this exact installation and hardened container. The default
+          // cache probe is diagnostic; direct loading from the immutable
+          // package is a required compatibility gate, with no credentials.
+          const nativeProbe = `
+            import { createRequire } from "node:module";
+            const require = createRequire(import.meta.url);
+            const attempts = (error, depth = 0) => ({
+              message: String(error?.message ?? "unknown native load failure").slice(0, 2048),
+              ...(depth < 3 && Array.isArray(error?.attempts) ? {
+                attempts: error.attempts.slice(0, 8).map((attempt) => ({
+                  source: attempt.source, path: attempt.path, loadPath: attempt.loadPath,
+                  backend: attempt.backend, abi: attempt.abi, ...attempts(attempt, depth + 1),
+                })),
+              } : {}),
+            });
+            try {
+              const addon = require("node-addon-require-builtin");
+              const info = addon.getBindingInfo();
+              const internals = addon.requireBuiltin("internal/modules/esm/loader");
+              if (typeof internals.getOrInitializeCascadedLoader !== "function") throw new Error("Node ESM internals unavailable");
+              console.log(JSON.stringify({ ok: true, ...info }));
+            } catch (error) {
+              console.log(JSON.stringify({ ok: false, ...attempts(error) }));
+              process.exitCode = 1;
+            }
+          `;
+          const probe = (disableCache) => {
+            const child = spawnSync(process.execPath, ["--expose-internals", "--input-type=module", "-e", nativeProbe], {
+              cwd: process.cwd(), encoding: "utf8", timeout: 10000, maxBuffer: 65536,
+              env: { PATH: process.env.PATH, HOME: "/tmp", ...(disableCache ? { NARB_DISABLE_NATIVE_CACHE: "1" } : {}) },
+            });
+            if (child.error || child.signal !== null || ![0, 1].includes(child.status)) throw new Error("Native binding probe did not complete");
+            return { exitCode: child.status, ...JSON.parse(child.stdout) };
+          };
+          const defaultCache = probe(false);
+          const immutablePackage = probe(true);
+          const nativeAddonVersion = JSON.parse(await readFile("node_modules/node-addon-require-builtin/package.json", "utf8")).version;
+          const defaultEvidence = JSON.stringify(defaultCache);
+          const tmpMount = (await readFile("/proc/mounts", "utf8")).split("\n").find((line) => line.split(" ")[1] === "/tmp");
+          if (!tmpMount?.split(" ")[3]?.split(",").includes("noexec")) throw new Error("Worker temporary filesystem must remain noexec");
+          console.log(JSON.stringify({
+            node: process.version, nodeAbi: process.versions.modules, nativeAddonVersion, tmpMount,
+            defaultCacheFailureObserved: defaultCache.ok === false,
+            cacheNoexecFailureObserved: defaultCache.ok === false && defaultEvidence.includes('"loadPath":"/tmp/') && /failed to map segment|permission denied|operation not permitted/iu.test(defaultEvidence),
+            defaultCache, immutablePackage,
+          }));
+          if (!immutablePackage.ok || immutablePackage.exitCode !== 0 ||
+              immutablePackage.bindingSource !== "optional-package" ||
+              !immutablePackage.bindingPath.startsWith(process.cwd() + "/node_modules/")) {
+            throw new Error("Pinned native binding must load directly from the read-only package");
+          }
+
+          const expectedVersion = "0.1.7-rc.2";
           const manifest = JSON.parse(await readFile("package.json", "utf8"));
           const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
           const expectedPackages = Object.keys(manifest.dependencies ?? {})
@@ -143,6 +201,8 @@ jobs:
           if (
             typeof appBoot.boot !== "function" ||
             typeof appBoot.loadProfile !== "function" ||
+            typeof appBoot.createRuntimeResolution !== "function" ||
+            typeof appBoot.PluginPackages !== "function" ||
             typeof appBoot.installFailLoud !== "function"
           ) {
             throw new Error("official dsh-app-boot exports are unavailable");
@@ -214,29 +274,46 @@ jobs:
           docker run --rm --init --read-only --cap-drop ALL --security-opt no-new-privileges \
             --pids-limit 256 --memory 2g --cpus 2 --user "$run_as" \
             --network "$smoke_network" --add-host "host.docker.internal:$smoke_gateway" \
-            --tmpfs /tmp:rw,nosuid,nodev,size=536870912 \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \
             --mount "type=bind,source=$smoke_dir/workspace,target=/workspace,readonly" \
             --mount "type=bind,source=$smoke_dir/home,target=/dsh-home,readonly" \
             --mount "type=bind,source=$smoke_dir/home/action-state,target=/dsh-home/action-state" \
             --mount "type=bind,source=$smoke_dir/home/sessions,target=/dsh-home/sessions" \
             --mount "type=bind,source=$smoke_dir/home/attachments,target=/dsh-home/attachments" \
+            --mount "type=bind,source=$smoke_dir/home/storages,target=/dsh-home/storages" \
             --mount "type=bind,source=$runtime_dir,target=/dsh-home/profiles/github-action,readonly" \
             --mount "type=bind,source=$runtime_dir,target=/opt/dsh-action/package,readonly" \
             --workdir /workspace \
             --env CI=true --env HOME=/dsh-home --env DSH_HOME=/dsh-home \
             --env DSH_PERMISSION_MODE=read-only --env DSH_TELEMETRY_DISABLED=1 \
             --env DSH_TOOLS_MODE=native --env DEEPSEEK_API_KEY=fixture-worker-token \
+            --env NARB_DISABLE_NATIVE_CACHE=1 \
             --env "DEEPSEEK_BASE_URL=http://host.docker.internal:$fixture_port" \
             --env "DEEPSEEK_SEARCH_BASE_URL=http://host.docker.internal:$fixture_port" \
             docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \
-            node --expose-internals /opt/dsh-action/package/native-launcher.mjs \
+            node --expose-internals /dsh-home/profiles/github-action/native-launcher.mjs \
             'Use the requested native ecosystem capabilities and return review JSON.' \
             >"$smoke_dir/native.stdout" 2>"$smoke_dir/native.stderr"
 
-          [[ ! -s "$smoke_dir/native.stderr" ]]
-          jq -e '
-            .protocolVersion == 1 and .operation == "review" and
-            .state == "final" and .summary == "native ecosystem booted"
+          node --input-type=module - "$smoke_dir/native.stderr" <<'NODE'
+          import { readFile } from "node:fs/promises";
+          const stderr = await readFile(process.argv[2], "utf8");
+          const diagnostics = stderr.replace(
+            /\(node:\d+\) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\r?\n\(Use `node --trace-warnings \.\.\.` to show where the warning was created\)\r?\n/gu,
+            "",
+          );
+          if (diagnostics !== "") throw new Error(`Unexpected native runtime diagnostic: ${diagnostics}`);
+          NODE
+          jq -s -e '
+            .[0].type == "session" and
+            ([.[] | select(.type == "session")] | length) == 1 and
+            ([.[] | select(.type == "final")] | length) == 1 and
+            all(.[]; .type != "error") and
+            any(.[]; .type == "status" and .phase == "turn_end" and .reason.kind == "completed") and
+            .[-1].type == "final" and
+            (.[-1].text | fromjson |
+              .protocolVersion == 1 and .operation == "review" and
+              .state == "final" and .summary == "native ecosystem booted")
           ' "$smoke_dir/native.stdout" >/dev/null
           jq -s -e '
             length == 1 and .[0].schemaVersion == 1 and
@@ -248,6 +325,8 @@ jobs:
             (.[0].observedTools | index("mcp__fixture__add") != null) and
             (.[0].observedTools | index("native_bundle_echo") != null) and
             (.[0].observedTools | index("native_plugin_echo") != null) and
+            (.[0].observedTools | index("web_fetch") == null) and
+            (.[0].observedTools | index("list_mcp_resources") == null) and
             (.[0].observedTools | index("workspace.read") == null)
           ' "$smoke_dir/home/action-state/native-observed-tools.jsonl" >/dev/null
           jq -s -e '

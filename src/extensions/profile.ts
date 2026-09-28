@@ -206,6 +206,10 @@ function loaderModuleSpecifier(path: string): string {
 const ALWAYS_DISABLED_BASE_ROWS = [
   "session-title-llm",
   "session-telemetry-otel",
+  "session-log-deepseek",
+  "plugin-package-inventory-deepseek",
+  "web-fetch-http",
+  "mcp-resources",
   "user-questions",
   "agent-instructions",
   "skill",
@@ -228,10 +232,10 @@ const ALWAYS_DISABLED_BASE_ROWS = [
   "tool-subagent-list-agents",
   "tool-subagent-fork",
   "tool-subagent-report",
-  "workflow-worker-thread",
+  "workflow-ptc",
   "tool-workflow",
   "tool-ralph",
-  "code-runtime",
+  "ptc-runtime",
 ] as const;
 
 function controlledRows(
@@ -331,7 +335,7 @@ function controlledRows(
       id: "headless-runner",
       name: "@deepseek-ai/dsh-headless",
       inject: ["headlessStartup", "actionWorkspace"],
-      config: { task: options.task },
+      config: { task: options.task, json: true },
     },
     ...disabled.map((id) => ({ id, disabled: true })),
   ];
@@ -346,6 +350,11 @@ export function renderControlledProfilePatch(options: PrepareControlledProfileOp
     ...options.plan.tools.map((tool) => extensionRule(tool)),
   ];
   const entries = [
+    // 0.1.7 no longer ships this row in dsh-base. Cordis id patches only
+    // update existing rows, so retaining the Action editor requires insertion.
+    ...(options.nativeTools.includes("workspace.edit")
+      ? [{ id: "tool-str-replace-editor", name: "@deepseek-ai/dsh-tool-str-replace-editor" }]
+      : []),
     {
       id: "dsh-action-workspace",
       name: loaderModuleSpecifier(options.workspacePluginPath),

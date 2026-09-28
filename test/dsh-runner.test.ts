@@ -49,8 +49,8 @@ import {
 const temporaryPaths: string[] = [];
 const PINNED_NODE_IMAGE = `node@sha256:${"a".repeat(64)}`;
 const CONTAINER_PACKAGE_ROOT = "/opt/dsh-action/package";
-const CONTAINER_LAUNCHER = "/opt/dsh-action/package/action-launcher.mjs";
-const CONTAINER_NATIVE_LAUNCHER = "/opt/dsh-action/package/native-launcher.mjs";
+const CONTAINER_LAUNCHER = "/dsh-home/profiles/github-action/action-launcher.mjs";
+const CONTAINER_NATIVE_LAUNCHER = "/dsh-home/profiles/github-action/native-launcher.mjs";
 
 afterEach(async () => {
   vi.restoreAllMocks();
@@ -99,7 +99,7 @@ function request(overrides: Partial<DshRunRequest>): DshRunRequest {
     apiKey: "controller-real-key",
     baseUrl: "https://api.deepseek.com",
     webSearchBaseUrl: "https://api.deepseek.com/anthropic/v1",
-    dshVersion: "0.1.1-rc.2",
+    dshVersion: "0.1.7-rc.2",
     containerImage: "node:24-bookworm",
     ...overrides,
   };
@@ -290,7 +290,8 @@ describe("runDsh", () => {
   });
 
   it("binds policy patches to the audited DSH version", () => {
-    expect(() => assertSupportedDshVersion("0.1.1-rc.2")).not.toThrow();
+    expect(() => assertSupportedDshVersion("0.1.7-rc.2")).not.toThrow();
+    expect(() => assertSupportedDshVersion("0.1.1-rc.2")).toThrow();
     expect(() => assertSupportedDshVersion("latest")).toThrow(/exact semver/u);
     expect(() => assertSupportedDshVersion("0.1.0-rc.6")).toThrow(/no audited/u);
   });
@@ -358,6 +359,9 @@ describe("runDsh", () => {
     { mode: "native", representation: "leftover-request", state: "final" },
     { mode: "controlled", representation: "leftover-request", state: "blocked" },
     { mode: "native", representation: "leftover-request", state: "blocked" },
+    { mode: "controlled", representation: "ndjson-prose", state: "final" },
+    { mode: "native", representation: "ndjson-prose", state: "final" },
+    { mode: "controlled", representation: "ndjson-leftover", state: "final" },
   ] as const)(
     "repairs $mode $state $representation over the real Controller proxy without repeating worker effects",
     async ({ mode, representation, state }) => {
@@ -369,17 +373,25 @@ describe("runDsh", () => {
         summary: "README inspected.",
         findings: [],
       };
-      const raw =
-        representation === "prose"
-          ? "README inspected."
-          : JSON.stringify({
-              ...output,
-              toolRequest: {
-                id: "command.prepare-validation",
-                input: {},
-                reason: "RESIDUAL_REQUEST_DO_NOT_EXECUTE",
-              },
-            });
+      const raw = representation.endsWith("prose")
+        ? "README inspected."
+        : JSON.stringify({
+            ...output,
+            toolRequest: {
+              id: "command.prepare-validation",
+              input: {},
+              reason: "RESIDUAL_REQUEST_DO_NOT_EXECUTE",
+            },
+          });
+      const workerStdout = representation.startsWith("ndjson")
+        ? [
+            { type: "session", sessionId: "session-test", cwd: "/workspace" },
+            { type: "tool_call", callId: "already-done", tool: "never-replay", input: {} },
+            { type: "final", text: raw },
+          ]
+            .map((event) => JSON.stringify(event))
+            .join("\n") + "\n"
+        : raw;
       const upstream = vi.fn<typeof fetch>().mockResolvedValue(
         Response.json({
           choices: [
@@ -430,7 +442,7 @@ describe("runDsh", () => {
                 );
             }
             return {
-              stdout: worker ? raw : "",
+              stdout: worker ? workerStdout : "",
               stderr: "",
               exitCode: 0,
               signal: null,
@@ -439,7 +451,7 @@ describe("runDsh", () => {
         },
       );
       expect(result.output).toEqual(output);
-      expect(result.rawStdout).toBe(raw);
+      expect(result.rawStdout).toBe(workerStdout);
       expect(result.output).not.toHaveProperty("toolRequest");
       expect(workerExecutions).toBe(1);
       expect(await readFile(join(fixture.workspace, "execution-count"), "utf8")).toBe("1");
@@ -457,6 +469,7 @@ describe("runDsh", () => {
         "private-original-operator-instruction",
         "controller-real-key",
         "controller-github-token",
+        "never-replay",
       ]) {
         expect(upstreamRequest?.body).not.toContain(excluded);
       }
@@ -465,61 +478,78 @@ describe("runDsh", () => {
     },
   );
 
-  it.each(["process", "credential", "escaped-credential", "limit", "cancel", "empty"] as const)(
-    "does not format or rerun a worker after %s failure",
-    async (kind) => {
-      const fixture = await fixtures();
-      const proxy = fakeProxy();
-      const resultRepairFetch = vi.fn<typeof fetch>();
-      const executeProcess = vi.fn(() => {
-        if (kind === "limit") throw new DshOutputLimitError("stdout", 100);
-        if (kind === "cancel") throw new DshAbortedError();
-        const escaped = JSON.stringify({
-          protocolVersion: 1,
-          operation: "review",
-          state: "final",
-          summary: "controller-real-key",
-          findings: [],
-        }).replace("controller", "\\u0063ontroller");
-        return Promise.resolve({
-          stdout:
-            kind === "credential"
-              ? "controller-real-key"
-              : kind === "escaped-credential"
-                ? escaped
-                : kind === "empty"
-                  ? "  \n"
+  it.each([
+    "process",
+    "credential",
+    "escaped-credential",
+    "limit",
+    "cancel",
+    "empty",
+    "stream-error",
+    "stream-incomplete",
+    "stream-exit",
+  ] as const)("does not format or rerun a worker after %s failure", async (kind) => {
+    const fixture = await fixtures();
+    const proxy = fakeProxy();
+    const resultRepairFetch = vi.fn<typeof fetch>();
+    const executeProcess = vi.fn(() => {
+      if (kind === "limit") throw new DshOutputLimitError("stdout", 100);
+      if (kind === "cancel") throw new DshAbortedError();
+      const escaped = JSON.stringify({
+        protocolVersion: 1,
+        operation: "review",
+        state: "final",
+        summary: "controller-real-key",
+        findings: [],
+      }).replace("controller", "\\u0063ontroller");
+      return Promise.resolve({
+        stdout:
+          kind === "credential"
+            ? "controller-real-key"
+            : kind === "escaped-credential"
+              ? escaped
+              : kind === "empty"
+                ? "  \n"
+                : kind.startsWith("stream-")
+                  ? [
+                      { type: "session", sessionId: "session-test", cwd: "/workspace" },
+                      ...(kind === "stream-error" ? [{ type: "error", message: "failure" }] : []),
+                      ...(kind === "stream-incomplete"
+                        ? []
+                        : [{ type: "final", text: "malformed result" }]),
+                    ]
+                      .map((event) => JSON.stringify(event))
+                      .join("\n") + "\n"
                   : "invalid result",
-          stderr: "",
-          exitCode: kind === "process" ? 1 : 0,
-          signal: null,
-        });
+        stderr: "",
+        exitCode: kind === "process" || kind === "stream-exit" ? 1 : 0,
+        signal: null,
       });
-      await expect(
-        runDsh(request({ workspacePath: fixture.workspace, dshExecutable: fixture.executable }), {
-          assetsDirectory: fixture.assets,
-          temporaryDirectory: fixture.root,
-          startProxy: () => Promise.resolve(proxy),
-          executeProcess,
-          resultRepairFetch,
-        }),
-      ).rejects.toMatchObject({
-        code:
-          kind === "process"
-            ? "DSH_PROCESS_FAILED"
-            : kind === "limit"
-              ? "DSH_OUTPUT_LIMIT"
-              : kind === "cancel"
-                ? "DSH_ABORTED"
-                : kind === "empty"
-                  ? "DSH_MALFORMED_OUTPUT"
-                  : "DSH_CREDENTIAL_LEAK",
-      });
-      expect(executeProcess).toHaveBeenCalledOnce();
-      expect(resultRepairFetch).not.toHaveBeenCalled();
-      expect(proxy.closeMock).toHaveBeenCalledOnce();
-    },
-  );
+    });
+    await expect(
+      runDsh(request({ workspacePath: fixture.workspace, dshExecutable: fixture.executable }), {
+        assetsDirectory: fixture.assets,
+        temporaryDirectory: fixture.root,
+        startProxy: () => Promise.resolve(proxy),
+        executeProcess,
+        resultRepairFetch,
+      }),
+    ).rejects.toMatchObject({
+      code:
+        kind === "process" || kind === "stream-exit"
+          ? "DSH_PROCESS_FAILED"
+          : kind === "limit"
+            ? "DSH_OUTPUT_LIMIT"
+            : kind === "cancel"
+              ? "DSH_ABORTED"
+              : kind === "empty" || kind.startsWith("stream-")
+                ? "DSH_MALFORMED_OUTPUT"
+                : "DSH_CREDENTIAL_LEAK",
+    });
+    expect(executeProcess).toHaveBeenCalledOnce();
+    expect(resultRepairFetch).not.toHaveBeenCalled();
+    expect(proxy.closeMock).toHaveBeenCalledOnce();
+  });
 
   it("uses the DshComposition boundary for launch artifacts and runtime identity", async () => {
     const fixture = await fixtures();
@@ -2496,6 +2526,11 @@ describe("runDsh", () => {
     expect(captured?.args).toContain("--read-only");
     expect(captured?.args).toContain("--user");
     expect(captured?.args).toContain("no-new-privileges");
+    expect(captured?.args).toContain("/tmp:rw,noexec,nosuid,nodev,size=536870912");
+    expect(captured?.args).toContain("NARB_DISABLE_NATIVE_CACHE=1");
+    expect(captured?.args.some((argument) => argument.startsWith("NARB_NATIVE_CACHE_DIR="))).toBe(
+      false,
+    );
     expect(captured?.args).toContain(PINNED_NODE_IMAGE);
     expect(captured?.env).not.toHaveProperty("GITHUB_TOKEN");
     expect(captured?.env).not.toHaveProperty("GH_TOKEN");
@@ -2522,6 +2557,9 @@ describe("runDsh", () => {
       true,
     );
     expect(captured?.args.some((argument) => argument.endsWith(":/dsh-home/attachments:rw"))).toBe(
+      true,
+    );
+    expect(captured?.args.some((argument) => argument.endsWith(":/dsh-home/storages:rw"))).toBe(
       true,
     );
     expect(

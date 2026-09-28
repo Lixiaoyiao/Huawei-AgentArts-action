@@ -4,9 +4,10 @@ import { join } from "node:path";
 
 import { Context } from "@deepseek-ai/cordis";
 import AgentRegistry, { type Agent } from "@deepseek-ai/dsh-agent";
-import { CallId } from "@deepseek-ai/dsh-llm";
+import { brandString } from "@deepseek-ai/dsh-brand";
+import type { ToolCallId } from "@deepseek-ai/dsh-llm";
 import { createScope, type Scope } from "@deepseek-ai/dsh-scope";
-import { SessionId } from "@deepseek-ai/dsh-session";
+import type { SessionId } from "@deepseek-ai/dsh-session";
 import SystemPrompt, { renderPrompt } from "@deepseek-ai/dsh-system-prompt";
 import ToolRuntime, { type ToolDefinition } from "@deepseek-ai/dsh-tools";
 import { afterEach, describe, expect, it } from "vitest";
@@ -97,7 +98,7 @@ async function setup(options: SetupOptions) {
 function invoke(context: Context, name: string, callId: string, agent?: Agent) {
   return context.tools.execute({
     signal: new AbortController().signal,
-    callId: CallId(callId),
+    callId: brandString<ToolCallId>(callId),
     name,
     arguments: {},
     ...(agent === undefined ? {} : { agent }),
@@ -119,7 +120,7 @@ async function createScopedAgent(
   if (parent === undefined) throw new Error("tools injection did not activate");
   const identity: Record<string, unknown> = {};
   const scope = createScope(parent, identity);
-  const id = SessionId(`policy-agent-${String(Math.random()).slice(2)}`);
+  const id = brandString<SessionId>(`policy-agent-${String(Math.random()).slice(2)}`);
   const agent = identity as unknown as Agent;
   const agentContext = scope.ctx.extend({ agent });
   Object.assign(identity, {
@@ -146,7 +147,7 @@ async function createScopedAgent(
     inject: () => undefined,
   });
   for (const tool of tools) agentContext.tools.register(tool);
-  context.agents.register(agent);
+  await context.agents.register(agent);
   return { agent, scope };
 }
 

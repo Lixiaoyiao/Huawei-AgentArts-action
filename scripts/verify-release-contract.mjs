@@ -57,10 +57,10 @@ const manifest = JSON.parse(manifestText);
 const lock = JSON.parse(lockText);
 const installerManifest = JSON.parse(installerManifestText);
 const installerLock = JSON.parse(installerLockText);
-const installerVersion = "0.2.1";
-const installerActionTag = "v0.8.2";
+const installerVersion = "0.3.0";
+const installerActionTag = "v0.9.0";
 const installerSourceTag = `create-deepseek-harness-action-v${installerVersion}`;
-const installerActionReleaseSha = "8d336a00c4977634f95e12c94045f3f4fada68c5";
+const installerReleaseBinding = "DSH_ACTION_RELEASE_SHA";
 const directDependencies = {
   ...(manifest.dependencies ?? {}),
   ...(manifest.devDependencies ?? {}),
@@ -254,7 +254,7 @@ assert.ok(
 assert.ok(
   installerReadme.includes(`Version \`${installerVersion}\``) &&
     installerReadme.includes(installerActionTag) &&
-    installerReadme.includes(installerActionReleaseSha),
+    installerReadme.includes(installerReleaseBinding),
   "installer README must identify its version and immutable Action binding",
 );
 for (const [name, document] of [
@@ -268,7 +268,7 @@ for (const [name, document] of [
   assert.ok(
     document.includes(installerVersion) &&
       document.includes(installerActionTag) &&
-      document.includes(installerActionReleaseSha),
+      document.includes(installerReleaseBinding),
     `${name} must identify the installer version and immutable Action binding`,
   );
 }
@@ -305,7 +305,7 @@ assert.ok(
   "installer build must deterministically render controlled and native templates",
 );
 assert.ok(
-  !installerBuild.includes(installerActionReleaseSha),
+  !/deepseek-harness-action@[0-9a-f]{40}/u.test(installerBuild),
   "installer source build must receive the formal Action SHA only through DSH_ACTION_RELEASE_SHA",
 );
 for (const [name, template] of [

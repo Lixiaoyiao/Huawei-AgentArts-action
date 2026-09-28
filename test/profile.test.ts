@@ -118,6 +118,23 @@ describe("controlled official DSH Profile", () => {
       },
     });
     expect(row("tool-subagent-fork")).toMatchObject({ disabled: true });
+    expect(
+      rows.flatMap(({ insert }) => insert ?? []).find(({ id }) => id === "tool-str-replace-editor"),
+    ).toMatchObject({
+      name: "@deepseek-ai/dsh-tool-str-replace-editor",
+    });
+    for (const id of [
+      "ptc-runtime",
+      "workflow-ptc",
+      "mcp-resources",
+      "web-fetch-http",
+      "session-log-deepseek",
+      "plugin-package-inventory-deepseek",
+      "session-telemetry-otel",
+    ]) {
+      expect(row(id)).toMatchObject({ disabled: true });
+    }
+    expect(row("headless-runner")?.config).toMatchObject({ json: true });
 
     const policyRow = rows
       .flatMap(({ insert }) => insert ?? [])

@@ -66,7 +66,7 @@ describe("tool-free result formatting", () => {
       const body = JSON.parse(init.body) as Record<string, unknown>;
       expect(body).toMatchObject({
         stream: false,
-        model: "deepseek-v4-flash",
+        model: "deepseek-flash",
         response_format: { type: "json_object" },
       });
       expect(body).not.toHaveProperty("tools");

@@ -69,6 +69,7 @@ describe("run-scoped DSH runtime", () => {
         join(runtime.dshHome, "action-state"),
         join(runtime.dshHome, "sessions"),
         join(runtime.dshHome, "attachments"),
+        join(runtime.dshHome, "storages"),
       ];
       for (const directory of directories) {
         const details = await stat(directory);

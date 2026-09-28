@@ -2,7 +2,8 @@ import { fileURLToPath } from "node:url";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 
 import { Context } from "@deepseek-ai/cordis";
-import { CallId } from "@deepseek-ai/dsh-llm";
+import { brandString } from "@deepseek-ai/dsh-brand";
+import type { ToolCallId } from "@deepseek-ai/dsh-llm";
 import { apply as applyOfficialMcpClient } from "@deepseek-ai/dsh-mcp-client";
 import SystemPrompt from "@deepseek-ai/dsh-system-prompt";
 import ToolRuntime from "@deepseek-ai/dsh-tools";
@@ -44,7 +45,7 @@ describe("official @deepseek-ai/dsh-mcp-client rc.2", () => {
     expect(context.tools.schemas().map(({ name }) => name)).toContain("mcp__fixture__add");
     const result = await context.tools.execute({
       signal: new AbortController().signal,
-      callId: CallId("action-mcp-add"),
+      callId: brandString<ToolCallId>("action-mcp-add"),
       name: "mcp__fixture__add",
       arguments: { left: 19, right: 23 },
     });
@@ -65,7 +66,7 @@ describe("official @deepseek-ai/dsh-mcp-client rc.2", () => {
   it("enforces the official MCP tool-call timeout", async () => {
     const result = await context.tools.execute({
       signal: new AbortController().signal,
-      callId: CallId("action-mcp-timeout"),
+      callId: brandString<ToolCallId>("action-mcp-timeout"),
       name: "mcp__fixture__slow",
       arguments: {},
     });
@@ -76,7 +77,7 @@ describe("official @deepseek-ai/dsh-mcp-client rc.2", () => {
   it("returns controlled failures after a server crashes with reconnect disabled", async () => {
     const result = await context.tools.execute({
       signal: new AbortController().signal,
-      callId: CallId("action-mcp-crash"),
+      callId: brandString<ToolCallId>("action-mcp-crash"),
       name: "mcp__fixture__crash",
       arguments: {},
     });
@@ -84,7 +85,7 @@ describe("official @deepseek-ai/dsh-mcp-client rc.2", () => {
     await new Promise((resolvePromise) => setTimeout(resolvePromise, 100));
     const afterCrash = await context.tools.execute({
       signal: new AbortController().signal,
-      callId: CallId("action-mcp-after-crash"),
+      callId: brandString<ToolCallId>("action-mcp-after-crash"),
       name: "mcp__fixture__add",
       arguments: { left: 1, right: 1 },
     });
@@ -152,7 +153,7 @@ describe("official streamable-http transport", () => {
   it("invokes tools and forwards only configured headers", async () => {
     const result = await context.tools.execute({
       signal: new AbortController().signal,
-      callId: CallId("action-http-shout"),
+      callId: brandString<ToolCallId>("action-http-shout"),
       name: "mcp__httpfixture__shout",
       arguments: { message: "controlled" },
     });

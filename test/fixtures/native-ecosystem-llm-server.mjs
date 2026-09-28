@@ -1,5 +1,6 @@
 import { appendFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
+import { messageToolResults, sendMessagesSse as sendSse } from "./messages-sse.mjs";
 
 const host = process.env.DSH_FIXTURE_HOST ?? "127.0.0.1";
 const requestLog = process.env.DSH_NATIVE_REQUEST_LOG;
@@ -10,7 +11,10 @@ await writeFile(requestLog, "");
 
 function hasUserText(request, marker) {
   return (request.messages ?? []).some(
-    ({ role, content }) => role === "user" && JSON.stringify(content).includes(marker),
+    ({ role, content }) =>
+      role === "user" &&
+      Array.isArray(content) &&
+      content.some((block) => block.type === "text" && block.text?.includes(marker)),
   );
 }
 
@@ -24,24 +28,6 @@ async function readJsonRequest(request) {
     chunks.push(bytes);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-}
-
-function sendSse(response, delta, finishReason) {
-  response.writeHead(200, {
-    "content-type": "text/event-stream",
-    "cache-control": "no-cache",
-    connection: "keep-alive",
-  });
-  response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta, finish_reason: null }] })}\n\n`,
-  );
-  response.write(
-    `data: ${JSON.stringify({
-      choices: [{ index: 0, delta: {}, finish_reason: finishReason }],
-      usage: { prompt_tokens: 3, completion_tokens: 3 },
-    })}\n\n`,
-  );
-  response.end("data: [DONE]\n\n");
 }
 
 function sendToolCall(response, index, name, args) {
@@ -62,7 +48,7 @@ function sendToolCall(response, index, name, args) {
 }
 
 const server = createServer((request, response) => {
-  if (request.method !== "POST" || !request.url?.endsWith("/chat/completions")) {
+  if (request.method !== "POST" || !request.url?.endsWith("/v1/messages")) {
     request.resume();
     response.writeHead(404).end();
     return;
@@ -78,7 +64,7 @@ const server = createServer((request, response) => {
         sendSse(response, { content: "CHILD_NATIVE_MARKER_OK" }, "stop");
         return;
       }
-      const results = body.messages?.filter(({ role }) => role === "tool").length ?? 0;
+      const results = messageToolResults(body).length;
       switch (results) {
         case 0:
           sendToolCall(response, results, "skill", { name: "native-dsh" });
