@@ -413,6 +413,26 @@ describe("trusted core E2E workflow", () => {
     expect(evidence).not.toContain(".prompt");
   });
 
+  it.each(["fix", "implement"])(
+    "explicitly grants workspace editing before the %s fixture requests a Bash write",
+    (operation) => {
+      const integration = stepBlock(
+        workflow,
+        "Exercise routes, filters, structured output, and typed GitHub tools",
+      );
+      const invocation = integration
+        .split(`run_candidate ${operation} `)[1]
+        ?.split(`|| ${operation}_ok=false`)[0];
+
+      expect(invocation).toContain("'INPUT_PERMISSION-PROFILE=custom'");
+      expect(invocation).toContain('INPUT_ALLOWED-TOOLS=["workspace.edit","native.bash"]');
+      expect(invocation).toContain("'INPUT_ALLOW-WRITE=true'");
+      expect(invocation).toContain("'INPUT_ISOLATION=docker'");
+      expect(invocation).toContain("'INPUT_RUN-TESTS=true'");
+      expect(invocation).toContain("'INPUT_VALIDATION-INTEGRITY=strict'");
+    },
+  );
+
   it("cleans partial integration fixtures independently and aggregates failures", () => {
     const cleanup = stepBlock(workflow, "Remove only verified integration fixtures");
 
