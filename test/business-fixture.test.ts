@@ -2,6 +2,8 @@ import { spawnSync } from "node:child_process";
 
 import { describe, expect, it } from "vitest";
 
+import { parseDshOutput } from "../src/dsh/schema.js";
+
 const moduleUrl = new URL("../.github/e2e/business-fixture.mjs", import.meta.url).href;
 const settings = {
   fixturePath: ".github/dsh-e2e-fixtures/checks-10-1.txt",
@@ -45,24 +47,37 @@ function invoke(route: string, index: number, body: unknown, configuration = set
 }
 
 describe("trusted business fixture requires actual tool feedback", () => {
-  it("anchors the review to the real one-line fixture diff", () => {
-    const value = invoke("review", 1, {}).value;
-    expect(value?.phase).toBe("final");
-    expect(JSON.parse(value?.message.content ?? "null")).toMatchObject({
-      operation: "review",
-      state: "final",
-      findings: [
-        {
-          path: settings.fixturePath,
-          line: 1,
-          side: "RIGHT",
-          confidence: 1,
-        },
-      ],
-    });
-  });
+  it.each(["chat", "messages"])(
+    "accepts the %s review final at the production boundary",
+    (protocol) => {
+      const value = invoke("review", 1, {
+        messages: [
+          {
+            role: "user",
+            content:
+              protocol === "chat"
+                ? "Review the fixture"
+                : [{ type: "text", text: "Review the fixture" }],
+          },
+        ],
+      }).value;
+      expect(value?.phase).toBe("final");
+      expect(parseDshOutput(value?.message.content ?? "", "review")).toMatchObject({
+        operation: "review",
+        state: "final",
+        findings: [
+          {
+            path: settings.fixturePath,
+            line: 1,
+            side: "RIGHT",
+            confidence: 1,
+          },
+        ],
+      });
+    },
+  );
 
-  it.each(["fix", "implement"])(
+  it.each(["fix", "implement"] as const)(
     "requires a single %s Bash call for either provider protocol",
     (route) => {
       const prompt = { role: "user", content: "DSH_E2E_CI_FAILURE_10/1" };
@@ -107,10 +122,31 @@ describe("trusted business fixture requires actual tool feedback", () => {
               };
         const second = invoke(route, 2, { messages: [prompt, assistant, feedback] }).value;
         expect(second?.phase).toBe("bash-observed");
-        expect(JSON.parse(second?.message.content ?? "null")).toMatchObject({
+        // Consume the actual final with the Controller's strict public schema,
+        // rather than validating a second copy of the fixture's own shape.
+        expect(parseDshOutput(second?.message.content ?? "", route)).toMatchObject({
           operation: route,
           state: "final",
+          changePlan: [
+            { path: route === "fix" ? settings.fixturePath : settings.implementationPath },
+          ],
         });
+        if (protocol === "messages") {
+          const failedFeedback = {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: call?.id,
+                is_error: true,
+                content: [{ type: "text", text: marker }],
+              },
+            ],
+          };
+          expect(
+            invoke(route, 2, { messages: [prompt, assistant, failedFeedback] }).error,
+          ).toContain("one matching completed");
+        }
         expect(invoke(route, 2, { messages: [prompt, feedback] }).error).toContain(
           "one matching completed",
         );
