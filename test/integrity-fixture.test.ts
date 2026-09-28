@@ -54,7 +54,11 @@ async function fixture(protocol: "chat" | "messages" = "chat") {
     const request = (body: unknown, key = fixtureKey) =>
       fetch(`${baseUrl}/${protocol === "messages" ? "v1/messages" : "chat/completions"}`, {
         method: "POST",
-        headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${key}`,
+          "content-type": "application/json",
+          ...(protocol === "messages" ? { "x-api-key": key } : {}),
+        },
         body: JSON.stringify(body),
       });
     return { request, audit, close };

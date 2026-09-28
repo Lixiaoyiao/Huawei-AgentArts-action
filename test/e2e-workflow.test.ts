@@ -373,6 +373,46 @@ describe("trusted core E2E workflow", () => {
     }
   });
 
+  it("qualifies PR review, failed-CI fix, and Issue implementation through recorded effects", () => {
+    const integration = stepBlock(
+      workflow,
+      "Exercise routes, filters, structured output, and typed GitHub tools",
+    );
+    for (const contract of [
+      "run_candidate review",
+      "run_candidate fix",
+      "run_candidate implement",
+      ".publication.inlinePublished == 1",
+      "repos/$REPOSITORY/check-runs",
+      "DSH_E2E_CI_FAILURE_",
+      "INPUT_RUN-TESTS=true",
+      "INPUT_VALIDATION-INTEGRITY=strict",
+      'select(.id == "native.bash" and .completed and .ok)',
+      "node .github/e2e/assert-business-effects.mjs fix",
+      "node .github/e2e/assert-business-effects.mjs implement",
+      'echo "implementation_branch=$implementation_branch"',
+      'echo "implementation_pull_ids=',
+      '["bash-issued","bash-observed"]',
+    ])
+      expect(integration).toContain(contract);
+    expect(integration.indexOf('echo "implementation_branch=')).toBeLessThan(
+      integration.indexOf("run_candidate implement"),
+    );
+    expect(integration.indexOf('echo "implementation_pull_ids=')).toBeLessThan(
+      integration.indexOf('[[ "$implement_ok" == "true" ]]'),
+    );
+    const cleanup = stepBlock(workflow, "Remove only verified integration fixtures");
+    expect(cleanup).toContain("assert-business-effects.mjs cleanup-implement");
+    expect(cleanup).toContain("assert-business-effects.mjs fix-cleanup");
+    expect(cleanup).toContain("cleanup_failure_check");
+    expect(cleanup).toContain("-f conclusion=neutral");
+    expect(cleanup).toContain("original_commit_id == $head");
+    const evidence = stepBlock(workflow, "Capture bounded business execution evidence");
+    expect(evidence).toContain("if: always()");
+    expect(evidence).toContain("{route,index,kind,phase,authorizationMatches}");
+    expect(evidence).not.toContain(".prompt");
+  });
+
   it("cleans partial integration fixtures independently and aggregates failures", () => {
     const cleanup = stepBlock(workflow, "Remove only verified integration fixtures");
 

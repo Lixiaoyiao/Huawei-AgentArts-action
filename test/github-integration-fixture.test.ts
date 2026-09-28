@@ -67,7 +67,11 @@ describe("trusted GitHub integration provider fixture", () => {
         const request = async (route: string, title = false) => {
           const response = await fetch(`${server.origin}/${route}/${endpoint}`, {
             method: "POST",
-            headers: { authorization: `Bearer ${fixtureKey}`, "content-type": "application/json" },
+            headers: {
+              authorization: `Bearer ${fixtureKey}`,
+              "content-type": "application/json",
+              ...(messagesProtocol ? { "x-api-key": fixtureKey } : {}),
+            },
             body: JSON.stringify({
               system: [{ type: "text", text: "Trusted fixture system marker" }],
               messages: [

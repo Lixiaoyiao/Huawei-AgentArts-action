@@ -62,7 +62,12 @@ const server = createServer((request, response) => {
     response.writeHead(404).end();
     return;
   }
-  if (request.headers.authorization !== `Bearer ${fixtureKey}`) {
+  const credentialMatches =
+    request.headers.authorization === `Bearer ${fixtureKey}` &&
+    (messagesProtocol
+      ? request.headers["x-api-key"] === fixtureKey
+      : request.headers["x-api-key"] === undefined);
+  if (!credentialMatches) {
     request.resume();
     response.writeHead(403).end("Only the public integrity fixture credential is accepted");
     return;

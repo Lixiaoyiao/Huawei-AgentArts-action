@@ -1334,7 +1334,8 @@ jobs:
     timeout-minutes: 75
     permissions:
       actions: read
-      checks: read
+      # Only this trusted harness creates a failed check on its disposable PR.
+      checks: write
       contents: write
       issues: write
       pull-requests: write
@@ -1518,6 +1519,10 @@ jobs:
           HISTORY_ID: ${{ steps.integration_entities.outputs.history_id }}
           CHECKS_PR: ${{ steps.integration_entities.outputs.pr_number }}
           CHECKS_HEAD: ${{ steps.integration_entities.outputs.head_sha }}
+          CHECKS_PR_ID: ${{ steps.integration_entities.outputs.pr_id }}
+          CHECKS_BASE_BRANCH: ${{ steps.integration_entities.outputs.base_branch }}
+          CHECKS_BASE_SHA: ${{ steps.integration_entities.outputs.base_sha }}
+          FIXTURE_PATH: ${{ steps.integration_entities.outputs.fixture_path }}
           CI_RUN_ID: ${{ steps.integration_baseline.outputs.ci_run_id }}
         run: |
           set -euo pipefail
@@ -1538,6 +1543,9 @@ jobs:
           DSH_E2E_GITHUB_AUDIT="$audit" DSH_E2E_FIXTURE_KEY="$fixture_key" \
             DSH_E2E_ISSUE_LABEL="$ISSUE_LABEL" DSH_E2E_ISSUE_ASSIGNEE="$GITHUB_ACTOR" \
             DSH_E2E_PULL_TITLE="$mutated_pull_title" \
+            DSH_E2E_FIXTURE_PATH="$FIXTURE_PATH" \
+            DSH_E2E_IMPLEMENTATION_PATH="dsh-e2e-implementation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.txt" \
+            DSH_E2E_RUN_SUFFIX="$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" \
             node .github/e2e/github-integration-llm.mjs > "$fixture_info" 2> "$fixture_log" &
           fixture_pid=$!
           cleanup_fixture() {
@@ -1787,14 +1795,122 @@ jobs:
             (.loop.toolReceipts | any(.id == "github.checks.read" and .ok == true and .effect == "read"))
           ' <<<"$native_checks_result" >/dev/null
 
+          # PR review must publish both its sticky summary and an inline comment
+          # anchored to the actual immutable fixture diff.
+          run_candidate review pull_request "$RUNNER_TEMP/dsh-e2e-checks-event.json" review \
+            'INPUT_COMMAND=review' 'INPUT_PERMISSION-PROFILE=strict' \
+            'INPUT_ISOLATION=docker' 'INPUT_MAX-TURNS=1'
+          review_comments="$(gh api "repos/$REPOSITORY/pulls/$CHECKS_PR/comments?per_page=100")"
+          echo "review_comment_ids=$(jq -c '[.[].id]' <<<"$review_comments")" >> "$GITHUB_OUTPUT"
+          review_result="$(read_output review result-json)"
+          jq -e '
+            .conclusion == "success" and .operation == "review" and
+            .publication.inlinePublished == 1 and .publication.summaryOnly == 0 and
+            .publication.failures == []
+          ' <<<"$review_result" >/dev/null
+          jq -e --arg head "$CHECKS_HEAD" --arg path "$FIXTURE_PATH" \
+            --arg marker "DSH E2E inline review $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" '
+            length == 1 and .[0].user.id == 41898282 and .[0].commit_id == $head and
+            .[0].path == $path and .[0].line == 1 and .[0].side == "RIGHT" and
+            (.[0].body | contains($marker))
+          ' <<<"$review_comments" >/dev/null
+          gh api "repos/$REPOSITORY/issues/$CHECKS_PR/comments?per_page=100" \
+            | jq -e --arg marker "DSH E2E review completed $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" '
+                any(.[]; .user.id == 41898282 and (.body | contains($marker)))
+              ' >/dev/null
+
+          # Real failed-check context, one real DSH Bash call, Controller validation,
+          # and an exact remote head/content read qualify the existing fix path.
+          check_json="$(jq -cn --arg name "dsh-e2e-failure-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" \
+            --arg head "$CHECKS_HEAD" --arg marker "DSH_E2E_CI_FAILURE_$GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" '
+            {name:$name,head_sha:$head,status:"completed",conclusion:"failure",
+             output:{title:"Intentional isolated E2E failure",summary:$marker}}
+          ' | gh api --method POST "repos/$REPOSITORY/check-runs" --input -)"
+          echo "failure_check_id=$(jq -r .id <<<"$check_json")" >> "$GITHUB_OUTPUT"
+          jq -e --arg head "$CHECKS_HEAD" '.head_sha == $head and .conclusion == "failure"' <<<"$check_json" >/dev/null
+          expected_fix="DSH E2E fixed $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          validation="$(jq -cn --arg path "$FIXTURE_PATH" --arg content "$expected_fix" \
+            '[["node","-e","require(\"node:assert/strict\").equal(require(\"node:fs\").readFileSync(process.argv[1],\"utf8\"),process.argv[2]+\"\\n\")",$path,$content]]')"
+          fix_ok=true
+          run_candidate fix pull_request "$RUNNER_TEMP/dsh-e2e-checks-event.json" fix \
+            'INPUT_COMMAND=fix' 'INPUT_ALLOW-WRITE=true' 'INPUT_PERMISSION-PROFILE=custom' \
+            'INPUT_ALLOWED-TOOLS=["native.bash"]' 'INPUT_ISOLATION=docker' 'INPUT_MAX-TURNS=1' \
+            'INPUT_RUN-TESTS=true' 'INPUT_VALIDATION-INTEGRITY=strict' \
+            "INPUT_TEST-COMMANDS=$validation" \
+            'INPUT_CONTAINER-IMAGE=docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059' \
+            || fix_ok=false
+          fixed_head="$(gh api "repos/$REPOSITORY/pulls/$CHECKS_PR" --jq .head.sha)"
+          echo "fixed_head=$fixed_head" >> "$GITHUB_OUTPUT"
+          [[ "$fix_ok" == "true" ]]
+          fix_result="$(read_output fix result-json)"
+          jq -e --arg head "$fixed_head" --arg path "$FIXTURE_PATH" '
+            .conclusion == "success" and .operation == "fix" and .write.status == "success" and
+            .write.commitSha == $head and .write.changedPaths == [$path] and
+            .validation.status == "passed" and .validation.integrity.status == "clean" and
+            ([.loop.dshToolReceipts[] | select(.id == "native.bash" and .completed and .ok)] | length == 1)
+          ' <<<"$fix_result" >/dev/null
+          FIXED_HEAD="$fixed_head" node .github/e2e/assert-business-effects.mjs fix
+
+          # Reopen only the isolated Issue already bound by this job. The generated
+          # implementation branch is predictable from the Controller operation key,
+          # so an interrupted PR creation still leaves a precisely owned cleanup target.
+          implementation_path="dsh-e2e-implementation-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT.txt"
+          implementation_key="$(node --input-type=module - "$REPOSITORY" "$ISSUE_NUMBER" "$GITHUB_RUN_ID" <<'NODE'
+          import { createHash } from "node:crypto";
+          const [repository, issue, run] = process.argv.slice(2);
+          process.stdout.write(createHash("sha256").update([...repository.toLowerCase().split("/"), issue, run].join("\0")).digest("hex").slice(0, 24));
+          NODE
+          )"
+          implementation_branch="dsh-e2e/implement-$ISSUE_NUMBER-$implementation_key"
+          echo "implementation_branch=$implementation_branch" >> "$GITHUB_OUTPUT"
+          echo "implementation_key=$implementation_key" >> "$GITHUB_OUTPUT"
+          echo "implementation_path=$implementation_path" >> "$GITHUB_OUTPUT"
+          gh api --method PATCH "repos/$REPOSITORY/issues/$ISSUE_NUMBER" -f state=open -f state_reason=reopened \
+            > "$RUNNER_TEMP/dsh-e2e-implementation-issue.json"
+          jq -n --slurpfile repository "$RUNNER_TEMP/dsh-e2e-integration-repository.json" \
+            --slurpfile issue "$RUNNER_TEMP/dsh-e2e-implementation-issue.json" --arg actor "$actor" '
+            {action:"opened",repository:$repository[0],sender:{login:$actor},issue:$issue[0]}
+          ' > "$RUNNER_TEMP/dsh-e2e-implementation-event.json"
+          expected_implementation="DSH E2E implemented $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
+          validation="$(jq -cn --arg path "$implementation_path" --arg content "$expected_implementation" \
+            '[["node","-e","require(\"node:assert/strict\").equal(require(\"node:fs\").readFileSync(process.argv[1],\"utf8\"),process.argv[2]+\"\\n\")",$path,$content]]')"
+          implement_ok=true
+          run_candidate implement issues "$RUNNER_TEMP/dsh-e2e-implementation-event.json" implement \
+            'INPUT_COMMAND=implement' 'INPUT_ALLOW-WRITE=true' 'INPUT_PERMISSION-PROFILE=custom' \
+            'INPUT_ALLOWED-TOOLS=["native.bash"]' 'INPUT_ISOLATION=docker' 'INPUT_MAX-TURNS=1' \
+            "INPUT_BASE-BRANCH=$CHECKS_BASE_BRANCH" 'INPUT_BRANCH-PREFIX=dsh-e2e/' \
+            'INPUT_BRANCH-NAME-TEMPLATE={{prefix}}implement-{{entityNumber}}-{{key}}' \
+            'INPUT_RUN-TESTS=true' 'INPUT_VALIDATION-INTEGRITY=strict' "INPUT_TEST-COMMANDS=$validation" \
+            'INPUT_CONTAINER-IMAGE=docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059' \
+            || implement_ok=false
+          implementation_pulls="$(gh api --method GET "repos/$REPOSITORY/pulls" \
+            -f head="${REPOSITORY%%/*}:$implementation_branch" -f base="$CHECKS_BASE_BRANCH" -f state=all -f per_page=100)"
+          echo "implementation_pull_ids=$(jq -c '[.[] | {number,id,head:.head.sha}]' <<<"$implementation_pulls")" >> "$GITHUB_OUTPUT"
+          [[ "$implement_ok" == "true" ]]
+          implementation_result="$(read_output implement result-json)"
+          jq -e --arg branch "$implementation_branch" --arg path "$implementation_path" '
+            .conclusion == "success" and .operation == "implement" and
+            .write.status == "success" and .write.branchName == $branch and
+            (.write.pullRequestNumber | type == "number") and
+            .validation.status == "passed" and .validation.integrity.status == "clean" and
+            ([.loop.dshToolReceipts[] | select(.id == "native.bash" and .completed and .ok)] | length == 1)
+          ' <<<"$implementation_result" >/dev/null
+          IMPLEMENTATION_BRANCH="$implementation_branch" IMPLEMENTATION_KEY="$implementation_key" \
+            IMPLEMENTATION_PATH="$implementation_path" \
+            IMPLEMENTATION_PULL_NUMBER="$(jq -r .write.pullRequestNumber <<<"$implementation_result")" \
+            node .github/e2e/assert-business-effects.mjs implement
+          for business_result in "$review_result" "$fix_result" "$implementation_result"; do
+            jq -c '{operation,conclusion,publication,validation,write,dshToolReceipts:.loop.dshToolReceipts}' <<<"$business_result"
+          done
+
           fixture_hash="$(printf '%s' "$fixture_key" | sha256sum | cut -d' ' -f1)"
-          for public_result in "$native_write_result" "$native_checks_result"; do
+          for public_result in "$native_write_result" "$native_checks_result" "$review_result" "$fix_result" "$implementation_result"; do
             [[ "$public_result" != *"$fixture_key"* ]]
             [[ "$public_result" != *"$fixture_hash"* ]]
           done
 
           jq -s -e '
-            ([.[] | select(.kind == "agent")] | length == 14) and
+            ([.[] | select(.kind == "agent")] | length == 19) and
             all(.authorizationMatches == true) and
             ([.[] | select(.route == "label")] | length == 1) and
             ([.[] | select(.route == "assignee")] | length == 1) and
@@ -1802,8 +1918,35 @@ jobs:
             ([.[] | select(.route == "metadata")] | length == 2) and
             ([.[] | select(.route == "checks")] | length == 2) and
             ([.[] | select(.route == "native-write" and .kind == "agent")] | length == 1) and
-            ([.[] | select(.route == "native-checks" and .kind == "agent")] | length == 2)
+            ([.[] | select(.route == "native-checks" and .kind == "agent")] | length == 2) and
+            ([.[] | select(.route == "review")] | length == 1) and
+            ([.[] | select(.route == "fix") | .phase] == ["bash-issued","bash-observed"]) and
+            ([.[] | select(.route == "implement") | .phase] == ["bash-issued","bash-observed"])
           ' "$audit" >/dev/null
+
+      - name: Capture bounded business execution evidence
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          audit="$RUNNER_TEMP/dsh-e2e-github-audit.jsonl"
+          evidence="$RUNNER_TEMP/dsh-e2e-business-evidence.json"
+          if [[ -f "$audit" ]]; then
+            jq -s '[.[] | select(.route == "review" or .route == "fix" or .route == "implement") |
+              {route,index,kind,phase,authorizationMatches}]' "$audit" > "$evidence"
+          else
+            printf '[]\n' > "$evidence"
+          fi
+          cat "$evidence"
+
+      - name: Preserve business execution evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: business-execution-evidence
+          path: ${{ runner.temp }}/dsh-e2e-business-evidence.json
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Remove only verified integration fixtures
         if: always()
@@ -1827,6 +1970,10 @@ jobs:
           FIXTURE_PATH: ${{ steps.integration_entities.outputs.fixture_path }}
           CHECKS_PR: ${{ steps.integration_entities.outputs.pr_number }}
           CHECKS_PR_ID: ${{ steps.integration_entities.outputs.pr_id }}
+          IMPLEMENTATION_BRANCH: ${{ steps.integration_contracts.outputs.implementation_branch }}
+          IMPLEMENTATION_KEY: ${{ steps.integration_contracts.outputs.implementation_key }}
+          IMPLEMENTATION_PATH: ${{ steps.integration_contracts.outputs.implementation_path }}
+          FAILURE_CHECK_ID: ${{ steps.integration_contracts.outputs.failure_check_id }}
         run: |
           set +e
           set -uo pipefail
@@ -1889,6 +2036,11 @@ jobs:
             pr_json="$(gh api "repos/$REPOSITORY/pulls/$CHECKS_PR")"
             actual_pr_id="$(jq -r .id <<<"$pr_json")"
             expected_head="$CHECKS_HEAD"
+            actual_head="$(jq -r .head.sha <<<"$pr_json")"
+            if [[ -n "$expected_head" && "$actual_head" != "$expected_head" ]]; then
+              FIXED_HEAD="$actual_head" node .github/e2e/assert-business-effects.mjs fix-cleanup
+              expected_head="$actual_head"
+            fi
             [[ "$actual_pr_id" =~ ^[1-9][0-9]*$ ]]
             [[ -z "$CHECKS_PR_ID" || "$CHECKS_PR_ID" == "$actual_pr_id" ]]
             if [[ -z "$expected_head" ]]; then expected_head="$(jq -r .head.sha <<<"$pr_json")"; fi
@@ -1896,12 +2048,11 @@ jobs:
             jq -e --argjson number "$CHECKS_PR" --arg repo "${REPOSITORY,,}" \
               --arg branch "$CHECKS_BRANCH" --arg base "$CHECKS_BASE_BRANCH" --arg sha "$expected_head" \
               --arg base_sha "$CHECKS_BASE_SHA" --arg title "$pr_title" --arg mutated "$mutated_pr_title" --arg body "$pr_body" '
-              .number == $number and .state == "open" and .draft == true and
+              .number == $number and (.state == "open" or .state == "closed") and .draft == true and
               (.head.repo.full_name | ascii_downcase) == $repo and .head.ref == $branch and .head.sha == $sha and
               (.base.repo.full_name | ascii_downcase) == $repo and .base.ref == $base and .base.sha == $base_sha and
               (.title == $title or .title == $mutated) and .body == $body
             ' <<<"$pr_json" >/dev/null
-            gh api --method PATCH "repos/$REPOSITORY/pulls/$CHECKS_PR" -f title="$pr_title" >/dev/null
             pr_comments="$(gh api "repos/$REPOSITORY/issues/$CHECKS_PR/comments?per_page=100")"
             jq -e 'all(.[]; .user.id == 41898282)' <<<"$pr_comments" >/dev/null
             mapfile -t comment_ids < <(jq -r '.[].id' <<<"$pr_comments")
@@ -1909,7 +2060,28 @@ jobs:
               [[ "$comment_id" =~ ^[1-9][0-9]*$ ]]
               gh api --method DELETE "repos/$REPOSITORY/issues/comments/$comment_id"
             done
-            gh api --method PATCH "repos/$REPOSITORY/pulls/$CHECKS_PR" -f state=closed >/dev/null
+            review_comments="$(gh api "repos/$REPOSITORY/pulls/$CHECKS_PR/comments?per_page=100")"
+            jq -e --arg head "$CHECKS_HEAD" --arg path "$FIXTURE_PATH" \
+              --arg marker "DSH E2E inline review $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" '
+              all(.[]; .user.id == 41898282 and .original_commit_id == $head and .path == $path and
+                (.body | contains($marker)))
+            ' <<<"$review_comments" >/dev/null
+            mapfile -t review_ids < <(jq -r '.[].id' <<<"$review_comments")
+            for review_id in "${review_ids[@]}"; do
+              [[ "$review_id" =~ ^[1-9][0-9]*$ ]]
+              gh api --method DELETE "repos/$REPOSITORY/pulls/comments/$review_id"
+            done
+            [[ "$(gh api "repos/$REPOSITORY/pulls/$CHECKS_PR/comments?per_page=100" --jq length)" -eq 0 ]]
+            current_pull="$(gh api "repos/$REPOSITORY/pulls/$CHECKS_PR")"
+            jq -e --argjson id "$actual_pr_id" --argjson number "$CHECKS_PR" --arg repo "${REPOSITORY,,}" \
+              --arg branch "$CHECKS_BRANCH" --arg base "$CHECKS_BASE_BRANCH" --arg sha "$expected_head" \
+              --arg base_sha "$CHECKS_BASE_SHA" --arg title "$pr_title" --arg mutated "$mutated_pr_title" --arg body "$pr_body" '
+              .id == $id and .number == $number and (.state == "open" or .state == "closed") and .draft == true and
+              (.head.repo.full_name | ascii_downcase) == $repo and .head.ref == $branch and .head.sha == $sha and
+              (.base.repo.full_name | ascii_downcase) == $repo and .base.ref == $base and .base.sha == $base_sha and
+              (.title == $title or .title == $mutated) and .body == $body
+            ' <<<"$current_pull" >/dev/null
+            gh api --method PATCH "repos/$REPOSITORY/pulls/$CHECKS_PR" -f title="$pr_title" -f state=closed >/dev/null
             [[ "$(gh api "repos/$REPOSITORY/pulls/$CHECKS_PR" --jq .state)" == "closed" ]]
           )
 
@@ -1924,6 +2096,11 @@ jobs:
             fi
             ref_sha="$(jq -r .object.sha <<<"$ref_json")"
             [[ "$ref_sha" =~ ^[a-f0-9]{40}$ ]]
+            if [[ -n "$CHECKS_HEAD" && "$ref_sha" != "$CHECKS_HEAD" ]]; then
+              FIXED_HEAD="$ref_sha" node .github/e2e/assert-business-effects.mjs fix-cleanup
+              node .github/e2e/fixture-ref.mjs delete "$CHECKS_BRANCH" "$ref_sha"
+              return
+            fi
             [[ -z "$CHECKS_HEAD" || "$ref_sha" == "$CHECKS_HEAD" ]]
             commit_json="$(gh api "repos/$REPOSITORY/git/commits/$ref_sha")"
             [[ "$(jq -r '.parents | length' <<<"$commit_json")" -eq 1 ]]
@@ -1973,6 +2150,27 @@ jobs:
             node .github/e2e/fixture-ref.mjs delete "$CHECKS_BASE_BRANCH" "$ref_sha"
           )
 
+          cleanup_failure_check() (
+            set -euo pipefail
+            [[ "$FAILURE_CHECK_ID" =~ ^[1-9][0-9]*$ ]]
+            check_json="$(gh api "repos/$REPOSITORY/check-runs/$FAILURE_CHECK_ID")"
+            jq -e --argjson id "$FAILURE_CHECK_ID" --arg head "$CHECKS_HEAD" \
+              --arg name "dsh-e2e-failure-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" '
+              .id == $id and .head_sha == $head and .name == $name and
+              .status == "completed" and (.conclusion == "failure" or .conclusion == "neutral")
+            ' <<<"$check_json" >/dev/null
+            gh api --method PATCH "repos/$REPOSITORY/check-runs/$FAILURE_CHECK_ID" \
+              -f conclusion=neutral >/dev/null
+            [[ "$(gh api "repos/$REPOSITORY/check-runs/$FAILURE_CHECK_ID" --jq .conclusion)" == "neutral" ]]
+          )
+
+          if [[ -n "$FAILURE_CHECK_ID" ]]; then
+            cleanup_failure_check; status=$?; if [[ "$status" -ne 0 ]]; then record_failure failure-check; fi
+          fi
+          if [[ -n "$IMPLEMENTATION_BRANCH" ]]; then
+            node .github/e2e/assert-business-effects.mjs cleanup-implement
+            status=$?; if [[ "$status" -ne 0 ]]; then record_failure implementation; fi
+          fi
           if [[ -n "$ISSUE_NUMBER" || -n "$ISSUE_ID" ]]; then
             cleanup_issue; status=$?; if [[ "$status" -ne 0 ]]; then record_failure issue; fi
           fi
