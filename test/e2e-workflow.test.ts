@@ -59,6 +59,31 @@ describe("trusted core E2E workflow", () => {
     );
   });
 
+  it("uses the bound candidate runtime default at every Action and direct-process entry", () => {
+    expect(workflow).not.toMatch(/^\s+dsh-version:/mu);
+    expect(workflow).not.toContain("INPUT_DSH-VERSION=");
+    expect(workflow).toContain("uses: ./candidate-action");
+    expect(workflow).toContain("node candidate-action/dist/index.js");
+  });
+
+  it("installs candidate test dependencies separately from the trusted harness lock", () => {
+    const fixtures = stepBlock(workflow, "Install fixture dependencies without lifecycle scripts");
+    const candidate = stepBlock(
+      workflow,
+      "Install exact candidate test dependencies without lifecycle scripts",
+    );
+    const ecosystem = stepBlock(workflow, "Deterministic native ecosystem compatibility");
+
+    expect(fixtures).toContain("run: npm ci --ignore-scripts");
+    expect(candidate).toContain("npm ci --prefix candidate-action --ignore-scripts --no-fund");
+    expect(candidate).toContain("npm ls --prefix candidate-action --all");
+    expect(candidate).not.toMatch(/--force|--legacy-peer-deps|--no-audit/u);
+    expect(ecosystem).toContain("cd candidate-action");
+    expect(ecosystem).toContain("./node_modules/.bin/vitest run");
+    expect(ecosystem).not.toContain("../node_modules/.bin/vitest");
+    expect(workflow.indexOf(candidate)).toBeLessThan(workflow.indexOf(ecosystem));
+  });
+
   it("locks controlled tool-policy semantics into the strict and MCP golden paths", () => {
     const strict = stepBlock(workflow, "Assert strict/Profile/Bundle result");
     const mcp = stepBlock(workflow, "Assert MCP allow/deny and receipts");
@@ -172,7 +197,7 @@ describe("trusted core E2E workflow", () => {
 
     expect(ecosystem).toContain("cd candidate-action");
     expect(ecosystem).toContain(
-      "../node_modules/.bin/vitest run test/native-ecosystem.integration.test.ts",
+      "./node_modules/.bin/vitest run test/native-ecosystem.integration.test.ts",
     );
     expect(nativeWrite).toContain("uses: ./candidate-action");
     expect(nativeWrite).toContain("deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}");
@@ -346,6 +371,46 @@ describe("trusted core E2E workflow", () => {
     ]) {
       expect(integration).not.toContain(forbiddenReceiptPayload);
     }
+  });
+
+  it("qualifies PR review, failed-CI fix, and Issue implementation through recorded effects", () => {
+    const integration = stepBlock(
+      workflow,
+      "Exercise routes, filters, structured output, and typed GitHub tools",
+    );
+    for (const contract of [
+      "run_candidate review",
+      "run_candidate fix",
+      "run_candidate implement",
+      ".publication.inlinePublished == 1",
+      "repos/$REPOSITORY/check-runs",
+      "DSH_E2E_CI_FAILURE_",
+      "INPUT_RUN-TESTS=true",
+      "INPUT_VALIDATION-INTEGRITY=strict",
+      'select(.id == "native.bash" and .completed and .ok)',
+      "node .github/e2e/assert-business-effects.mjs fix",
+      "node .github/e2e/assert-business-effects.mjs implement",
+      'echo "implementation_branch=$implementation_branch"',
+      'echo "implementation_pull_ids=',
+      '["bash-issued","bash-observed"]',
+    ])
+      expect(integration).toContain(contract);
+    expect(integration.indexOf('echo "implementation_branch=')).toBeLessThan(
+      integration.indexOf("run_candidate implement"),
+    );
+    expect(integration.indexOf('echo "implementation_pull_ids=')).toBeLessThan(
+      integration.indexOf('[[ "$implement_ok" == "true" ]]'),
+    );
+    const cleanup = stepBlock(workflow, "Remove only verified integration fixtures");
+    expect(cleanup).toContain("assert-business-effects.mjs cleanup-implement");
+    expect(cleanup).toContain("assert-business-effects.mjs fix-cleanup");
+    expect(cleanup).toContain("cleanup_failure_check");
+    expect(cleanup).toContain("-f conclusion=neutral");
+    expect(cleanup).toContain("original_commit_id == $head");
+    const evidence = stepBlock(workflow, "Capture bounded business execution evidence");
+    expect(evidence).toContain("if: always()");
+    expect(evidence).toContain("{route,index,kind,phase,authorizationMatches}");
+    expect(evidence).not.toContain(".prompt");
   });
 
   it("cleans partial integration fixtures independently and aggregates failures", () => {

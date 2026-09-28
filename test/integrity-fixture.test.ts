@@ -10,7 +10,7 @@ const fixtureKey = "dsh-e2e-integrity-fixture-key";
 const callId = "integrity-bash-once";
 const prompt = { role: "user", content: "DSH_E2E_INTEGRITY_FIXTURE" };
 
-async function fixture() {
+async function fixture(protocol: "chat" | "messages" = "chat") {
   const root = await mkdtemp(join(tmpdir(), "dsh-integrity-fixture-"));
   const audit = join(root, "audit.jsonl");
   const child = spawn(
@@ -52,9 +52,13 @@ async function fixture() {
     });
     const { baseUrl } = JSON.parse(line) as { baseUrl: string };
     const request = (body: unknown, key = fixtureKey) =>
-      fetch(`${baseUrl}/chat/completions`, {
+      fetch(`${baseUrl}/${protocol === "messages" ? "v1/messages" : "chat/completions"}`, {
         method: "POST",
-        headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+        headers: {
+          authorization: `Bearer ${key}`,
+          "content-type": "application/json",
+          ...(protocol === "messages" ? { "x-api-key": key } : {}),
+        },
         body: JSON.stringify(body),
       });
     return { request, audit, close };
@@ -181,4 +185,124 @@ describe("deterministic integrity model fixture", () => {
       await server.close();
     }
   });
+
+  it.each([false, true])(
+    "preserves one Bash call and matching Messages feedback (stream=%s)",
+    async (stream) => {
+      const server = await fixture("messages");
+      const messagesPrompt = { role: "user", content: [{ type: "text", text: prompt.content }] };
+      const readMessage = async (response: Response) => {
+        expect(response.status).toBe(200);
+        if (!stream)
+          return response.json() as Promise<{
+            content: { type: string; id?: string; name?: string; input?: unknown; text?: string }[];
+            stop_reason: string;
+          }>;
+        expect(response.headers.get("content-type")).toBe("text/event-stream");
+        const frames = (await response.text()).trim().split("\n\n");
+        const events = frames.map((frame) => {
+          const [name, data] = frame.split("\n");
+          const event = JSON.parse(data?.slice("data: ".length) ?? "null") as {
+            type: string;
+            content_block?: { type: string; id?: string; name?: string };
+            delta?: { partial_json?: string; text?: string; stop_reason?: string };
+          };
+          expect(name).toBe(`event: ${event.type}`);
+          return event;
+        });
+        expect(events.map((event) => event.type)).toEqual([
+          "message_start",
+          "content_block_start",
+          "content_block_delta",
+          "content_block_stop",
+          "message_delta",
+          "message_stop",
+        ]);
+        const block = events[1]?.content_block;
+        const delta = events[2]?.delta;
+        return {
+          content: [
+            {
+              ...block,
+              type: block?.type ?? "",
+              ...(block?.type === "tool_use"
+                ? { input: JSON.parse(delta?.partial_json ?? "null") as unknown }
+                : { text: delta?.text }),
+            },
+          ],
+          stop_reason: events[4]?.delta?.stop_reason,
+        };
+      };
+      try {
+        expect((await server.request({}, "different-key")).status).toBe(403);
+        expect(
+          (await server.request({ messages: [messagesPrompt], system: fixtureKey })).status,
+        ).toBe(422);
+        expect(
+          (
+            await server.request({
+              messages: [messagesPrompt],
+              tools: [{ function: { name: "bash" } }],
+            })
+          ).status,
+        ).toBe(422);
+        const issued = await readMessage(
+          await server.request({
+            messages: [messagesPrompt],
+            tools: [{ name: "bash", input_schema: { type: "object" } }],
+            stream,
+          }),
+        );
+        expect(issued.stop_reason).toBe("tool_use");
+        expect(issued.content).toHaveLength(1);
+        expect(issued.content[0]).toMatchObject({ type: "tool_use", id: callId, name: "bash" });
+        const assistant = { role: "assistant", content: issued.content };
+        const feedback = {
+          type: "tool_result",
+          tool_use_id: callId,
+          content: [{ type: "text", text: "DSH_E2E_INTEGRITY_WEAKENED\n" }],
+        };
+        for (const invalidHistory of [
+          [messagesPrompt, { role: "user", content: [feedback] }],
+          [messagesPrompt, assistant, { role: "user", content: [feedback, feedback] }],
+          [
+            messagesPrompt,
+            assistant,
+            { role: "user", content: [{ ...feedback, tool_use_id: "wrong-call" }] },
+          ],
+          [
+            messagesPrompt,
+            assistant,
+            { role: "user", content: [{ ...feedback, content: "command failed" }] },
+          ],
+        ]) {
+          expect((await server.request({ messages: invalidHistory, stream })).status).toBe(422);
+        }
+        const final = await readMessage(
+          await server.request({
+            messages: [messagesPrompt, assistant, { role: "user", content: [feedback] }],
+            stream,
+          }),
+        );
+        expect(final.stop_reason).toBe("end_turn");
+        const finalBlock = final.content[0];
+        expect(
+          JSON.parse(finalBlock && "text" in finalBlock ? (finalBlock.text ?? "null") : "null"),
+        ).toMatchObject({
+          protocolVersion: 1,
+          operation: "task",
+          state: "final",
+          findings: [],
+        });
+        expect(await readFile(server.audit, "utf8")).toBe(
+          ["bash-issued", "bash-observed"]
+            .map((phase) => JSON.stringify({ phase, tool: "bash", callId }) + "\n")
+            .join(""),
+        );
+        expect((await server.request({ messages: [messagesPrompt], stream })).status).toBe(422);
+      } finally {
+        await server.close();
+      }
+    },
+  );
 });

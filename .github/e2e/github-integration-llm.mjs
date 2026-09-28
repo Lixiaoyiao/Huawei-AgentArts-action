@@ -1,6 +1,9 @@
 import { appendFile } from "node:fs/promises";
 import { createServer } from "node:http";
 
+import { sendMessages } from "./messages-fixture.mjs";
+import { businessReply } from "./business-fixture.mjs";
+
 const auditPath = process.env.DSH_E2E_GITHUB_AUDIT;
 const expectedKey = process.env.DSH_E2E_FIXTURE_KEY;
 const issueLabel = process.env.DSH_E2E_ISSUE_LABEL;
@@ -27,7 +30,7 @@ async function readJson(request) {
 }
 
 function messageText(body) {
-  return (body.messages ?? [])
+  return [{ content: body.system }, ...(body.messages ?? [])]
     .flatMap((message) => {
       if (typeof message.content === "string") return [message.content];
       if (!Array.isArray(message.content)) return [];
@@ -144,18 +147,35 @@ function fixtureOutput(route, index) {
   throw new Error(`unexpected fixture route: ${route}`);
 }
 
-function sendSse(response, value) {
-  const content = JSON.stringify(value);
+function sendSse(response, message, messagesProtocol) {
+  const content = message.content;
+  const toolCalls = message.tool_calls;
+  const finishReason = toolCalls ? "tool_calls" : "stop";
+  if (messagesProtocol) {
+    sendMessages(
+      response,
+      toolCalls
+        ? toolCalls.map((call) => ({
+            type: "tool_use",
+            id: call.id,
+            name: call.function.name,
+            input: JSON.parse(call.function.arguments),
+          }))
+        : [{ type: "text", text: content }],
+      true,
+    );
+    return;
+  }
   response.writeHead(200, {
     "content-type": "text/event-stream",
     "cache-control": "no-cache",
     connection: "keep-alive",
   });
   response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta: { content }, finish_reason: null }] })}\n\n`,
+    `data: ${JSON.stringify({ choices: [{ index: 0, delta: toolCalls ? { tool_calls: toolCalls } : { content }, finish_reason: null }] })}\n\n`,
   );
   response.write(
-    `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: "stop" }], usage: { prompt_tokens: 3, completion_tokens: 3 } })}\n\n`,
+    `data: ${JSON.stringify({ choices: [{ index: 0, delta: {}, finish_reason: finishReason }], usage: { prompt_tokens: 3, completion_tokens: 3 } })}\n\n`,
   );
   response.end("data: [DONE]\n\n");
 }
@@ -166,7 +186,7 @@ const server = createServer((request, response) => {
     return;
   }
   const match =
-    /^\/(label|assignee|github|metadata|checks|native-write|native-checks)\/(?:v1\/)?chat\/completions$/u.exec(
+    /^\/(label|assignee|github|metadata|checks|native-write|native-checks|review|fix|implement)\/(?:(?:v1\/)?chat\/completions|v1\/messages)$/u.exec(
       request.url ?? "",
     );
   if (request.method !== "POST" || match === null) {
@@ -175,12 +195,25 @@ const server = createServer((request, response) => {
     return;
   }
   const route = match[1];
+  const messagesProtocol = request.url.endsWith("/v1/messages");
+  const authorizationMatches =
+    request.headers.authorization === `Bearer ${expectedKey}` &&
+    (messagesProtocol
+      ? request.headers["x-api-key"] === expectedKey
+      : request.headers["x-api-key"] === undefined);
   readJson(request)
     .then(async (body) => {
       const prompt = messageText(body);
       const titleRequest =
         route.startsWith("native-") && prompt.includes("Generate the session title");
       const index = titleRequest ? 0 : (calls.get(route) ?? 0) + 1;
+      const business = ["review", "fix", "implement"].includes(route)
+        ? businessReply(route, index, body, {
+            fixturePath: process.env.DSH_E2E_FIXTURE_PATH,
+            implementationPath: process.env.DSH_E2E_IMPLEMENTATION_PATH,
+            suffix: process.env.DSH_E2E_RUN_SUFFIX,
+          })
+        : undefined;
       if (!titleRequest) calls.set(route, index);
       await appendFile(
         auditPath,
@@ -188,12 +221,22 @@ const server = createServer((request, response) => {
           route,
           index,
           kind: titleRequest ? "title" : "agent",
-          authorizationMatches: request.headers.authorization === `Bearer ${expectedKey}`,
+          authorizationMatches,
+          ...(business ? { phase: business.phase } : {}),
           prompt,
         })}\n`,
         "utf8",
       );
-      sendSse(response, titleRequest ? "Native qualification" : fixtureOutput(route, index));
+      sendSse(
+        response,
+        business?.message ?? {
+          role: "assistant",
+          content: JSON.stringify(
+            titleRequest ? "Native qualification" : fixtureOutput(route, index),
+          ),
+        },
+        messagesProtocol,
+      );
     })
     .catch((error) => {
       if (!response.headersSent) response.writeHead(500, { "content-type": "text/plain" });
