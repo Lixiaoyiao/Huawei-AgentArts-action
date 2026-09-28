@@ -103,7 +103,9 @@ does not enable Files or model-discovery endpoints. The sole forwarded beta
 header is the candidate's published dynamic-tools beta.
 
 The existing one-shot terminal-result formatter remains on Chat Completions
-through the same Controller proxy. Therefore, a custom endpoint must support
+through the same Controller proxy and follows the selected `deepseek-flash`
+model ID, which the [official Chat Completions contract](https://api-docs.deepseek.com/api/create-chat-completion/)
+also accepts. Therefore, a custom endpoint must support
 both the Messages model route and Chat Completions result-formatting route.
 The formatter receives only the bounded previous result and strict output
 contract; it has no tool catalog or execution hook and cannot replay the task,
