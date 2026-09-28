@@ -1459,8 +1459,13 @@ jobs:
 
           base_blob_sha="$(jq -cn --arg content "$base_fixture_content" '{content:$content,encoding:"utf-8"}' \
             | gh api --method POST "repos/$REPOSITORY/git/blobs" --input - --jq .sha)"
+          validator_blob_sha="$(jq -cn --rawfile content .github/e2e/validate-business-file.mjs '{content:$content,encoding:"utf-8"}' \
+            | gh api --method POST "repos/$REPOSITORY/git/blobs" --input - --jq .sha)"
+          [[ "$validator_blob_sha" == "$(git hash-object .github/e2e/validate-business-file.mjs)" ]]
           base_tree_sha="$(jq -cn --arg path "$fixture_path" --arg sha "$base_blob_sha" \
-            '{tree:[{path:$path,mode:"100644",type:"blob",sha:$sha}]}' \
+            --arg validator "$validator_blob_sha" \
+            '{tree:[{path:$path,mode:"100644",type:"blob",sha:$sha},
+                    {path:".github/dsh-e2e-fixtures/validate-business-file.mjs",mode:"100644",type:"blob",sha:$validator}]}' \
             | gh api --method POST "repos/$REPOSITORY/git/trees" --input - --jq .sha)"
           base_commit_message="DSH E2E checks base $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           base_sha="$(jq -cn --arg message "$base_commit_message" --arg tree "$base_tree_sha" --arg parent "$CANDIDATE_SHA" \
@@ -1830,7 +1835,7 @@ jobs:
           jq -e --arg head "$CHECKS_HEAD" '.head_sha == $head and .conclusion == "failure"' <<<"$check_json" >/dev/null
           expected_fix="DSH E2E fixed $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           validation="$(jq -cn --arg path "$FIXTURE_PATH" --arg content "$expected_fix" \
-            '[["node","-e","require(\"node:assert/strict\").equal(require(\"node:fs\").readFileSync(process.argv[1],\"utf8\"),process.argv[2]+\"\\n\")",$path,$content]]')"
+            '[["node",".github/dsh-e2e-fixtures/validate-business-file.mjs",$path,$content]]')"
           fix_ok=true
           run_candidate fix pull_request "$RUNNER_TEMP/dsh-e2e-checks-event.json" fix \
             'INPUT_COMMAND=fix' 'INPUT_ALLOW-WRITE=true' 'INPUT_PERMISSION-PROFILE=custom' \
@@ -1873,7 +1878,7 @@ jobs:
           ' > "$RUNNER_TEMP/dsh-e2e-implementation-event.json"
           expected_implementation="DSH E2E implemented $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT"
           validation="$(jq -cn --arg path "$implementation_path" --arg content "$expected_implementation" \
-            '[["node","-e","require(\"node:assert/strict\").equal(require(\"node:fs\").readFileSync(process.argv[1],\"utf8\"),process.argv[2]+\"\\n\")",$path,$content]]')"
+            '[["node",".github/dsh-e2e-fixtures/validate-business-file.mjs",$path,$content]]')"
           implement_ok=true
           run_candidate implement issues "$RUNNER_TEMP/dsh-e2e-implementation-event.json" implement \
             'INPUT_COMMAND=implement' 'INPUT_ALLOW-WRITE=true' 'INPUT_PERMISSION-PROFILE=custom' \
@@ -2137,10 +2142,12 @@ jobs:
             [[ "$CHECKS_BASE_TREE" =~ ^[a-f0-9]{40}$ && "$(jq -r .tree.sha <<<"$commit_json")" == "$CHECKS_BASE_TREE" ]]
             [[ "$(jq -r .message <<<"$commit_json")" == "DSH E2E checks base $GITHUB_RUN_ID/$GITHUB_RUN_ATTEMPT" ]]
             tree_json="$(gh api "repos/$REPOSITORY/git/trees/$CHECKS_BASE_TREE?recursive=1")"
-            base_blob_sha="$(jq -r --arg path "$FIXTURE_PATH" '
-              if .truncated == false and (.tree | length == 3) and
+            validator_blob_sha="$(git hash-object .github/e2e/validate-business-file.mjs)"
+            base_blob_sha="$(jq -r --arg path "$FIXTURE_PATH" --arg validator "$validator_blob_sha" '
+              if .truncated == false and (.tree | length == 4) and
                 ([.tree[] | select(.path == ".github" and .mode == "040000" and .type == "tree")] | length == 1) and
                 ([.tree[] | select(.path == ".github/dsh-e2e-fixtures" and .mode == "040000" and .type == "tree")] | length == 1) and
+                ([.tree[] | select(.path == ".github/dsh-e2e-fixtures/validate-business-file.mjs" and .mode == "100644" and .type == "blob" and .sha == $validator)] | length == 1) and
                 ([.tree[] | select(.path == $path and .mode == "100644" and .type == "blob")] | length == 1)
               then (.tree[] | select(.path == $path)).sha else empty end
             ' <<<"$tree_json")"

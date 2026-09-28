@@ -1,8 +1,13 @@
 import { spawnSync } from "node:child_process";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
 import { parseDshOutput } from "../src/dsh/schema.js";
+import { inspectValidationIntegrity } from "../src/write/validation-integrity.js";
+import { createWorkspaceSnapshot, inspectWorkspaceChanges } from "../src/write/workspace.js";
 
 const moduleUrl = new URL("../.github/e2e/business-fixture.mjs", import.meta.url).href;
 const settings = {
@@ -169,4 +174,100 @@ describe("trusted business fixture requires actual tool feedback", () => {
       invoke("review", 1, {}, { ...settings, fixturePath: "file'; touch anything" }).error,
     ).toContain("identity is invalid");
   });
+
+  it.each(["fix", "implement"] as const)(
+    "accepts the %s fixture write with the workflow's real validation argv and integrity guard",
+    async (route) => {
+      const root = await mkdtemp(join(tmpdir(), "dsh-business-validation-"));
+      try {
+        const source = join(root, "source");
+        const sourceFile = join(source, settings.fixturePath);
+        const validatorPath = ".github/dsh-e2e-fixtures/validate-business-file.mjs";
+        await mkdir(dirname(sourceFile), { recursive: true });
+        await writeFile(
+          sourceFile,
+          `DSH E2E checks ${route === "fix" ? "head" : "base"} ${settings.suffix}`,
+        );
+        await writeFile(
+          join(source, validatorPath),
+          await readFile(new URL("../.github/e2e/validate-business-file.mjs", import.meta.url)),
+        );
+        const snapshot = await createWorkspaceSnapshot(
+          { kind: "materialized-tree", root: source },
+          join(root, "worker"),
+        );
+        const path = route === "fix" ? settings.fixturePath : settings.implementationPath;
+        const content = `DSH E2E ${route === "fix" ? "fixed" : "implemented"} ${settings.suffix}`;
+        const workflow = await readFile(
+          new URL("../.github/workflows/e2e.yml", import.meta.url),
+          "utf8",
+        );
+        // Read the actual jq argv templates so changes to either workflow
+        // validation command are consumed by the production integrity guard.
+        const templates = [...workflow.matchAll(/\[\["node","[^"\r\n]+",\$path,\$content\]\]/gu)];
+        expect(templates).toHaveLength(2);
+        const template = templates[route === "fix" ? 0 : 1]?.[0];
+        if (template === undefined) throw new Error("Missing business validation argv");
+        const commands = JSON.parse(
+          template
+            .replace("$path", JSON.stringify(path))
+            .replace("$content", JSON.stringify(content)),
+        ) as string[][];
+        const argv = commands[0];
+        if (argv === undefined) throw new Error("Missing business validation command");
+        expect(argv.slice(0, 2)).toEqual(["node", validatorPath]);
+        const validate = () =>
+          spawnSync(process.execPath, argv.slice(1), {
+            cwd: snapshot.workerRoot,
+            encoding: "utf8",
+          });
+        expect(validate().status).not.toBe(0);
+        await writeFile(join(snapshot.workerRoot, path), `${content}\n`);
+        const validated = validate();
+        expect(validated.error).toBeUndefined();
+        expect(validated.stderr).toBe("");
+        expect(validated.status).toBe(0);
+        const changes = await inspectWorkspaceChanges(snapshot);
+        expect(changes).toEqual({
+          all: [path],
+          added: route === "implement" ? [path] : [],
+          modified: route === "fix" ? [path] : [],
+          deleted: [],
+        });
+        expect(
+          await inspectValidationIntegrity({ snapshot, changes, commands, mode: "strict" }),
+        ).toMatchObject({
+          mode: "strict",
+          status: "clean",
+          changeCount: 0,
+          dangerousChangeCount: 0,
+          controlPlaneChangeCount: 0,
+          changes: [],
+        });
+        await writeFile(join(snapshot.workerRoot, validatorPath), "process.exit(0);\n");
+        const weakenedChanges = await inspectWorkspaceChanges(snapshot);
+        expect(
+          await inspectValidationIntegrity({
+            snapshot,
+            changes: weakenedChanges,
+            commands,
+            mode: "strict",
+          }),
+        ).toMatchObject({
+          status: "blocked",
+          dangerousChangeCount: 1,
+          controlPlaneChangeCount: 1,
+          changes: [
+            expect.objectContaining({
+              path: validatorPath,
+              category: "entrypoint",
+              risk: "dangerous",
+            }),
+          ],
+        });
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
 });
