@@ -256,15 +256,21 @@ Graceful cancellation is the verifiable path. `SIGKILL`, runner/host loss, a pro
 
 If Core E2E finds a bug, fix it on the PR, obtain the new head SHA, update the variable, rerun CI, and dispatch Core E2E again. Never use an older candidate run as evidence for the new head.
 
-For an Actions `GITHUB_TOKEN` rate-limit failure, dispatch the independent
-[Actions token rate-limit diagnostic](../.github/workflows/e2e-rate-limit.yml)
-once with `gh workflow run e2e-rate-limit.yml --ref main`. It uses the Actions
-installation token with no repository permissions, checks out no code, and makes
-one `GET /rate_limit` request. The [official endpoint](https://docs.github.com/en/rest/rate-limit/rate-limit)
-does not consume the primary quota; its response headers are authoritative if
-they differ from the body. Record the reported reset time and remaining quota
-before deciding whether another full run is appropriate. A personal token used
-by the local CLI has a separate quota. A successful diagnostic does not qualify any candidate or
+For an Actions `GITHUB_TOKEN` failure while materializing repository content,
+dispatch the independent [Actions content-read quota diagnostic](../.github/workflows/e2e-rate-limit.yml)
+once with `gh workflow run e2e-rate-limit.yml --ref main -f blob_sha=<existing-blob-sha>`.
+Supply a verified 40-character lowercase blob SHA, such as the SHA of `main`'s
+README. The workflow uses only `contents: read`, checks out no code, and makes
+one [blob GET](https://docs.github.com/en/rest/git/blobs#get-a-blob) in this repository.
+Unlike `/rate_limit`, that request exercises content reading and consumes API quota. It reports only
+the status and allowlisted rate-limit/retry headers, never the blob or error
+body. A 403/429 retains its reset/retry evidence and fails the diagnostic;
+missing or malformed counters are `unknown` and also fail it. Record these
+response headers before deciding whether another full run is appropriate.
+Generic `/rate_limit` core balances and a personal CLI token's quota do not
+establish the content-read budget. This minimal-permission probe is also a new
+Actions token context, so its success cannot prove the reader or writer tokens
+from a failed E2E run have recovered. It does not qualify any candidate or
 release or replace any Core E2E evidence.
 
 ## Merge and qualify `main`
