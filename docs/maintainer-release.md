@@ -154,6 +154,21 @@ gh workflow run e2e.yml --ref main \
 
 Harness files and fixtures are checked out at the trusted default-branch SHA. Candidate Action code is checked out separately at the bound candidate SHA. Every checkout sets `persist-credentials: false`, and the workflow verifies that no checkout Git credential remains.
 
+Harness fixtures install from the trusted harness lock. Candidate ecosystem
+tests install from the candidate's own lock with lifecycle scripts disabled and
+run its own test executable; they must never resolve a different DSH runtime
+from the harness checkout. Action and direct-process launches use the bound
+candidate's exact runtime default, without overriding it with the harness
+version. A runtime migration must prepare any needed trusted harness changes
+on `main` before qualifying its migration candidate; the immutable gate and
+main-only environment remain unchanged.
+
+The trusted integrity and GitHub integration providers accept both the existing
+Chat Completions transport and the candidate Messages transport. Messages tool
+results must preserve the issued assistant tool-use identity; a fabricated
+final answer is never execution evidence. These local providers use only dummy
+keys, while the live-provider golden paths retain their existing secret gates.
+
 The golden paths cover:
 
 The deliberately weakened-validator case uses a localhost completion fixture
@@ -206,8 +221,21 @@ only operation, stage, HTTP status and attempt number.
 | Branch UX                   | A real task PR targets the candidate branch and uses the configured sanitized prefix/template while retaining the Controller key                                                                                                                         |
 | Typed GitHub tools          | All six exact operations: labels, assignees, Issue state, reconciled comment creation, PR metadata, and immutable-head check/status reads                                                                                                                |
 | Structured task output      | Trusted bounded schema, final Controller validation, scalar output, and optional field inside the unchanged audit envelope                                                                                                                               |
+| PR review                   | One summary and one inline comment published to the real isolated PR, with bot identity, immutable commit, exact path/line and marker checks                                                                                                             |
+| Failed-CI fix               | A run-owned failed check on the isolated head enters model context; one actual Bash receipt and provider feedback precede strict validation, one child commit and exact remote blob verification                                                         |
+| Issue implementation        | An isolated Issue produces one actual Bash receipt, strict validation and a PR on its isolated base; branch key, commit parent/trailers, PR marker, Issue link and one added blob are verified independently                                             |
 | Image boundary              | Inline/reference Markdown, HTML image/source, and raw GitHub attachment URLs/tokens are absent from the deterministic LLM request                                                                                                                        |
 | Credential isolation        | All candidate and harness checkouts use `persist-credentials: false` and have no residual Git auth configuration                                                                                                                                         |
+
+Only the trusted integration harness receives `checks: write`, to create its
+run-bound failed-check fixture; this does not change Action permissions or add
+a GitHub capability. Cleanup revalidates the exact check ID, name and commit
+and marks it neutral. GitHub does not offer deletion of check runs, so that
+historical fixture remains attached to the disposable commit after its refs
+are removed. Bounded provider phase evidence is preserved as an artifact even
+if a business assertion fails. Implementation branch identity is recorded
+before execution, and exact PR/commit/blob ownership is revalidated before
+closing its PR or deleting an orphaned branch.
 
 The workflow also compares `main`, the candidate identity, PR/comments when
 present, legacy `dsh/task-*` refs, and Controller-created task PRs on

@@ -44,6 +44,7 @@ jobs:
           [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
           git diff --exit-code "$CANDIDATE_SHA" -- \
             .github/workflows/ci.yml .github/e2e/integrity-llm.mjs \
+            .github/e2e/messages-fixture.mjs \
             test/integrity-docker.integration.test.ts scripts/verify-dsh-config.mjs \
             src assets/dsh package.json package-lock.json
           ./node_modules/.bin/vitest run test/integrity-docker.integration.test.ts
