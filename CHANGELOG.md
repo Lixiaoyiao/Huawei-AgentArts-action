@@ -3,11 +3,11 @@
 Notable user-facing changes are recorded here. This project follows semantic
 versioning for published action releases.
 
-## [0.9.0] - Pending qualification
+## [0.9.0]
 
 - Migrates controlled and native composition to the fixed DSH `0.1.7-rc.2`
-  candidate and Cordis `4.0.4`, with exact lockfile identities. This entry does
-  not claim that CI, trusted E2E, or formal release qualification has passed.
+  candidate and Cordis `4.0.4`, with exact lockfile identities. Qualification
+  belongs to the exact commit recorded in the PR and formal release evidence.
 - Uses official Profile resolution, PluginPackages, Agent/Session lifecycle,
   Messages transport, and PTC-backed native Workflow. Keeps MCP, Bundle, Plugin,
   Skills, Subagents, and all existing GitHub business operations.
