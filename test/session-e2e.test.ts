@@ -8,6 +8,9 @@ import { zipSync } from "fflate";
 import { beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
 
+import { parseTaskOutputSchema, validateTaskOutput } from "../src/dsh/task-output.js";
+import { loadInputs } from "../src/inputs.js";
+
 interface FixtureModule {
   buildSessionTask(
     phase: string,
@@ -174,9 +177,84 @@ describe("independent Actions Session qualification fixture", () => {
     const schema = object(JSON.parse(resume.schema));
     expect(object(object(schema.properties).memory)).toEqual({
       type: "string",
-      pattern: "^[a-f0-9]{48}$",
+      minLength: 48,
+      maxLength: 48,
     });
   });
+
+  it.each(["save", "resume"])(
+    "admits the real prepare-generated %s schema through public schema and workflow input parsers",
+    async (phase) => {
+      const task = fixture.buildSessionTask(phase, challenge, memory);
+      const schema = parseTaskOutputSchema(task.schema);
+      if (schema === undefined) throw new Error("Expected generated task schema");
+      expect(validateTaskOutput({ memory, challenge, phase }, schema)).toEqual({
+        memory,
+        challenge,
+        phase,
+      });
+      expect(() =>
+        validateTaskOutput({ memory, challenge: "0".repeat(24), phase }, schema),
+      ).toThrow();
+      expect(() =>
+        validateTaskOutput(
+          { memory, challenge, phase: phase === "save" ? "resume" : "save" },
+          schema,
+        ),
+      ).toThrow();
+      expect(() =>
+        validateTaskOutput({ memory: memory.slice(1), challenge, phase }, schema),
+      ).toThrow();
+      const wrongMemory = "f".repeat(48);
+      expect(validateTaskOutput({ memory: wrongMemory, challenge, phase }, schema)).toEqual({
+        memory: wrongMemory,
+        challenge,
+        phase,
+      });
+      expect(
+        fixture.resultChecks(
+          { taskOutput: { memory: wrongMemory, challenge, phase } },
+          identity({ phase }),
+        ).memory,
+      ).toBe(false);
+
+      const workflow = object(
+        parse(
+          await readFile(new URL("../.github/workflows/session-e2e.yml", import.meta.url), "utf8"),
+        ),
+      );
+      const steps = object(object(workflow.jobs).session).steps;
+      if (!Array.isArray(steps)) throw new Error("Expected actual workflow steps");
+      const action = steps.map(object).find((step) => step.id === "action");
+      const declaredInputs = object(object(action).with);
+      for (const mode of ["controlled", "native"]) {
+        const expressions: Readonly<Record<string, string>> = {
+          "${{ secrets.DEEPSEEK_API_KEY }}": "fixture-model-credential",
+          "${{ github.token }}": "fixture-controller-credential",
+          "${{ inputs.phase == 'save' && 'write' || 'read' }}": phase === "save" ? "write" : "read",
+          "${{ inputs.dsh_mode }}": mode,
+          "${{ steps.task.outputs.prompt }}": task.prompt,
+          "${{ steps.task.outputs.schema }}": task.schema,
+          "${{ inputs.phase }}": phase,
+          "${{ inputs.session_key }}": "fixture-logical-task",
+          "${{ inputs.source_run_id }}": phase === "save" ? "" : "42",
+        };
+        const values = Object.fromEntries(
+          Object.entries(declaredInputs).map(([name, raw]) => {
+            if (typeof raw !== "string")
+              throw new Error("Workflow inputs must be explicit strings");
+            const value = expressions[raw] ?? raw;
+            if (value.includes("${{")) throw new Error("Unresolved fixture expression");
+            return [name, value];
+          }),
+        );
+        const parsed = loadInputs((name) => values[name] ?? "");
+        expect(parsed.taskOutputSchema).toEqual(schema);
+        expect(parsed.dshMode).toBe(mode);
+        expect(parsed.taskAccess).toBe(phase === "save" ? "write" : "read");
+      }
+    },
+  );
 
   it.each([
     "repository",
