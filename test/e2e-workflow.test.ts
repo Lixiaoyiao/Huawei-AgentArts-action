@@ -66,6 +66,30 @@ describe("trusted core E2E workflow", () => {
     expect(workflow).toContain("node candidate-action/dist/index.js");
   });
 
+  it("declares real validation commands for the no-change Subagent write without executing validation", () => {
+    const launch = stepBlock(workflow, "Real native.subagent with no-change write");
+    const assertion = stepBlock(workflow, "Assert native.subagent and no-change semantics");
+    const configured = /^\s+test-commands: '(.+)'$/mu.exec(launch)?.[1];
+    if (configured === undefined)
+      throw new Error("Subagent write lacks explicit validation commands");
+    const commands: unknown = JSON.parse(configured);
+
+    expect(commands).toEqual([
+      ["npm", "ci", "--ignore-scripts"],
+      ["npm", "run", "typecheck"],
+      ["npm", "test"],
+    ]);
+    expect(launch).toContain("task-access: write");
+    expect(launch).toContain('allow-write: "true"');
+    expect(launch).toContain('run-tests: "true"');
+    expect(launch).toContain('disallowed-tools: \'["native.bash","native.web-search"]\'');
+    expect(assertion).toContain('.policy.trust == "trusted-write"');
+    expect(assertion).toContain('.write.status == "no-changes" and .write.changedPaths == []');
+    expect(assertion).toContain('.validation.status == "not-applicable"');
+    expect(assertion).toContain('.id == "native.subagent" and .completed == true and .ok == true');
+    expect(assertion).toContain("for component in main candidate prs comments task-refs task-prs");
+  });
+
   it("installs candidate test dependencies separately from the trusted harness lock", () => {
     const fixtures = stepBlock(workflow, "Install fixture dependencies without lifecycle scripts");
     const candidate = stepBlock(
