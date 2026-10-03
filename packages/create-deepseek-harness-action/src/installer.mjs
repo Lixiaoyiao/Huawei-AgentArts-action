@@ -6,7 +6,7 @@ import { createInterface } from "node:readline/promises";
 import { INSTALLER_ACTION_INPUTS } from "./action-inputs.generated.mjs";
 
 const DOCUMENTATION_URL =
-  "https://github.com/Lixiaoyiao/deepseek-harness-action/blob/create-deepseek-harness-action-v0.3.1/docs/setup.md";
+  "https://github.com/Lixiaoyiao/deepseek-harness-action/blob/create-deepseek-harness-action-v0.4.0/docs/setup.md";
 const ACTION_REFERENCE_PATTERN = /uses: Lixiaoyiao\/deepseek-harness-action@[0-9a-f]{40}(?:\s|$)/gu;
 const MODES = new Set(["review", "commands", "both"]);
 const DSH_MODES = new Set(["controlled", "native"]);
@@ -321,6 +321,26 @@ async function installWorkflows({
         }
       }
       if (containerImage !== undefined) {
+        const imageInputs = [...contents.matchAll(/^([ \t]*)container-image: .+$/gmu)];
+        if (imageInputs.length !== 1) {
+          throw new Error(
+            `Installer command template ${definition.source} must contain exactly one container-image Action input; found ${String(imageInputs.length)} matching lines`,
+          );
+        }
+        const actionInputs =
+          /^([ \t]*)- uses: Lixiaoyiao\/deepseek-harness-action@[0-9a-f]{40}[ \t]*\r?\n\1 {2}with:[ \t]*\r?\n((?:\1 {4}.*(?:\r?\n|$))+)/mu.exec(
+            contents,
+          );
+        const imageInput = imageInputs[0];
+        if (
+          actionInputs === null ||
+          imageInput?.[1] !== `${actionInputs[1]}    ` ||
+          !actionInputs[2]?.includes(imageInput[0])
+        ) {
+          throw new Error(
+            `Installer command template ${definition.source} container-image must be a direct input of the pinned Action step`,
+          );
+        }
         contents = contents.replace(
           /^([ \t]*)container-image: .+$/mu,
           (_source, indentation) => `${indentation}container-image: ${containerImage}`,

@@ -29,6 +29,20 @@ versioning for published action releases.
   lack a published structured Headless input. Neither becomes a partial input.
   See [runtime evidence and residual advisories](docs/v0.9.2-runtime-audit.md).
 
+## Installer 0.4.0 - 2026-10-04
+
+- Binds generated workflows to formal Action v0.9.2 commit `c184872f309ebfc5e57a0c5c1397c59e774709e0`
+  through `DSH_ACTION_RELEASE_SHA`, retaining exact DSH `0.2.0-rc.2`.
+- Adds explicit maintainer-selected `--test-commands` JSON argv and
+  digest-pinned `--container-image` options. No repository scripts are
+  discovered, executed or automatically trusted; omitted validation remains
+  a fail-closed placeholder and Controller authorization/validation stays mandatory.
+- Reports credential/scopes/quota, Docker/image and repository validation
+  as unchecked at installation, and retains overwrite protection.
+- Qualifies source CI/tag, exact packed bytes, official npm publication and
+  fresh controlled/native public consumers as separate gates. Historical
+  installer releases and tags remain immutable.
+
 ## Installer 0.3.1 - 2026-10-03
 
 - Updates the independently versioned create package for the formal v0.9.1
