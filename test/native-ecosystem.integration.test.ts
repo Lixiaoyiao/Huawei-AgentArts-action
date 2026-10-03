@@ -22,6 +22,8 @@ import {
 
 const execFileAsync = promisify(execFile);
 const temporary: string[] = [];
+const nativeEcosystemTask =
+  "Use the requested native ecosystem capabilities and return review JSON.";
 // Cold Windows module loading can exceed the 10s denial-probe process cap.
 // Preserve exact exit/output and zero-model-request assertions, while allowing
 // startup to reach the gate. Every child remains independently time-bounded.
@@ -176,7 +178,7 @@ describe("locked rc.2 native ecosystem boot", () => {
           [
             "--expose-internals",
             join(process.cwd(), "assets", "dsh", "native-launcher.mjs"),
-            "Use the requested native ecosystem capabilities and return review JSON.",
+            nativeEcosystemTask,
           ],
           {
             cwd: workspace,
@@ -219,9 +221,7 @@ describe("locked rc.2 native ecosystem boot", () => {
           state: "final",
           summary: "native ecosystem booted",
         });
-        const rootRequests = llm.requests.filter(
-          (request) => !hasUserText(request, "CHILD_NATIVE_MARKER"),
-        );
+        const rootRequests = llm.requests.filter(isRootTaskRequest);
         expect(rootRequests.length).toBeGreaterThanOrEqual(7);
         const firstTools = toolNames(rootRequests[0]);
         expect(firstTools).not.toContain("web_fetch");
@@ -398,6 +398,61 @@ function hasUserText(request: DeepSeekRequest, marker: string): boolean {
       ),
   );
 }
+
+function isRootTaskRequest(request: DeepSeekRequest): boolean {
+  return (
+    !hasUserText(request, "CHILD_NATIVE_MARKER") &&
+    (request.messages ?? []).some(
+      ({ role, content }) =>
+        role === "user" &&
+        Array.isArray(content) &&
+        content.some(
+          (block: { readonly type?: string; readonly text?: string }) =>
+            block.type === "text" && block.text === nativeEcosystemTask,
+        ),
+    )
+  );
+}
+
+describe("native root request selection", () => {
+  it("keeps the main task when the tool-free title request arrives first or last", () => {
+    const main: DeepSeekRequest = {
+      messages: [{ role: "user", content: [{ type: "text", text: nativeEcosystemTask }] }],
+      tools: [{ name: "skill" }],
+    };
+    const title: DeepSeekRequest = {
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Generate the session title from this JSON array of human messages:\n${JSON.stringify([nativeEcosystemTask])}`,
+            },
+          ],
+        },
+      ],
+    };
+    const child: DeepSeekRequest = {
+      messages: [
+        ...(main.messages ?? []),
+        { role: "user", content: [{ type: "text", text: "CHILD_NATIVE_MARKER" }] },
+      ],
+      tools: [{ name: "skill" }],
+    };
+    for (const requests of [
+      [title, child, main],
+      [main, child, title],
+    ]) {
+      expect(requests.filter(isRootTaskRequest)).toEqual([main]);
+      expect(toolNames(requests.find(isRootTaskRequest))).toEqual(["skill"]);
+    }
+    // Selecting by task identity must not hide a genuinely missing tool graph.
+    const emptyMain = { ...main, tools: [] };
+    expect([title, emptyMain].filter(isRootTaskRequest)).toEqual([emptyMain]);
+    expect(toolNames(emptyMain)).toEqual([]);
+  });
+});
 
 async function readJsonRequest(request: IncomingMessage): Promise<DeepSeekRequest> {
   const chunks: Buffer[] = [];
