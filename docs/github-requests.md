@@ -38,6 +38,11 @@ stable code `GITHUB_QUOTA_EXHAUSTED`; inspect recorded commit/branch/PR and
 Gateway receipts before rerunning. A result lists confirmed effects; absence
 of an identity does not prove an interrupted external extension had no effect.
 
+If an unknown mutation and its reconciliation read both fail, the current
+diagnostic cause retains the read failure rather than the original transport
+failure. The effect remains `possible`, the attempt count stays one, and the
+mutation is not resent. This is a remaining diagnostic limitation.
+
 Keep three operational scopes distinct:
 
 | Scope              | Credential and evidence                                                                                                                                                                     |

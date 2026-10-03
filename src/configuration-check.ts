@@ -162,7 +162,10 @@ export function checkConfiguration(
           message: `${name} must use either inputs or credentialEnv, not both.`,
         });
       }
-      raw[name] = environment[environmentName] ?? "";
+      const value = Object.hasOwn(environment, environmentName)
+        ? environment[environmentName]
+        : undefined;
+      raw[name] = typeof value === "string" ? value : "";
     }
     const credential = raw[name];
     if (credential === undefined || credential.trim() === "" || credential.includes("${{")) {

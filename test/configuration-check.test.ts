@@ -20,6 +20,7 @@ const credentialInputs = {
   "github-token": "check-controller-github-token",
 };
 const directories: string[] = [];
+const inheritedCredentialNames = ["constructor", "toString", "valueOf", "__proto__"] as const;
 
 afterEach(async () => {
   await Promise.all(
@@ -75,6 +76,33 @@ describe("offline configuration check", () => {
       }).ok,
     ).toBe(true);
   });
+
+  it.each(inheritedCredentialNames)(
+    "requires an own credential environment property for %s",
+    (environmentName) => {
+      const document = {
+        schemaVersion: 1,
+        inputs: { "github-token": credentialInputs["github-token"] },
+        credentialEnv: { "deepseek-api-key": environmentName },
+      };
+      const missing = checkConfiguration(document, {});
+      expect(missing.ok).toBe(false);
+      expect(missing.diagnostics.find(({ id }) => id === "deepseek-api-key")).toMatchObject({
+        status: "failed",
+      });
+      expect(missing.diagnostics.find(({ id }) => id === "deepseek-api-key")?.message).toContain(
+        "missing",
+      );
+      const supplied = checkConfiguration(document, {
+        [environmentName]: credentialInputs["deepseek-api-key"],
+      });
+      expect(supplied.ok).toBe(true);
+      expect(JSON.stringify([missing, supplied])).not.toContain(
+        credentialInputs["deepseek-api-key"],
+      );
+      expect(JSON.stringify([missing, supplied])).not.toContain(credentialInputs["github-token"]);
+    },
+  );
 
   it.each([
     { schemaVersion: 2, inputs: credentialInputs },
@@ -196,6 +224,43 @@ describe("offline configuration check", () => {
     await expect(readFile(marker)).rejects.toThrow();
     expect(stdout).not.toContain("unsafe");
     expect(stdout).not.toContain(credentialInputs["deepseek-api-key"]);
+  });
+
+  it("the actual CLI returns JSON for an inherited credential environment property", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "dsh-check-config-credential-"));
+    directories.push(directory);
+    const path = join(directory, "check.json");
+    await writeFile(
+      path,
+      JSON.stringify({
+        schemaVersion: 1,
+        inputs: { "github-token": credentialInputs["github-token"] },
+        credentialEnv: { "deepseek-api-key": "constructor" },
+      }),
+      "utf8",
+    );
+    const result = await execFileAsync(
+      process.execPath,
+      [fileURLToPath(new URL("../scripts/check-config.mjs", import.meta.url)), "--config", path],
+      { cwd: directory, windowsHide: true, env: {}, timeout: 15_000 },
+    ).then(
+      ({ stdout, stderr }) => ({ failed: false, stdout, stderr }),
+      (error: unknown) => ({
+        failed: true,
+        stdout: error instanceof Error && "stdout" in error ? String(error.stdout) : "",
+        stderr: error instanceof Error && "stderr" in error ? String(error.stderr) : "",
+      }),
+    );
+    expect(result.failed).toBe(true);
+    expect(result.stderr).toBe("");
+    const parsed = JSON.parse(result.stdout) as {
+      ok: boolean;
+      diagnostics: { id: string; status: string }[];
+    };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.diagnostics.find(({ id }) => id === "deepseek-api-key")?.status).toBe("failed");
+    expect(result.stdout).not.toContain(credentialInputs["deepseek-api-key"]);
+    expect(result.stdout).not.toContain(credentialInputs["github-token"]);
   });
 
   it.each(["missing", "encoding", "oversize", "json"])(
