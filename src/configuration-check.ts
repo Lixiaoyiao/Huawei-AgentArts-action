@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { ACTION_INPUT_CONTRACT } from "./action-contract.js";
 import { assertPinnedContainerImage } from "./dsh/docker-policy.js";
-import { ActionConfigurationError } from "./errors.js";
+import { ActionConfigurationError, PolicyDeniedError } from "./errors.js";
 import { loadInputs, type ActionInputs } from "./inputs.js";
 import { redactKnownSecrets } from "./security/env.js";
 import { assertWriteValidationConfigured } from "./write/validate.js";
@@ -76,7 +76,7 @@ export function assertStartupConfiguration(inputs: ActionInputs): void {
     (inputs.command === "task" && inputs.taskAccess === "write")
   ) {
     if (!inputs.allowWrite) {
-      throw new ActionConfigurationError(
+      throw new PolicyDeniedError(
         "Explicit write tasks require allow-write=true; this setting still does not grant actor or repository authority",
       );
     }

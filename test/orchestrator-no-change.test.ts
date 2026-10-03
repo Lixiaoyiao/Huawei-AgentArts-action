@@ -311,22 +311,36 @@ afterEach(() => {
 
 describe("orchestrator task no-change publication", () => {
   it.each([
-    { label: "missing commands", runTests: true, testCommands: [], diagnostic: "test-commands" },
+    {
+      label: "missing commands",
+      allowWrite: true,
+      runTests: true,
+      testCommands: [],
+      diagnostic: "test-commands",
+    },
     {
       label: "run-tests=false",
+      allowWrite: true,
       runTests: false,
       testCommands: [["npm", "test"]],
       diagnostic: "run-tests=false",
     },
+    {
+      label: "allow-write=false",
+      allowWrite: false,
+      runTests: true,
+      testCommands: [["npm", "test"]],
+      diagnostic: "allow-write=true",
+    },
   ])(
     "denies a write task with $label before routing, model startup or GitHub calls",
-    async ({ runTests, testCommands, diagnostic }) => {
+    async ({ allowWrite, runTests, testCommands, diagnostic }) => {
       mocks.loadInputs.mockReturnValueOnce(
         inputs({
           command: "task",
           prompt: "Implement a change",
           taskAccess: "write",
-          allowWrite: true,
+          allowWrite,
           runTests,
           testCommands,
         }),
