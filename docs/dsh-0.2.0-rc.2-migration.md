@@ -1,8 +1,9 @@
 # DSH 0.2.0-rc.2 migration audit
 
 Action v0.9.1 migrates the production DSH family from `0.1.7-rc.2` to the
-published `0.2.0-rc.2` family. The Action's public inputs, outputs, composition
-defaults, and authority boundaries do not change. This is a patch release;
+published `0.2.0-rc.2` family. The Action's public input/output shapes, composition
+defaults, and authority boundaries do not change. Workflows explicitly setting
+`dsh-version` must update that exact pin to `0.2.0-rc.2`. This is a patch release;
 upstream's own version change does not require an Action minor release.
 Neither `0.2.1` alpha nor upstream `master` is a migration target.
 
@@ -165,7 +166,7 @@ advisories:
 
 - [fflate malformed ZIP64 denial of service](https://github.com/advisories/GHSA-px8p-9vwx-vf98):
   root `fflate@0.8.3` is fixed, but the official
-  `@deepseek-ai/libreoffice-kit@0.1.2` graph requires exact `fflate@0.8.2`.
+  `@deepseek-ai/libreoffice-kit@0.1.5` graph requires exact `fflate@0.8.2`.
   The vulnerable nested copy remains installed through optional Office paths.
 - [http-cache-semantics cached response disclosure](https://github.com/advisories/GHSA-ch52-4w7c-c8xp):
   the published OTel/Got graph contains `http-cache-semantics@4.2.0`, with no
