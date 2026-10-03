@@ -13,6 +13,12 @@ const DSH_MODES = new Set(["controlled", "native"]);
 const DSH_MODE_INPUT_NAME = INSTALLER_ACTION_INPUTS.dshMode.name;
 const DSH_MODE_OPTION = `--${DSH_MODE_INPUT_NAME}`;
 const DEFAULT_DSH_MODE = INSTALLER_ACTION_INPUTS.dshMode.defaultValue;
+// Match the fixed Action's Docker image grammar without a runtime dependency.
+const IMAGE_PATH_COMPONENT_PATTERN = /^[a-z0-9]+(?:(?:[._]|__|-+)[a-z0-9]+)*$/u;
+const IMAGE_REGISTRY_DOMAIN_PATTERN =
+  /^(?:[A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9])(?:\.(?:[A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9-]*[A-Za-z0-9]))*(?::[0-9]+)?$/u;
+const IMAGE_TAG_PATTERN = /^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$/u;
+const IMAGE_DIGEST_PATTERN = /^sha256:[a-f0-9]{64}$/u;
 const WORKFLOWS = Object.freeze({
   controlled: Object.freeze({
     review: Object.freeze({
@@ -53,6 +59,53 @@ function usage() {
     "CI/non-interactive usage requires --mode; --dsh-mode defaults to controlled.",
     "Validation argv are explicitly maintainer-selected; the installer never reads or executes repository scripts.",
   ].join("\n");
+}
+
+function validContainerImageReference(containerImage, requireDigest) {
+  if (
+    containerImage.length === 0 ||
+    containerImage.length > 512 ||
+    containerImage.includes("://") ||
+    containerImage.includes("//")
+  ) {
+    return false;
+  }
+  const digestParts = containerImage.split("@");
+  if (digestParts.length > 2) return false;
+  const nameAndTag = digestParts[0];
+  const digest = digestParts[1];
+  if (
+    nameAndTag === undefined ||
+    nameAndTag === "" ||
+    (requireDigest && digest === undefined) ||
+    (digest !== undefined && !IMAGE_DIGEST_PATTERN.test(digest))
+  ) {
+    return false;
+  }
+
+  const segments = nameAndTag.split("/");
+  const finalSegment = segments.at(-1);
+  if (finalSegment === undefined || finalSegment === "") return false;
+  const tagSeparator = finalSegment.lastIndexOf(":");
+  if (tagSeparator >= 0) {
+    const tag = finalSegment.slice(tagSeparator + 1);
+    const imageName = finalSegment.slice(0, tagSeparator);
+    if (!IMAGE_TAG_PATTERN.test(tag) || !IMAGE_PATH_COMPONENT_PATTERN.test(imageName)) return false;
+    segments[segments.length - 1] = imageName;
+  }
+
+  const first = segments[0];
+  const explicitRegistry =
+    segments.length > 1 &&
+    first !== undefined &&
+    (first.includes(".") ||
+      first.includes(":") ||
+      first === "localhost" ||
+      first !== first.toLowerCase());
+  if (explicitRegistry && !IMAGE_REGISTRY_DOMAIN_PATTERN.test(first)) return false;
+  return segments
+    .slice(explicitRegistry ? 1 : 0)
+    .every((segment) => IMAGE_PATH_COMPONENT_PATTERN.test(segment));
 }
 
 export function parseArguments(argv) {
@@ -119,12 +172,7 @@ export function parseArguments(argv) {
     if (option === "container-image") {
       if (containerImage !== undefined)
         throw new Error("--container-image may be provided only once");
-      if (
-        typeof value !== "string" ||
-        value.length > 512 ||
-        value.includes("//") ||
-        !/^[A-Za-z0-9][A-Za-z0-9./:_-]*@sha256:[a-f0-9]{64}$/u.test(value)
-      ) {
+      if (typeof value !== "string" || !validContainerImageReference(value, true)) {
         throw new Error(
           "--container-image requires one name@sha256:<64 lowercase hex> image reference",
         );

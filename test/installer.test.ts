@@ -15,6 +15,7 @@ import {
   type InstallerDshMode,
   type InstallerMode,
 } from "../packages/create-deepseek-harness-action/src/installer.mjs";
+import { assertPinnedContainerImage } from "../src/dsh/docker-policy.js";
 import { DSH_VERSION } from "../src/release.js";
 
 const execFileAsync = promisify(execFile);
@@ -238,6 +239,60 @@ describe("create-deepseek-harness-action release build", () => {
 });
 
 describe("explicit maintainer validation setup", () => {
+  it.each([
+    { reference: "node", accepted: true },
+    { reference: "node:Upper_Tag.24", accepted: true },
+    { reference: "REGISTRY.EXAMPLE/repo:UpperTag", accepted: true },
+    { reference: "localhost:5000/team/node", accepted: true },
+    { reference: "registry.example/ns__team/my.image_one--two", accepted: true },
+    { reference: "UPPER_REPO", accepted: false },
+    { reference: "node:", accepted: false },
+    { reference: "registry:badport/repo", accepted: false },
+    { reference: "registry.example/UPPER_REPO", accepted: false },
+    { reference: "registry.example/node_", accepted: false },
+    { reference: "node:bad:tag", accepted: false },
+    { reference: "registry.example//node", accepted: false },
+    { reference: "-node", accepted: false },
+    { reference: ".node", accepted: false },
+    { reference: "node/", accepted: false },
+  ])("matches the fixed Action image grammar for $reference", ({ reference, accepted }) => {
+    const image = `${reference}@sha256:${"a".repeat(64)}`;
+    let actionAccepted = true;
+    try {
+      assertPinnedContainerImage(image);
+    } catch {
+      actionAccepted = false;
+    }
+    expect(actionAccepted).toBe(accepted);
+    if (actionAccepted) {
+      expect(parseArguments(["--mode", "commands", "--container-image", image])).toMatchObject({
+        containerImage: image,
+      });
+    } else {
+      expect(() => parseArguments(["--mode", "commands", "--container-image", image])).toThrow(
+        /name@sha256/u,
+      );
+    }
+  });
+
+  it.each(["UPPER_REPO", "node:", "registry:badport/repo"])(
+    "rejects %s before creating workflow files",
+    async (reference) => {
+      const project = await createProject();
+      await expect(
+        runInstaller({
+          argv: ["--mode", "both", "--container-image", `${reference}@sha256:${"a".repeat(64)}`],
+          cwd: project,
+          output: new OutputCapture(),
+          input: Readable.from([]),
+          isTTY: false,
+          templateDirectory: join(builtPackage, "templates"),
+        }),
+      ).rejects.toThrow(/name@sha256/u);
+      expect(await readdir(project)).toEqual([]);
+    },
+  );
+
   it.each(["controlled", "native"] as const)(
     "writes reviewed argv and a digest for %s without executing repository code",
     async (dshMode) => {
