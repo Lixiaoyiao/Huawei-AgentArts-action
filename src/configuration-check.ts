@@ -46,8 +46,8 @@ function extensionsConfigured(inputs: ActionInputs): boolean {
 
 /** Early admission only. Runtime authorization and validation remain independent gates. */
 export function assertWriteTaskConfiguration(inputs: ActionInputs): void {
+  assertWriteValidationConfigured(inputs.runTests, inputs.testCommands);
   try {
-    assertWriteValidationConfigured(inputs.runTests, inputs.testCommands);
     if (
       inputs.testCommands.some((argv) =>
         argv.some((argument) => /REPLACE_WITH_|REQUIRED: replace test-commands/iu.test(argument)),

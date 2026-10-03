@@ -310,28 +310,49 @@ afterEach(() => {
 });
 
 describe("orchestrator task no-change publication", () => {
-  it("rejects a write task with missing validation before routing, model startup or GitHub calls", async () => {
-    mocks.loadInputs.mockReturnValueOnce(
-      inputs({
-        command: "task",
-        prompt: "Implement a change",
-        taskAccess: "write",
-        allowWrite: true,
-        testCommands: [],
-      }),
-    );
-    const outcome = await runAction();
-    expect(outcome).toMatchObject({
-      conclusion: "failure",
-      error: { code: "ACTION_CONFIGURATION", phase: "configuration" },
-    });
-    expect(outcome.error?.message).toContain("test-commands");
-    expect(mocks.readEventPayload).not.toHaveBeenCalled();
-    expect(mocks.createGitHubClient).not.toHaveBeenCalled();
-    expect(mocks.runAgentLoop).not.toHaveBeenCalled();
-    expect(mocks.createGitHubCommitFromWorkspace).not.toHaveBeenCalled();
-    expect(mocks.publishTaskAnswer).not.toHaveBeenCalled();
-  });
+  it.each([
+    { label: "missing commands", runTests: true, testCommands: [], diagnostic: "test-commands" },
+    {
+      label: "run-tests=false",
+      runTests: false,
+      testCommands: [["npm", "test"]],
+      diagnostic: "run-tests=false",
+    },
+  ])(
+    "denies a write task with $label before routing, model startup or GitHub calls",
+    async ({ runTests, testCommands, diagnostic }) => {
+      mocks.loadInputs.mockReturnValueOnce(
+        inputs({
+          command: "task",
+          prompt: "Implement a change",
+          taskAccess: "write",
+          allowWrite: true,
+          runTests,
+          testCommands,
+        }),
+      );
+      const outcome = await runAction();
+      expect(outcome).toMatchObject({
+        conclusion: "failure",
+        error: {
+          code: "POLICY_DENIED",
+          category: "policy",
+          phase: "configuration",
+          retryable: false,
+        },
+      });
+      expect(outcome.error?.message).toContain(diagnostic);
+      const outputs = buildActionOutputs(outcome);
+      expect(outputs["error-code"]).toBe("POLICY_DENIED");
+      const result = JSON.parse(String(outputs["result-json"])) as { status: string };
+      expect(result.status).toBe("denied");
+      expect(mocks.readEventPayload).not.toHaveBeenCalled();
+      expect(mocks.createGitHubClient).not.toHaveBeenCalled();
+      expect(mocks.runAgentLoop).not.toHaveBeenCalled();
+      expect(mocks.createGitHubCommitFromWorkspace).not.toHaveBeenCalled();
+      expect(mocks.publishTaskAnswer).not.toHaveBeenCalled();
+    },
+  );
 
   it("copies the immutable GitHub tree through the explicit materialized-tree source contract", async () => {
     await runAction();
