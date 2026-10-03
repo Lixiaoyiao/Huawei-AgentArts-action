@@ -38,6 +38,7 @@ import { parseTaskOutputSchema } from "./dsh/task-output.js";
 import { assertSupportedDshVersion } from "./dsh/version.js";
 import { validateRefName } from "./security/refs.js";
 import { validateBranchNameTemplate, validateBranchPrefix } from "./write/branch.js";
+import { parseContextFiles, parsePromptFile } from "./text-files.js";
 
 const booleanInput = z.enum(["true", "false"]).transform((value) => value === "true");
 
@@ -179,6 +180,28 @@ const actionInputsSchema = z.object({
   command: z.enum(["auto", "task", "review", "diagnose", "fix", "implement"]),
   taskAccess: z.enum(["read", "write"]),
   prompt: z.string(),
+  promptFile: z.string().transform((value, context) => {
+    try {
+      return parsePromptFile(value);
+    } catch (error: unknown) {
+      context.addIssue({
+        code: "custom",
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return z.NEVER;
+    }
+  }),
+  contextFiles: z.string().transform((value, context) => {
+    try {
+      return parseContextFiles(value);
+    } catch (error: unknown) {
+      context.addIssue({
+        code: "custom",
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return z.NEVER;
+    }
+  }),
   dshVersion: z.string().min(1),
   dshExecutable: z.string(),
   isolation: z.enum(["docker", "none"]),
@@ -296,6 +319,8 @@ function assertControllerSecretsAbsentFromWorkerInputs(inputs: ActionInputs): vo
     inputs.baseBranch,
     inputs.branchPrefix,
     inputs.branchNameTemplate,
+    inputs.promptFile,
+    ...inputs.contextFiles,
   ];
   const configuredArgv = [
     ...inputs.testCommands,
@@ -387,6 +412,8 @@ export function loadInputs(reader: InputReader = core.getInput): ActionInputs {
     command: optionalInput(reader, "command"),
     taskAccess: optionalInput(reader, "taskAccess"),
     prompt: optionalInput(reader, "prompt"),
+    promptFile: optionalInput(reader, "promptFile"),
+    contextFiles: optionalInput(reader, "contextFiles"),
     dshVersion: optionalInput(reader, "dshVersion"),
     dshExecutable: optionalInput(reader, "dshExecutable"),
     isolation: optionalInput(reader, "isolation"),
@@ -468,9 +495,14 @@ export function loadInputs(reader: InputReader = core.getInput): ActionInputs {
     throw configurationError(error);
   }
   assertControllerSecretsAbsentFromWorkerInputs(inputs);
-  if (inputs.command === "task" && inputs.prompt.trim() === "") {
+  if (inputs.prompt.trim() !== "" && inputs.promptFile !== "") {
     throw new ActionConfigurationError(
-      "Invalid action inputs: prompt is required when command is task",
+      "Invalid action inputs: prompt and prompt-file are mutually exclusive",
+    );
+  }
+  if (inputs.command === "task" && inputs.prompt.trim() === "" && inputs.promptFile === "") {
+    throw new ActionConfigurationError(
+      "Invalid action inputs: prompt or prompt-file is required when command is task",
     );
   }
   if (

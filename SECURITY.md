@@ -57,6 +57,15 @@ may publish its final answer, but performs no repository mutation.
 
 #### Explicit prompts are trusted control-plane input
 
+`prompt-file` is an explicit maintainer choice of a text file from the live
+repository default branch, bound to a complete commit and blob SHA. It is the
+only repository-file exception for task instructions; it never grants
+Controller authority. PR-head files cannot supply this instruction channel.
+`context-files` always adds bounded, labelled untrusted text, including when
+the file lives on the default branch. Both path inputs must come from trusted
+workflow configuration. The Controller reads Git objects, never arbitrary
+runner files, symlinks, submodules, or automatically discovered secret files.
+
 The `prompt` action input is deliberately treated as maintainer-authored
 instruction. GitHub evaluates `${{ ... }}` expressions before the action starts,
 so the action cannot recover the provenance of an interpolated value. Do not put
@@ -69,7 +78,7 @@ with:
 ```
 
 The same rule applies to capability-bearing inputs such as `command`,
-`task-access`, `allow-write`, `dsh-mode`, `permission-profile`, `allowed-tools`,
+`prompt-file`, `context-files`, `task-access`, `allow-write`, `dsh-mode`, `permission-profile`, `allowed-tools`,
 `disallowed-tools`, `tool-config`, `mcp-config`, `plugin-config`,
 `allow-plugin-install`, `run-tests`, `test-commands`, `validation-integrity`,
 `container-image`, `base-url`, `web-search-base-url`, `isolation`, and
@@ -86,7 +95,7 @@ validation integrity, or authorize/install an MCP server, Bundle or plugin.
 
 ### 2. Input and data trust
 
-Repository files, diffs, CI logs, README, AGENTS.md, CLAUDE.md, issues, pull
+Except the explicit `prompt-file` instruction channel above, repository files, diffs, CI logs, README, AGENTS.md, CLAUDE.md, issues, pull
 requests, comments, previous model prose and tool output are untrusted data.
 They are placed inside bounded untrusted context and never interpreted as
 controller instructions.

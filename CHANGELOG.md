@@ -3,6 +3,28 @@
 Notable user-facing changes are recorded here. This project follows semantic
 versioning for published action releases.
 
+## [0.9.2] - 2026-10-03
+
+- Adds explicit `prompt-file` and `context-files` text inputs in both modes.
+  Maintainer-selected instructions come from the immutable default-branch
+  revision; attached text remains untrusted. Reads validate Git objects,
+  relative paths, types, symlinks, UTF-8, count and total bytes without reading
+  runner paths. Provenance also participates in task deduplication.
+- Adds an offline configuration check and early write-validation/Docker
+  diagnostics. Installer source accepts explicit reviewed validation argv and
+  a pinned image; it never discovers, trusts or executes repository scripts.
+  The companion installer is versioned and published separately after canary.
+- Reuses sticky comments and schema-v1 outputs for quota classification,
+  recovery, confirmed publication effects and bounded request counters. Only
+  selected immutable text is cached/coalesced; authorization, mutable identity,
+  immediate write revalidation and effect reconciliation remain fresh.
+  GitHub mutations send once and reconcile; retries never replay writes/tasks.
+- Keeps DSH `0.2.0-rc.2` exact pins and existing compositions. Published Session
+  APIs can resume a new worker, but old permission intents and cross-run
+  provenance/concurrency/storage require further Action engineering. Images
+  lack a published structured Headless input. Neither becomes a partial input.
+  See [runtime evidence and residual advisories](docs/v0.9.2-runtime-audit.md).
+
 ## Installer 0.3.1 - 2026-10-03
 
 - Updates the independently versioned create package for the formal v0.9.1

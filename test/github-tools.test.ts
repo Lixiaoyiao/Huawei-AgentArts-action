@@ -591,7 +591,7 @@ describe("Controller-owned typed GitHub tools", () => {
     expect(receipt?.result.output).toMatchObject({ attempts: 1, reconciled: true });
   });
 
-  it("performs at most one safe retry when reconciliation confirms no effect", async () => {
+  it("retains an uncertain effect after reconciliation without resending a mutation", async () => {
     let labels: readonly string[] = [];
     const getRepository = vi.fn<GitHubToolBackend["getRepository"]>(() =>
       Promise.resolve({ id: 42 }),
@@ -615,16 +615,13 @@ describe("Controller-owned typed GitHub tools", () => {
       { callId: "call-retry", id: "github.issue.labels.set", input: { labels: ["bug"] } },
       invocation,
     );
-    const [receipt] = await tools.flush(invocation);
-    expect(setLabels).toHaveBeenCalledTimes(2);
-    expect(getRepository).toHaveBeenCalledTimes(3);
+    await expect(tools.flush(invocation)).rejects.toBeInstanceOf(GitHubToolFlushError);
+    expect(setLabels).toHaveBeenCalledTimes(1);
+    expect(getRepository).toHaveBeenCalledTimes(2);
     expect(getRepository.mock.invocationCallOrder[1]).toBeLessThan(
       setLabels.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
     );
-    expect(getRepository.mock.invocationCallOrder[2]).toBeLessThan(
-      setLabels.mock.invocationCallOrder[1] ?? Number.POSITIVE_INFINITY,
-    );
-    expect(receipt?.result.output).toMatchObject({ attempts: 2, labels: ["bug"] });
+    expect(labels).toEqual([]);
   });
 
   it("reconciles comment ambiguous success by marker and trusted bot identity", async () => {

@@ -83,6 +83,24 @@ export const ACTION_INPUT_CONTRACT = [
     docsGroup: "operation",
   },
   {
+    name: "prompt-file",
+    runtimeKey: "promptFile",
+    required: false,
+    default: "",
+    description:
+      "Explicit maintainer-selected UTF-8 task file from the repository default branch, pinned to its resolved commit SHA. Mutually exclusive with prompt; interactive command instructions keep precedence. Text only.",
+    docsGroup: "operation",
+  },
+  {
+    name: "context-files",
+    runtimeKey: "contextFiles",
+    required: false,
+    default: "[]",
+    description:
+      "JSON array of at most 8 explicit repository-relative text paths from the bound task revision. Attached as untrusted context, never authority; no globs, symlinks, runner paths, images, or Office files.",
+    docsGroup: "operation",
+  },
+  {
     name: "trigger-phrase",
     runtimeKey: "triggerPhrase",
     required: false,

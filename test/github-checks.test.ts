@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { fetchCiEvidence } from "../src/github/checks.js";
 import type { GitHubClient } from "../src/github/client.js";
+import { GitHubQuotaError } from "../src/github/request-policy.js";
 
 const SHA = "a".repeat(40);
 
@@ -206,6 +207,29 @@ describe("CI evidence broker", () => {
       expect(evidence.jobs[0]?.log).toBe("[log unavailable: secure download failed]");
       expect(JSON.stringify(evidence)).not.toContain("sig=secret");
     }
+  });
+
+  it("preserves GitHub log quota diagnostics and stops further log requests", async () => {
+    const { client, request, rest } = fakeClient({ jobs: [job(), job({ id: 21 })] });
+    const quota = new GitHubQuotaError({
+      credentialScope: "production-action",
+      clientRole: "main-controller",
+      requests: 3,
+      cacheHits: 0,
+      coalesced: 0,
+      retries: 0,
+      waitMs: 0,
+      quotaFailures: 1,
+      resetAt: "2026-10-03T12:00:00.000Z",
+    });
+    request.mockRejectedValueOnce(quota);
+    const fetchImpl = vi.fn();
+    await expect(
+      fetchCiEvidence(client, "octo", "repo", { headSha: SHA, fetch: fetchImpl }),
+    ).rejects.toBe(quota);
+    expect(request).toHaveBeenCalledOnce();
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(rest.checks.listForRef).not.toHaveBeenCalled();
   });
 
   it("aborts slow signed-log downloads and returns a generic error", async () => {

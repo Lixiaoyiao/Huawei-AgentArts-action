@@ -50,6 +50,37 @@ Release 与 release canary 身份一致后，通过 `DSH_ACTION_RELEASE_SHA` 注
 
 本地只在运行安装器时需要 Node.js 和 npm；生成的 workflow 不会假定目标仓库是 Node.js 项目。
 
+## 首次启动模型前检查配置
+
+在经过审核的 Action 源码 checkout 中，用 Node.js 24 和已安装的锁定依赖，
+复制 [`examples/config-check.json`](../examples/config-check.json)，把 `inputs`
+改为 workflow 中的字面量输入名和值。凭据不要写进 JSON；`credentialEnv`
+只指定保存 Controller 凭据的环境变量名称。
+
+```bash
+npm run check:config -- --config examples/config-check.json
+```
+
+检查器只读取明确选择的 JSON 文件（普通 UTF-8 文件，最多 256 KiB），复用
+Action 的公开输入和扩展 schema，检查缺少凭据、DSH 精确版本、模式与隔离、
+明确写任务的验证配置。它不启动模型、不执行仓库代码或验证命令、不联网、
+不修改远端状态。JSON 输出的 `scope` 是 `static_configuration_only`；
+`ok: true` 只表示静态配置通过。Docker/镜像可用性、凭据有效性、在线权限与
+配额、当前事件/SHA 授权、文本文件内容和扩展激活都明确标记 `not_checked`。
+允许写入的 `auto` 配置缺验证时只发警告，以保留只读路由；实际路由为写任务
+时会在模型启动前拒绝。
+
+实际运行时，凭据缺失、DSH 版本不支持或扩展格式错误在解析输入时失败。
+明确或路由后的写任务会提前拒绝空验证、禁用测试和未替换的占位符；
+有时间上限、无 Controller 凭据的 `docker info` 预检会在安装 runtime 前
+报告 CLI/daemon 不可用。这些检查不授予权限，也不替代 Controller 的真实验证。
+
+准备中的下一版安装器还为 `commands` / `both` 提供显式
+`--test-commands` JSON argv 和 `--container-image name@sha256:<64 位小写十六进制>`。
+这些选项目前来自待发布源码；上文旧版的正式发布身份仍然有效，直到完成
+安装器独立发布。维护者必须自行选择来源可信、经过审核、无凭据的验证命令。
+安装器不会自动发现或执行脚本；省略选项仍保留安全失败的验证占位符。
+
 ## 手工安装
 
 如果希望自己创建 workflow，请按以下步骤操作。
@@ -80,7 +111,7 @@ DEEPSEEK_API_KEY
 为了便于阅读，示例使用当前发布 Tag：
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
+uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
 ```
 
 生产环境应把 Tag 替换为从正式 Release 解析出的完整、不可变 commit SHA。
@@ -135,7 +166,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-version: 0.2.0-rc.2

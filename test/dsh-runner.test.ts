@@ -193,6 +193,72 @@ describe("executeBoundedDshProcess", () => {
 });
 
 describe("runDsh", () => {
+  it("checks Docker daemon before installing packages or starting the proxy/model", async () => {
+    const fixture = await fixtures();
+    const proxy = vi.fn(() => Promise.resolve(fakeProxy()));
+    const specs: DshProcessSpec[] = [];
+    await expect(
+      runDsh(request({ isolation: "docker", workspacePath: fixture.workspace }), {
+        assetsDirectory: fixture.assets,
+        environment: {
+          PATH: process.env.PATH,
+          DEEPSEEK_API_KEY: "real-key-never-forwarded",
+          GITHUB_TOKEN: "github-token-never-forwarded",
+          DOCKER_CONTEXT: "maintainer-context",
+        },
+        startProxy: proxy,
+        executeProcess: (spec, limits) => {
+          specs.push(spec);
+          expect(limits.timeoutMs).toBeLessThanOrEqual(5_000);
+          expect(spec.args).toEqual(["info", "--format", "{{.ServerVersion}}"]);
+          expect(spec.env.DOCKER_CONTEXT).toBe("maintainer-context");
+          expect(JSON.stringify(spec.env)).not.toContain("never-forwarded");
+          return Promise.resolve({
+            exitCode: 1,
+            signal: null,
+            stdout: "",
+            stderr: "Cannot connect to the Docker daemon",
+          });
+        },
+      }),
+    ).rejects.toThrow(/Docker CLI\/daemon is unavailable/u);
+    expect(specs).toHaveLength(1);
+    expect(proxy).not.toHaveBeenCalled();
+  });
+
+  it("bounds a stalled Docker daemon preflight by ten seconds and the run deadline", async () => {
+    const fixture = await fixtures();
+    const proxy = vi.fn(() => Promise.resolve(fakeProxy()));
+    let markStarted: (() => void) | undefined;
+    const started = new Promise<void>((resolveStarted) => {
+      markStarted = resolveStarted;
+    });
+    vi.useFakeTimers();
+    try {
+      const running = runDsh(
+        request({ isolation: "docker", workspacePath: fixture.workspace, timeoutMs: 30_000 }),
+        {
+          assetsDirectory: fixture.assets,
+          temporaryDirectory: fixture.root,
+          startProxy: proxy,
+          executeProcess: (spec, limits) => {
+            expect(spec.args[0]).toBe("info");
+            expect(limits.timeoutMs).toBe(10_000);
+            markStarted?.();
+            return new Promise<DshProcessResult>(() => undefined);
+          },
+        },
+      );
+      await started;
+      const failure = expect(running).rejects.toBeInstanceOf(DshTimeoutError);
+      await vi.advanceTimersByTimeAsync(10_000);
+      await failure;
+      expect(proxy).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("passes the trusted task schema to the prompt and returns only Controller-validated taskOutput", async () => {
     const fixture = await fixtures();
     const proxy = fakeProxy();
@@ -2497,11 +2563,12 @@ describe("runDsh", () => {
       },
     );
 
-    expect(observedSpecs).toHaveLength(5);
-    const installSpec = observedSpecs[0];
-    const createNetworkSpec = observedSpecs[1];
-    const inspectNetworkSpec = observedSpecs[2];
-    const removeNetworkSpec = observedSpecs[4];
+    expect(observedSpecs).toHaveLength(6);
+    expect(observedSpecs[0]?.args).toEqual(["info", "--format", "{{.ServerVersion}}"]);
+    const installSpec = observedSpecs[1];
+    const createNetworkSpec = observedSpecs[2];
+    const inspectNetworkSpec = observedSpecs[3];
+    const removeNetworkSpec = observedSpecs[5];
     const internalNetwork = createNetworkSpec?.args.at(-1);
     const installerCacheMount = installSpec?.args.find((argument) =>
       argument.endsWith(":/tmp/npm-cache:rw"),

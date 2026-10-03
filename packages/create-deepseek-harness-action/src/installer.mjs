@@ -1,5 +1,4 @@
-import { constants as fileConstants } from "node:fs";
-import { access, copyFile, mkdir, readFile, rm } from "node:fs/promises";
+import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 import { createInterface } from "node:readline/promises";
@@ -40,6 +39,7 @@ const WORKFLOWS = Object.freeze({
 function usage() {
   return [
     "Usage: create-deepseek-harness-action [--mode review|commands|both] [--dsh-mode controlled|native]",
+    "  [--test-commands '<JSON argv arrays>'] [--container-image '<name>@sha256:<digest>']",
     "",
     "Workflow choices:",
     "  1) PR Review",
@@ -51,6 +51,7 @@ function usage() {
     "  2) Native",
     "",
     "CI/non-interactive usage requires --mode; --dsh-mode defaults to controlled.",
+    "Validation argv are explicitly maintainer-selected; the installer never reads or executes repository scripts.",
   ].join("\n");
 }
 
@@ -58,6 +59,8 @@ export function parseArguments(argv) {
   let mode;
   let dshMode;
   let help = false;
+  let testCommands;
+  let containerImage;
 
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -82,6 +85,16 @@ export function parseArguments(argv) {
     } else if (argument?.startsWith(`${DSH_MODE_OPTION}=`)) {
       option = DSH_MODE_INPUT_NAME;
       value = argument.slice(`${DSH_MODE_OPTION}=`.length);
+    } else if (argument === "--test-commands" || argument === "--container-image") {
+      option = argument.slice(2);
+      value = argv[index + 1];
+      index += 1;
+    } else if (argument?.startsWith("--test-commands=")) {
+      option = "test-commands";
+      value = argument.slice("--test-commands=".length);
+    } else if (argument?.startsWith("--container-image=")) {
+      option = "container-image";
+      value = argument.slice("--container-image=".length);
     } else {
       throw new Error(`Unknown argument: ${argument ?? ""}\n\n${usage()}`);
     }
@@ -98,6 +111,27 @@ export function parseArguments(argv) {
       continue;
     }
 
+    if (option === "test-commands") {
+      if (testCommands !== undefined) throw new Error("--test-commands may be provided only once");
+      testCommands = parseValidationCommands(value);
+      continue;
+    }
+    if (option === "container-image") {
+      if (containerImage !== undefined)
+        throw new Error("--container-image may be provided only once");
+      if (
+        typeof value !== "string" ||
+        value.length > 512 ||
+        value.includes("//") ||
+        !/^[A-Za-z0-9][A-Za-z0-9./:_-]*@sha256:[a-f0-9]{64}$/u.test(value)
+      ) {
+        throw new Error(
+          "--container-image requires one name@sha256:<64 lowercase hex> image reference",
+        );
+      }
+      containerImage = value;
+      continue;
+    }
     if (dshMode !== undefined) throw new Error(`${DSH_MODE_OPTION} may be provided only once`);
     if (value === undefined || value === "" || value.startsWith("--")) {
       throw new Error(`${DSH_MODE_OPTION} requires controlled or native\n\n${usage()}`);
@@ -108,7 +142,53 @@ export function parseArguments(argv) {
     dshMode = value;
   }
 
-  return { help, mode, dshMode };
+  if (mode === "review" && (testCommands !== undefined || containerImage !== undefined)) {
+    throw new Error(
+      "--test-commands/--container-image are for commands or both; review needs no write setup",
+    );
+  }
+  return {
+    help,
+    mode,
+    dshMode,
+    ...(testCommands === undefined ? {} : { testCommands }),
+    ...(containerImage === undefined ? {} : { containerImage }),
+  };
+}
+
+function parseValidationCommands(value) {
+  let commands;
+  try {
+    if (typeof value !== "string" || value.length > 64 * 1024) throw new Error();
+    commands = JSON.parse(value);
+  } catch {
+    throw new Error("--test-commands requires a JSON array of non-empty argv arrays");
+  }
+  if (
+    !Array.isArray(commands) ||
+    commands.length === 0 ||
+    commands.length > 32 ||
+    commands.some(
+      (argv) =>
+        !Array.isArray(argv) ||
+        argv.length === 0 ||
+        argv.length > 64 ||
+        argv.some(
+          (argument) =>
+            typeof argument !== "string" ||
+            argument.length === 0 ||
+            argument.length > 4096 ||
+            argument.includes("\0") ||
+            argument.includes("${{") ||
+            /REPLACE_WITH_|REQUIRED: replace test-commands/iu.test(argument),
+        ),
+    )
+  ) {
+    throw new Error(
+      "--test-commands must contain 1-32 explicit argv arrays without placeholders, NUL or workflow expressions",
+    );
+  }
+  return commands;
 }
 
 async function promptForMode(readline, output) {
@@ -201,7 +281,14 @@ function assertReleaseBuiltTemplate(contents, source) {
   }
 }
 
-async function installWorkflows({ cwd, mode, dshMode, templateDirectory }) {
+async function installWorkflows({
+  cwd,
+  mode,
+  dshMode,
+  templateDirectory,
+  testCommands,
+  containerImage,
+}) {
   const definitions = workflowDefinitions(mode, dshMode).map((definition) => ({
     ...definition,
     absoluteTarget: join(cwd, ...definition.target.split("/")),
@@ -220,19 +307,37 @@ async function installWorkflows({ cwd, mode, dshMode, templateDirectory }) {
   }
 
   for (const definition of definitions) {
-    const contents = await readFile(join(templateDirectory, definition.source), "utf8");
+    let contents = await readFile(join(templateDirectory, definition.source), "utf8");
     assertReleaseBuiltTemplate(contents, definition.source);
+    if (definition.target.endsWith("dsh-commands.yml")) {
+      if (testCommands !== undefined) {
+        contents = contents.replace(
+          /^([ \t]*)test-commands: >-\r?\n[ \t]*\[.*\]\r?$/mu,
+          (_source, indentation) =>
+            `${indentation}test-commands: ${JSON.stringify(JSON.stringify(testCommands))}`,
+        );
+        if (contents.includes("REQUIRED: replace test-commands")) {
+          throw new Error("Installer command template has no supported validation placeholder");
+        }
+      }
+      if (containerImage !== undefined) {
+        contents = contents.replace(
+          /^([ \t]*)container-image: .+$/mu,
+          (_source, indentation) => `${indentation}container-image: ${containerImage}`,
+        );
+      }
+    }
+    definition.contents = contents;
   }
 
   await mkdir(join(cwd, ".github", "workflows"), { recursive: true });
   const created = [];
   try {
     for (const definition of definitions) {
-      await copyFile(
-        join(templateDirectory, definition.source),
-        definition.absoluteTarget,
-        fileConstants.COPYFILE_EXCL,
-      );
+      await writeFile(definition.absoluteTarget, definition.contents, {
+        encoding: "utf8",
+        flag: "wx",
+      });
       created.push(definition);
     }
   } catch (error) {
@@ -248,7 +353,7 @@ async function installWorkflows({ cwd, mode, dshMode, templateDirectory }) {
   return created.map(({ target }) => target);
 }
 
-function printSuccess(output, mode, dshMode, createdFiles) {
+function printSuccess(output, mode, dshMode, createdFiles, testCommands) {
   output.write("\nCreated workflow files:\n");
   for (const path of createdFiles) output.write(`  - ${path}\n`);
   output.write(`\nDSH mode: ${dshMode}\n`);
@@ -267,8 +372,12 @@ function printSuccess(output, mode, dshMode, createdFiles) {
       [
         "",
         "Required before coding writes:",
-        "  Replace the fail-closed test-commands placeholder with your repository's commands.",
+        testCommands === undefined
+          ? "  Replace the fail-closed test-commands placeholder with your repository's commands."
+          : "  Explicit validation argv were written; review their trusted source before enabling coding writes.",
         "  Replace the digest-pinned container-image too if validation needs another toolchain.",
+        "  No repository scripts were discovered, executed, or automatically trusted.",
+        "  run-tests=true, successful validation and fresh Controller authorization remain mandatory.",
       ].join("\n"),
     );
     output.write("\n");
@@ -282,6 +391,9 @@ function printSuccess(output, mode, dshMode, createdFiles) {
     output.write("  @dsh: start an Issue or pull request comment with an @dsh command.\n");
   }
   output.write(`\nDocumentation: ${DOCUMENTATION_URL}\n`);
+  output.write(
+    "\nNot checked: credential validity/token scopes/quota, Docker daemon/image, repository validation commands, actor/event/SHA authority. These are checked at execution.\n",
+  );
 }
 
 export async function runInstaller(options = {}) {
@@ -316,7 +428,20 @@ export async function runInstaller(options = {}) {
   }
   dshMode ??= DEFAULT_DSH_MODE;
 
-  const createdFiles = await installWorkflows({ cwd, mode, dshMode, templateDirectory });
-  printSuccess(output, mode, dshMode, createdFiles);
+  if (
+    mode === "review" &&
+    (parsed.testCommands !== undefined || parsed.containerImage !== undefined)
+  ) {
+    throw new Error("--test-commands/--container-image require commands or both");
+  }
+  const createdFiles = await installWorkflows({
+    cwd,
+    mode,
+    dshMode,
+    templateDirectory,
+    testCommands: parsed.testCommands,
+    containerImage: parsed.containerImage,
+  });
+  printSuccess(output, mode, dshMode, createdFiles, parsed.testCommands);
   return { mode, dshMode, createdFiles };
 }

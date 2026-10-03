@@ -9,6 +9,7 @@ import { throwIfCancelled } from "../lifecycle/cancellation.js";
 import { PHASE_TIMEOUTS, phaseTimeoutMs } from "../lifecycle/deadline.js";
 import { buildDshToolPolicyAudit } from "../permissions/profile.js";
 import { DshAgentEngine } from "../review/run.js";
+import { ReviewPublicationQuotaError } from "../review/publisher.js";
 import type { RunOutcome } from "../result.js";
 import { PolicyDeniedError } from "../errors.js";
 import { revalidatePullRequestHead } from "../write/pr.js";
@@ -209,19 +210,27 @@ export async function runAgentPhase(options: {
             snapshot.number,
             snapshot.headSha,
           );
-          const publication = await finishReview(
-            client,
-            {
-              owner: context.repository.owner,
-              repo: context.repository.repo,
-              pullNumber: snapshot.number,
-              expectedAuthorId: inputs.botUserId,
-              runUrl: currentRunUrl,
-            },
-            snapshot,
-            agentResult,
-            inputs.maxFindings,
-          );
+          let publication: Awaited<ReturnType<typeof finishReview>>;
+          try {
+            publication = await finishReview(
+              client,
+              {
+                owner: context.repository.owner,
+                repo: context.repository.repo,
+                pullNumber: snapshot.number,
+                expectedAuthorId: inputs.botUserId,
+                runUrl: currentRunUrl,
+              },
+              snapshot,
+              agentResult,
+              inputs.maxFindings,
+            );
+          } catch (error) {
+            if (error instanceof ReviewPublicationQuotaError) {
+              state.partialPublication = error.publication;
+            }
+            throw error;
+          }
           return { kind: "review", publication };
         }
         if (command.operation === "diagnose") {

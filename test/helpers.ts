@@ -2,6 +2,7 @@ import type { ActionInputs, ControlledActionInputs, NativeActionInputs } from ".
 import type { GitHubContext } from "../src/github/context.js";
 import type { PermissionCheck } from "../src/github/permissions.js";
 import { DSH_VERSION } from "../src/release.js";
+import { DEFAULT_CONTAINER_IMAGE } from "../src/action-contract.js";
 
 type ControlledInputOverrides = Partial<ControlledActionInputs> & {
   readonly dshMode?: "controlled";
@@ -25,10 +26,12 @@ export function inputs(
     command: "auto",
     taskAccess: "read",
     prompt: "",
+    promptFile: "",
+    contextFiles: [],
     dshVersion: DSH_VERSION,
     dshExecutable: "",
     isolation: "docker",
-    containerImage: "node:24-bookworm",
+    containerImage: DEFAULT_CONTAINER_IMAGE,
     timeoutMinutes: 20,
     maxFindings: 20,
     runTests: true,

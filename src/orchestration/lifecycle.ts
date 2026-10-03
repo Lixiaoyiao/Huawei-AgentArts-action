@@ -5,6 +5,7 @@ import type { RoutedCommand } from "../commands/router.js";
 import type { DshComposition, DshMode } from "../dsh/composition.js";
 import { DshAbortedError } from "../dsh/errors.js";
 import type { StickyProgressReporter } from "../github/progress.js";
+import { githubRequestAudit, type GitHubClient } from "../github/client.js";
 import type { ActionInputs } from "../inputs.js";
 import { PHASE_TIMEOUTS, settleWithin } from "../lifecycle/deadline.js";
 import type { PermissionAudit, ToolPolicyAudit } from "../permissions/profile.js";
@@ -19,6 +20,8 @@ import type { AuthorityAudit } from "../security/authority.js";
 import type { SecurityPolicy } from "../security/policy.js";
 import type { ValidationIntegritySummary } from "../write/validation-integrity.js";
 import type { WriteOutcome } from "./write.js";
+import type { PublicationResult } from "../review/publisher.js";
+import type { RepositoryTextFileAudit } from "../text-files.js";
 
 export interface RunState {
   phase: ActionPhase;
@@ -38,6 +41,12 @@ export interface RunState {
   composition?: DshComposition;
   progressFailure?: ProgressFailureFinalization;
   partialWrite?: WriteOutcome;
+  githubClient?: GitHubClient;
+  partialPublication?: PublicationResult;
+  textSources?: {
+    readonly instruction?: RepositoryTextFileAudit;
+    readonly contexts: readonly RepositoryTextFileAudit[];
+  };
 }
 
 interface ProgressFailureFinalization {
@@ -178,6 +187,8 @@ export async function finishProgressFailure(
 }
 
 export function outcomeContext(state: RunState, startedAt: number) {
+  const githubRequests =
+    state.githubClient === undefined ? undefined : githubRequestAudit(state.githubClient);
   return {
     schemaVersion: 1 as const,
     durationMs: Math.max(0, Date.now() - startedAt),
@@ -188,6 +199,9 @@ export function outcomeContext(state: RunState, startedAt: number) {
     ...(state.toolPolicy === undefined ? {} : { toolPolicy: state.toolPolicy }),
     ...(state.dsh === undefined ? {} : { dsh: state.dsh }),
     ...(state.authority === undefined ? {} : { authority: state.authority }),
+    ...(githubRequests === undefined ? {} : { githubRequests }),
+    ...(state.partialPublication === undefined ? {} : { publication: state.partialPublication }),
+    ...(state.textSources === undefined ? {} : { textSources: state.textSources }),
     ...(state.progress?.commentId === undefined ? {} : { commentId: state.progress.commentId }),
   };
 }

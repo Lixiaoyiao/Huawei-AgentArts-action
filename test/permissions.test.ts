@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { GitHubClient } from "../src/github/client.js";
 import { parseGitHubContext } from "../src/github/context.js";
 import { checkActorPermissions } from "../src/github/permissions.js";
+import { GitHubQuotaError } from "../src/github/request-policy.js";
 import { pullRequestContext } from "./helpers.js";
 
 function clientWith(
@@ -51,6 +52,32 @@ describe("checkActorPermissions", () => {
       allActorsAllowedForWrite: false,
     });
   });
+
+  it.each(["account", "permission"])(
+    "preserves quota diagnostics without granting authority when %s lookup is limited",
+    async (lookup) => {
+      const quota = new GitHubQuotaError({
+        credentialScope: "production-action",
+        clientRole: "main-controller",
+        requests: 1,
+        cacheHits: 0,
+        coalesced: 0,
+        retries: 0,
+        waitMs: 0,
+        quotaFailures: 1,
+        resetAt: "2026-10-03T12:00:00.000Z",
+      });
+      const client = clientWith(
+        () => (lookup === "permission" ? quota : "write"),
+        () => (lookup === "account" ? quota : "User"),
+      );
+      await expect(checkActorPermissions(client, pullRequestContext())).rejects.toBe(quota);
+      expect(client.rest.users.getByUsername).toHaveBeenCalledOnce();
+      expect(client.rest.repos.getCollaboratorPermissionLevel).toHaveBeenCalledTimes(
+        lookup === "account" ? 0 : 1,
+      );
+    },
+  );
 
   it("requires an explicitly allowed bot as well as repository write permission", async () => {
     const client = clientWith(
