@@ -14,6 +14,13 @@ reuse their already-read first page. Actor permissions, mutable branches and
 entity bindings, immediate write revalidation and unknown-effect reconciliation
 always make fresh requests; they never opt into the cache.
 
+Review context shares its existing 36 KiB JSON text budget fairly across
+changed-file patches before source snippets. Short patches return unused space;
+early large documentation cannot consume every later file's share. Explicit
+coverage and truncation metadata describes this projection, while the original
+snapshot and publication anchors stay intact. The final worker prompt can still
+truncate, so coverage metadata is not proof of a complete model review.
+
 Quota-limited GETs may wait and retry at most twice, with at most 15 seconds of
 total waiting and enough time left in the current task budget. `retry-after`
 and exhausted primary-quota reset headers set the earliest allowed retry time.

@@ -19,6 +19,10 @@ versioning for published action releases.
   selected immutable text is cached/coalesced; authorization, mutable identity,
   immediate write revalidation and effect reconciliation remain fresh.
   GitHub mutations send once and reconcile; retries never replay writes/tasks.
+- Fairly shares the existing Review context budget across changed-file patches
+  before source snippets, preventing early documentation from consuming later
+  code evidence. Explicit coverage/truncation metadata preserves review limits;
+  the original snapshot and publication anchors remain unchanged.
 - Keeps DSH `0.2.0-rc.2` exact pins and existing compositions. Published Session
   APIs can resume a new worker, but old permission intents and cross-run
   provenance/concurrency/storage require further Action engineering. Images

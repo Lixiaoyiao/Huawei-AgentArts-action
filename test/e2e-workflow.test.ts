@@ -11,6 +11,13 @@ function stepBlock(workflow: string, name: string): string {
   return workflow.slice(start, end < 0 ? undefined : end);
 }
 
+function workflowRecord(value: unknown): Readonly<Record<string, unknown>> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error("Expected a workflow mapping");
+  }
+  return value as Readonly<Record<string, unknown>>;
+}
+
 describe("trusted core E2E workflow", () => {
   let workflow: string;
 
@@ -64,6 +71,69 @@ describe("trusted core E2E workflow", () => {
     expect(workflow).not.toContain("INPUT_DSH-VERSION=");
     expect(workflow).toContain("uses: ./candidate-action");
     expect(workflow).toContain("node candidate-action/dist/index.js");
+  });
+
+  it("declares real validation commands for the no-change Subagent write without executing validation", () => {
+    const launch = stepBlock(workflow, "Real native.subagent with no-change write");
+    const assertion = stepBlock(workflow, "Assert native.subagent and no-change semantics");
+    const configured = /^\s+test-commands: '(.+)'$/mu.exec(launch)?.[1];
+    if (configured === undefined)
+      throw new Error("Subagent write lacks explicit validation commands");
+    const commands: unknown = JSON.parse(configured);
+
+    expect(commands).toEqual([
+      ["npm", "ci", "--ignore-scripts"],
+      ["npm", "run", "typecheck"],
+      ["npm", "test"],
+    ]);
+    expect(launch).toContain("task-access: write");
+    expect(launch).toContain('allow-write: "true"');
+    expect(launch).toContain('run-tests: "true"');
+    expect(launch).toContain('disallowed-tools: \'["native.bash","native.web-search"]\'');
+    expect(assertion).toContain('.policy.trust == "trusted-write"');
+    expect(assertion).toContain('.write.status == "no-changes" and .write.changedPaths == []');
+    expect(assertion).toContain('.validation.status == "not-applicable"');
+    expect(assertion).toContain('.id == "native.subagent" and .completed == true and .ok == true');
+    expect(assertion).toContain("for component in main candidate prs comments task-refs task-prs");
+  });
+
+  it("requires nonempty validation argv for every explicit write task and preserves the failing validator", () => {
+    const parsed: unknown = parse(workflow);
+    const steps = Object.values(workflowRecord(workflowRecord(parsed).jobs)).flatMap((job) => {
+      const candidates = workflowRecord(job).steps;
+      return Array.isArray(candidates) ? candidates.map(workflowRecord) : [];
+    });
+    const writeTasks = steps.filter((step) => {
+      if (step.uses !== "./candidate-action") return false;
+      const inputs = workflowRecord(step.with);
+      return inputs.command === "task" && inputs["task-access"] === "write";
+    });
+    expect(writeTasks.map((step) => step.name)).toEqual(
+      expect.arrayContaining([
+        "Native trusted-write workspace path",
+        "Real native.subagent with no-change write",
+      ]),
+    );
+    for (const step of writeTasks) {
+      const configured = workflowRecord(step.with)["test-commands"];
+      if (typeof configured !== "string") {
+        throw new Error(`Positive write ${String(step.name)} lacks explicit validation commands`);
+      }
+      const commands: unknown = JSON.parse(configured);
+      expect(commands, String(step.name)).toBeInstanceOf(Array);
+      if (!Array.isArray(commands)) throw new Error("Validation commands must be argv arrays");
+      expect(commands.length, String(step.name)).toBeGreaterThan(0);
+      for (const command of commands) {
+        expect(command, String(step.name)).toBeInstanceOf(Array);
+        if (!Array.isArray(command)) throw new Error("Validation command must be an argv array");
+        expect(command.length, String(step.name)).toBeGreaterThan(0);
+        expect(command.every((argument: unknown) => typeof argument === "string")).toBe(true);
+      }
+    }
+    const failingValidator = writeTasks.find(
+      (step) => workflowRecord(step.with)["test-commands"] === '[["false"]]',
+    );
+    expect(failingValidator?.["continue-on-error"]).toBe(true);
   });
 
   it("installs candidate test dependencies separately from the trusted harness lock", () => {

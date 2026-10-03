@@ -170,6 +170,62 @@ export function assertOperationContext(
   }
 }
 
+function contextTextBytes(value: string | undefined): number {
+  // Charge escaped newlines/quotes too, so 36 KiB does not become 72 KiB in
+  // the model's JSON envelope and silently discard later file metadata.
+  return value === undefined ? 0 : Buffer.byteLength(JSON.stringify(value), "utf8") - 2;
+}
+
+function boundContextText(value: string, maximumBytes: number): string {
+  if (contextTextBytes(value) <= maximumBytes) return value;
+  if (maximumBytes < contextTextBytes("\n[truncated by dsh-action]")) return "";
+  let low = 0;
+  let high = Math.min(Buffer.byteLength(value, "utf8"), maximumBytes);
+  let bounded = "";
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    const candidate = boundedText(value, middle);
+    if (contextTextBytes(candidate) <= maximumBytes) {
+      bounded = candidate;
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return bounded;
+}
+
+/** Deterministic water filling: short evidence returns its unused share. */
+function fairlyBoundContext(
+  values: readonly (string | undefined)[],
+  maximumBytes: number,
+  perFileBytes: number,
+): readonly (string | undefined)[] {
+  const capped = values.map((value) =>
+    value === undefined ? undefined : boundContextText(value, perFileBytes),
+  );
+  const needs = capped.map(contextTextBytes);
+  const allocations = needs.map(() => 0);
+  let remaining = maximumBytes;
+  let active = needs.flatMap((need, index) => (need > 0 ? [index] : []));
+  while (remaining > 0 && active.length > 0) {
+    const share = Math.floor(remaining / active.length);
+    const extra = remaining % active.length;
+    for (const [position, index] of active.entries()) {
+      const grant = Math.min(
+        (needs[index] ?? 0) - (allocations[index] ?? 0),
+        share + (position < extra ? 1 : 0),
+      );
+      allocations[index] = (allocations[index] ?? 0) + grant;
+      remaining -= grant;
+    }
+    active = active.filter((index) => (allocations[index] ?? 0) < (needs[index] ?? 0));
+  }
+  return capped.map((value, index) =>
+    value === undefined ? undefined : boundContextText(value, allocations[index] ?? 0),
+  );
+}
+
 function sanitizedSnapshot(snapshot: EntitySnapshot): unknown {
   if (snapshot.kind === "issue") {
     let commentBytes = 0;
@@ -186,7 +242,33 @@ function sanitizedSnapshot(snapshot: EntitySnapshot): unknown {
       }),
     };
   }
-  let contentBytes = 0;
+  const files = snapshot.changedFiles.slice(0, 100);
+  const sanitizedPatches = files.map((file) =>
+    file.patch === undefined ? undefined : sanitizeUntrustedText(file.patch),
+  );
+  const sanitizedSources = files.map((file) =>
+    file.source === undefined ? undefined : sanitizeUntrustedText(file.source),
+  );
+  // Allocate all patches before any source. A long early README, generated
+  // bundle or source prefix cannot consume later files' entire evidence share.
+  const patches = fairlyBoundContext(sanitizedPatches, 36 * 1024, 12 * 1024);
+  const patchBytes = patches.reduce((total, patch) => total + contextTextBytes(patch), 0);
+  const sources = fairlyBoundContext(sanitizedSources, 36 * 1024 - patchBytes, 4 * 1024);
+  const sourceBytes = sources.reduce((total, source) => total + contextTextBytes(source), 0);
+  const changedFiles = files.map((file, index) => {
+    const patch = patches[index];
+    const source = sources[index];
+    return {
+      ...file,
+      patch,
+      source,
+      patchTruncated: file.patchTruncated || patch !== sanitizedPatches[index],
+      sourceTruncated: file.sourceTruncated || source !== sanitizedSources[index],
+    };
+  });
+  const projectionTruncated =
+    files.length < snapshot.changedFiles.length ||
+    changedFiles.some((file) => file.patchTruncated || file.sourceTruncated);
   let commentBytes = 0;
   return {
     kind: snapshot.kind,
@@ -202,30 +284,34 @@ function sanitizedSnapshot(snapshot: EntitySnapshot): unknown {
     headRepositoryId: snapshot.headRepositoryId,
     draft: snapshot.draft,
     isFork: snapshot.isFork,
-    diffTruncated: snapshot.diffTruncated,
-    title: boundedText(sanitizeUntrustedText(snapshot.title), 2 * 1024),
-    body: boundedText(sanitizeUntrustedText(snapshot.body), 12 * 1024),
+    diffTruncated:
+      snapshot.diffTruncated ||
+      files.length < snapshot.changedFiles.length ||
+      changedFiles.some((file) => file.patchTruncated),
+    contextTruncated: projectionTruncated,
+    contextCoverage: {
+      changedFileCount: snapshot.changedFiles.length,
+      includedFileCount: files.length,
+      omittedFileCount: snapshot.changedFiles.length - files.length,
+      patchBytes,
+      sourceBytes,
+      contentBudgetBytes: 36 * 1024,
+      byteAccounting: "json-string-content-utf8",
+      patchesTruncated: changedFiles.filter((file) => file.patchTruncated).length,
+      sourcesTruncated: changedFiles.filter((file) => file.sourceTruncated).length,
+      patchesMissing: changedFiles.filter((file) => file.patchMissing).length,
+    },
+    // Keep patch evidence ahead of prose if the final argv-safe envelope must
+    // truncate an unusually large metadata/body/comments packet again.
+    changedFiles,
+    title: boundContextText(sanitizeUntrustedText(snapshot.title), 2 * 1024),
+    body: boundContextText(sanitizeUntrustedText(snapshot.body), 12 * 1024),
     comments: snapshot.comments.slice(-20).flatMap((comment) => {
-      const body = boundedText(sanitizeUntrustedText(comment.body), 2 * 1024);
-      const bytes = Buffer.byteLength(body, "utf8");
+      const body = boundContextText(sanitizeUntrustedText(comment.body), 2 * 1024);
+      const bytes = contextTextBytes(body);
       if (commentBytes + bytes > 6 * 1024) return [];
       commentBytes += bytes;
       return [{ ...comment, body }];
-    }),
-    changedFiles: snapshot.changedFiles.slice(0, 100).map((file) => {
-      const remaining = Math.max(0, 36 * 1024 - contentBytes);
-      const patch =
-        file.patch === undefined
-          ? undefined
-          : boundedText(sanitizeUntrustedText(file.patch), Math.min(12 * 1024, remaining));
-      contentBytes += patch === undefined ? 0 : Buffer.byteLength(patch, "utf8");
-      const sourceRemaining = Math.max(0, 36 * 1024 - contentBytes);
-      const source =
-        file.source === undefined
-          ? undefined
-          : boundedText(sanitizeUntrustedText(file.source), Math.min(4 * 1024, sourceRemaining));
-      contentBytes += source === undefined ? 0 : Buffer.byteLength(source, "utf8");
-      return { ...file, patch, source };
     }),
   };
 }
