@@ -36,8 +36,8 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 The installer creates `.github/workflows/` when necessary and refuses to
 overwrite an existing target workflow. It does not add `DEEPSEEK_API_KEY`,
-commit or push changes, or open a pull request. Installer v0.3.1 targets the
-formal v0.9.1 Action commit `80cf46ee9098158ea664c45ea6371604c47b71e6` and
+commit or push changes, or open a pull request. Installer v0.4.0 targets the
+formal v0.9.2 Action commit `c184872f309ebfc5e57a0c5c1397c59e774709e0` and
 the exact DSH `0.2.0-rc.2` pin in both composition modes. Packing must follow
 successful Action tag, GitHub Release, and release-canary identity checks and
 receive that commit as `DSH_ACTION_RELEASE_SHA`. Both source templates and
@@ -83,11 +83,8 @@ tests and untouched placeholders before model startup. A bounded, credential-fre
 `docker info` probe reports an unavailable CLI/daemon before runtime installation.
 These checks never grant authority or replace executed Controller validation.
 
-The next installer release also accepts optional `--test-commands` JSON argv
-arrays and `--container-image name@sha256:<64 lowercase hex>` for `commands` or
-`both`. These flags are available in the source being prepared for release;
-the current published installer identity above remains unchanged until its
-independent publication. Maintainers must explicitly choose reviewed,
+Installer 0.4.0 accepts optional `--test-commands` JSON argv arrays and
+`--container-image name@sha256:<64 lowercase hex>` for `commands` or `both`. Maintainers must explicitly choose reviewed,
 credential-free commands. The installer never discovers or executes scripts,
 and omitting the flags preserves the fail-closed placeholder.
 
@@ -125,11 +122,11 @@ uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
 ```
 
 For production, replace the tag with the full immutable commit SHA resolved
-from the formal release. Installer v0.3.1 targets the v0.9.1 commit shown below;
+from the formal release. Installer v0.4.0 targets the v0.9.2 commit shown below;
 its separately reviewed installer source commit is a different identity:
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@80cf46ee9098158ea664c45ea6371604c47b71e6 # v0.9.1
+uses: Lixiaoyiao/deepseek-harness-action@c184872f309ebfc5e57a0c5c1397c59e774709e0 # v0.9.2
 ```
 
 The installer source tag and `DSH_ACTION_RELEASE_SHA` packing input must each

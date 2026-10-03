@@ -18,7 +18,7 @@ import {
 import { DSH_VERSION } from "../src/release.js";
 
 const execFileAsync = promisify(execFile);
-const INSTALLER_VERSION = "0.3.1";
+const INSTALLER_VERSION = "0.4.0";
 // Test-only binding. Production packing must resolve the qualified formal tag.
 const RELEASE_SHA = "0123456789abcdef0123456789abcdef01234567";
 const RELEASE_TOKEN = "__DSH_ACTION_RELEASE_SHA__";
@@ -99,7 +99,7 @@ afterAll(async () => {
 });
 
 describe("create-deepseek-harness-action release build", () => {
-  it("declares the independent 0.3.1 npm create package", async () => {
+  it("declares the independent 0.4.0 npm create package", async () => {
     const manifest: unknown = JSON.parse(
       await readFile(new URL("package.json", packageRoot), "utf8"),
     );
@@ -165,7 +165,7 @@ describe("create-deepseek-harness-action release build", () => {
       expect(runtime).not.toContain(DSH_MODE_TOKEN);
     }
     await expect(readFile(join(builtPackage, "installer.mjs"), "utf8")).resolves.toContain(
-      "/blob/create-deepseek-harness-action-v0.3.1/docs/setup.md",
+      "/blob/create-deepseek-harness-action-v0.4.0/docs/setup.md",
     );
 
     for (const [index, invalidReleaseSha] of [
@@ -275,6 +275,8 @@ describe("explicit maintainer validation setup", () => {
       const withInputs = document.jobs.command.steps.at(-1)?.with;
       expect(withInputs?.["test-commands"]).toBe(JSON.stringify(commands));
       expect(withInputs?.["container-image"]).toBe(image);
+      expect(contents.match(/^ {10}container-image: .+$/gmu)).toHaveLength(1);
+      expect(await workflow(project, "dsh-review.yml")).not.toContain(image);
       expect(withInputs?.["run-tests"]).toBe("true");
       expect(contents).toContain(`deepseek-harness-action@${RELEASE_SHA}`);
       expect(contents).not.toContain("REQUIRED: replace test-commands");
@@ -283,6 +285,59 @@ describe("explicit maintainer validation setup", () => {
         "No repository scripts were discovered, executed, or automatically trusted",
       );
       expect(output.text).toContain("Not checked: credential validity/token scopes/quota, Docker");
+    },
+  );
+
+  it.each([
+    ["controlled", "missing"],
+    ["native", "missing"],
+    ["controlled", "duplicate"],
+    ["native", "duplicate"],
+    ["controlled", "misplaced"],
+    ["native", "misplaced"],
+  ] as const)(
+    "fails closed before creating either workflow for %s/%s image-template drift",
+    async (dshMode, drift) => {
+      const project = await createProject();
+      const templateDirectory = await mkdtemp(join(suiteDirectory, "image-template-drift-"));
+      for (const name of await readdir(join(builtPackage, "templates"))) {
+        await writeFile(
+          join(templateDirectory, name),
+          await readFile(join(builtPackage, "templates", name), "utf8"),
+          "utf8",
+        );
+      }
+      const source = dshMode === "native" ? "dsh-commands-native.yml" : "dsh-commands.yml";
+      const templatePath = join(templateDirectory, source);
+      const template = await readFile(templatePath, "utf8");
+      const imageLine = /^ {10}container-image: .+$/mu.exec(template)?.[0];
+      if (imageLine === undefined) throw new Error("Expected the official image-template fixture");
+      const altered =
+        drift === "missing"
+          ? template.replace(imageLine, "")
+          : drift === "duplicate"
+            ? template.replace(imageLine, `${imageLine}\n${imageLine}`)
+            : `${template.replace(imageLine, "")}\n      - name: Unrelated step\n        uses: example/other-action@v1\n        with:\n${imageLine}\n`;
+      await writeFile(templatePath, altered, "utf8");
+      await expect(
+        runInstaller({
+          argv: [
+            "--mode",
+            "both",
+            "--dsh-mode",
+            dshMode,
+            "--container-image",
+            `node@sha256:${"a".repeat(64)}`,
+          ],
+          cwd: project,
+          output: new OutputCapture(),
+          input: Readable.from([]),
+          isTTY: false,
+          templateDirectory,
+        }),
+      ).rejects.toThrow(/container-image Action input|container-image must be a direct input/u);
+      await expect(workflow(project, "dsh-review.yml")).rejects.toThrow();
+      await expect(workflow(project, "dsh-commands.yml")).rejects.toThrow();
     },
   );
 

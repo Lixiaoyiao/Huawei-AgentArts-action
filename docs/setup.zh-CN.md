@@ -35,7 +35,7 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 安装器会按需创建 `.github/workflows/`，如果目标 workflow 已存在则拒绝覆盖。
 它不会添加 `DEEPSEEK_API_KEY`、commit 或 push 改动，也不会创建 PR。安装器
-v0.3.1 对应正式 v0.9.1 Action commit `80cf46ee9098158ea664c45ea6371604c47b71e6`，
+v0.4.0 对应正式 v0.9.2 Action commit `c184872f309ebfc5e57a0c5c1397c59e774709e0`，
 两种 composition 都保持精确 DSH `0.2.0-rc.2` pin。打包须在 Action Tag、GitHub
 Release 与 release canary 身份一致后，通过 `DSH_ACTION_RELEASE_SHA` 注入该
 核验出的完整、不可变 commit；源码模板与实际打包内容都须检查精确 DSH pin。
@@ -75,10 +75,8 @@ Action 的公开输入和扩展 schema，检查缺少凭据、DSH 精确版本�
 有时间上限、无 Controller 凭据的 `docker info` 预检会在安装 runtime 前
 报告 CLI/daemon 不可用。这些检查不授予权限，也不替代 Controller 的真实验证。
 
-准备中的下一版安装器还为 `commands` / `both` 提供显式
-`--test-commands` JSON argv 和 `--container-image name@sha256:<64 位小写十六进制>`。
-这些选项目前来自待发布源码；上文旧版的正式发布身份仍然有效，直到完成
-安装器独立发布。维护者必须自行选择来源可信、经过审核、无凭据的验证命令。
+安装器 0.4.0 为 `commands` / `both` 提供显式 `--test-commands` JSON argv
+和 `--container-image name@sha256:<64 位小写十六进制>`。维护者必须自行选择来源可信、经过审核、无凭据的验证命令。
 安装器不会自动发现或执行脚本；省略选项仍保留安全失败的验证占位符。
 
 ## 手工安装
@@ -115,11 +113,11 @@ uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
 ```
 
 生产环境应把 Tag 替换为从正式 Release 解析出的完整、不可变 commit SHA。
-installer v0.3.1 对应如下 v0.9.1 Action commit；独立审查的 installer 源码 commit
+installer v0.4.0 对应如下 v0.9.2 Action commit；独立审查的 installer 源码 commit
 是另一个身份：
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@80cf46ee9098158ea664c45ea6371604c47b71e6 # v0.9.1
+uses: Lixiaoyiao/deepseek-harness-action@c184872f309ebfc5e57a0c5c1397c59e774709e0 # v0.9.2
 ```
 
 必须分别核验 installer 源码 Tag 与 `DSH_ACTION_RELEASE_SHA` 打包输入；源码中的
