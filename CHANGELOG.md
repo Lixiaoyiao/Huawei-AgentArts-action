@@ -3,6 +3,23 @@
 Notable user-facing changes are recorded here. This project follows semantic
 versioning for published action releases.
 
+## Installer 0.3.1 - 2026-10-03
+
+- Updates the independently versioned create package for the formal v0.9.1
+  Action commit `80cf46ee9098158ea664c45ea6371604c47b71e6` and audited DSH
+  `0.2.0-rc.2` input in controlled and native workflows.
+- Resolves migration PR feedback about obsolete installer runtime pins with
+  source-template and packed-artifact binding checks. The release-contract
+  and installer tests keep the Action SHA and exact DSH pin aligned across
+  every generated workflow.
+- Updates installer documentation and source-tag setup links for this
+  compatibility patch. Public CLI flags, controlled default, explicit native
+  opt-in, overwrite protection, and workflow security boundaries stay unchanged.
+- Keeps source review, immutable installer tagging, exact-tarball qualification,
+  npm publication, and fresh official-registry consumers as distinct gates.
+  Packing receives only the verified Action commit through
+  `DSH_ACTION_RELEASE_SHA`.
+
 ## [0.9.1] - 2026-10-03
 
 - Migrates the controlled and native compositions from DSH `0.1.7-rc.2` to

@@ -73,10 +73,11 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 ```
 
 安装器会按需创建 `.github/workflows/`，如果目标 workflow 已存在则拒绝覆盖。
-它不会添加 Secret、commit 或 push 改动，也不会创建 PR。已发布的安装器
-v0.3.0 绑定正式 v0.9.0 Action；v0.9.1 对应的安装器更新须等其 Tag、GitHub
-Release 与 release canary 身份一致后，打包时再通过 `DSH_ACTION_RELEASE_SHA`
-注入核验过的完整、不可变 Action commit。
+它不会添加 Secret、commit 或 push 改动，也不会创建 PR。安装器 v0.3.1
+对应正式 v0.9.1 Action commit `80cf46ee9098158ea664c45ea6371604c47b71e6`，
+controlled 与 native workflow 都保持 DSH `0.2.0-rc.2`。打包须在 Tag、GitHub
+Release 与 release canary 身份一致后，通过 `DSH_ACTION_RELEASE_SHA` 注入该
+核验过的完整、不可变 Action commit；源码模板与实际打包 workflow 都须保持精确 DSH pin。
 生成的 workflow 不会使用 candidate SHA、浮动 Tag 或分支。
 
 安装完成后，在 **Settings → Secrets and variables → Actions** 中添加 `DEEPSEEK_API_KEY`。打开或更新一个非 draft PR 即可触发 Review；使用 Coding Commands 时，把 `@dsh` 命令写在 Issue 或 PR 评论的第一行。完整 onboarding 与安全说明见[安装指南](docs/setup.zh-CN.md)。
@@ -115,7 +116,7 @@ jobs:
 
 打开一个非 draft PR。Action 只会检出受信任的 base SHA，通过 GitHub API 读取 PR，并且不会运行 fork 中的代码。
 
-生产环境应把 `v0.9.1` 替换为该版本发布时的完整、不可变 commit SHA。权限、版本固定、安全检出规则和完整模板见[安装指南](docs/setup.zh-CN.md)。
+生产环境应把 `v0.9.1` 替换为正式不可变 commit `80cf46ee9098158ea664c45ea6371604c47b71e6`。权限、版本固定、安全检出规则和完整模板见[安装指南](docs/setup.zh-CN.md)。
 
 ## 常用 `@dsh` 命令
 

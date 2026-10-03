@@ -8,11 +8,11 @@ v0.9.1 migrates the existing controlled and experimental native compositions
 to the fixed DSH `0.2.0-rc.2` candidate. It does not add Session/Resume, an
 Action-owned GitHub MCP backend, or another GitHub capability. Its formal
 annotated tag, GitHub Release, and release canary must resolve to the same
-qualified exact-main commit. The published installer `0.3.0` remains bound to
-the formal v0.9.0 Action commit. Its companion patch for v0.9.1 is prepared,
-reviewed, tagged, and published separately after the new Action's formal
-release canary succeeds. Never substitute a guessed or installer-source SHA
-for the immutable Action release binding.
+qualified exact-main commit. Installer `0.3.1` targets the formal v0.9.1
+Action commit `80cf46ee9098158ea664c45ea6371604c47b71e6`. Its source review,
+source tag, pack qualification, and npm publication are separate gates after
+the Action's formal release canary. Never substitute a guessed or
+installer-source SHA for the immutable Action release binding.
 
 ## Release invariants
 
@@ -79,12 +79,16 @@ For an Action version bump, update every release surface together:
 6. Any release-specific verification fixture or documentation.
 
 The standalone `create-deepseek-harness-action` package has its own semantic
-version. Its planned v0.9.1 companion patch is `0.3.1`; prepare that source
-only after the formal Action canary succeeds. Keep its package manifest,
-npm lock/workspace metadata, CLI tests,
-controlled/native templates, and pack-time release-SHA contract aligned.
+version. Its v0.9.1 companion patch is `0.3.1`; prepare that source only after
+the formal Action canary succeeds. Keep its package manifest, npm
+lock/workspace metadata, CLI tests, controlled/native templates, and pack-time
+release-SHA contract aligned.
 `DSH_ACTION_RELEASE_SHA` must be the full commit resolved from the formal
-v0.9.1 tag after qualification. Source preparation never invents that SHA.
+v0.9.1 tag after qualification: `80cf46ee9098158ea664c45ea6371604c47b71e6`.
+Source preparation never invents that SHA. Installer source-template and
+packed-workflow checks must also reject a `dsh-version` other than the
+Action's exact `0.2.0-rc.2` pin; SHA binding alone cannot detect an obsolete
+runtime input.
 
 For a DSH version bump, additionally:
 
@@ -417,7 +421,10 @@ tar -xzf "$tarball" -C "$installer_stage/unpacked"
 Inspect the packed artifact, not only the source tree. It must contain version
 `0.3.1`, expose the `create-deepseek-harness-action` executable, contain no
 unresolved release token or floating Action reference, and generate controlled
-and native workflows bound only to `release_sha`:
+and native workflows bound only to `release_sha`. Verify that every source
+template, packed template, and generated workflow has exactly one
+`dsh-version: 0.2.0-rc.2` input; the old `0.1.7-rc.2` pin is rejected by
+v0.9.1:
 
 ```bash
 node --input-type=module - "$installer_stage/unpacked/package/package.json" <<'NODE'
@@ -475,9 +482,12 @@ test ! -e "$installer_stage/overwrite/.github/workflows/dsh-commands.yml"
 Parse all four generated workflow files as YAML using the already-installed
 repository `yaml` dependency. Confirm the controlled pair resolves the default
 composition, the native pair explicitly selects `dsh-mode: native`, and every
-file contains exactly one immutable Action reference. The deterministic test
-suite separately covers all six `review|commands|both` × `controlled|native`
-combinations.
+file contains exactly one immutable Action reference and the exact audited
+DSH pin. Retain source-template and actual packed-artifact regressions for both
+release binding and runtime-input drift. The deterministic test suite
+separately covers all six `review|commands|both` × `controlled|native`
+combinations; PR feedback about obsolete installer pins must be resolved
+before packing.
 
 Only after those checks pass, authenticate to the official npm registry and
 publish that exact tarball. Do not publish from the source directory because
