@@ -15,6 +15,7 @@ import {
   type ActionPhase,
   type AgentRunSummary,
   type ValidationSummary,
+  type SessionRunSummary,
 } from "../result.js";
 import type { AuthorityAudit } from "../security/authority.js";
 import type { SecurityPolicy } from "../security/policy.js";
@@ -41,7 +42,9 @@ export interface RunState {
   composition?: DshComposition;
   progressFailure?: ProgressFailureFinalization;
   partialWrite?: WriteOutcome;
+  finalizedCommentId?: number;
   githubClient?: GitHubClient;
+  session?: SessionRunSummary;
   partialPublication?: PublicationResult;
   textSources?: {
     readonly instruction?: RepositoryTextFileAudit;
@@ -189,6 +192,7 @@ export async function finishProgressFailure(
 export function outcomeContext(state: RunState, startedAt: number) {
   const githubRequests =
     state.githubClient === undefined ? undefined : githubRequestAudit(state.githubClient);
+  const commentId = state.finalizedCommentId ?? state.progress?.commentId;
   return {
     schemaVersion: 1 as const,
     durationMs: Math.max(0, Date.now() - startedAt),
@@ -200,9 +204,10 @@ export function outcomeContext(state: RunState, startedAt: number) {
     ...(state.dsh === undefined ? {} : { dsh: state.dsh }),
     ...(state.authority === undefined ? {} : { authority: state.authority }),
     ...(githubRequests === undefined ? {} : { githubRequests }),
+    ...(state.session === undefined ? {} : { session: state.session }),
     ...(state.partialPublication === undefined ? {} : { publication: state.partialPublication }),
     ...(state.textSources === undefined ? {} : { textSources: state.textSources }),
-    ...(state.progress?.commentId === undefined ? {} : { commentId: state.progress.commentId }),
+    ...(commentId === undefined ? {} : { commentId }),
   };
 }
 

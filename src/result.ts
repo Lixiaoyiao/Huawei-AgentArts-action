@@ -27,6 +27,7 @@ import {
 import { ValidationFailureError } from "./write/validate.js";
 import { GitHubQuotaError, type GitHubRequestAudit } from "./github/request-policy.js";
 import type { RepositoryTextFileAudit } from "./text-files.js";
+import { SessionCheckpointError } from "./session/errors.js";
 
 export type ActionConclusion = "success" | "neutral" | "failure";
 export type ActionStatus =
@@ -70,6 +71,20 @@ export interface ValidationSummary {
   readonly integrity?: ValidationIntegritySummary;
 }
 
+export interface SessionRunSummary {
+  readonly mode: "save" | "resume";
+  readonly status: "preparing" | "claimed" | "restored" | "saved" | "failed" | "not_saved";
+  readonly sourceRunId?: number;
+  readonly sessionId?: string;
+  readonly generation?: number;
+  readonly claimArtifactId?: number;
+  readonly artifactId?: number;
+  readonly artifactName?: string;
+  readonly payloadSha256?: string;
+  readonly archiveSha256?: string;
+  readonly expiresAt?: string;
+}
+
 export interface RunOutcome {
   readonly schemaVersion: 1;
   readonly conclusion: ActionConclusion;
@@ -97,6 +112,7 @@ export interface RunOutcome {
   readonly taskOutput?: unknown;
   readonly error?: ActionFailure;
   readonly githubRequests?: GitHubRequestAudit;
+  readonly session?: SessionRunSummary;
   readonly textSources?: {
     readonly instruction?: RepositoryTextFileAudit;
     readonly contexts: readonly RepositoryTextFileAudit[];
@@ -233,6 +249,13 @@ export function describeActionFailure(error: unknown, phase: ActionPhase): Actio
     return classifiedFailure(error, phase, {
       title: "Action execution timed out",
       guidance: "Increase timeout-minutes or reduce the context, task, and validation scope.",
+    });
+  }
+  if (error instanceof SessionCheckpointError) {
+    return classifiedFailure(error, phase, {
+      title: "Session checkpoint could not be accepted or saved",
+      guidance:
+        "Inspect the recorded Session source, claim and external effects. Correct the provenance, concurrency, compatibility or retention condition. Use the latest successful producer; do not replay writes or start a duplicate task after an uncertain upload.",
     });
   }
   if (error instanceof AgentNoProgressError && error.cause instanceof ValidationIntegrityError) {
@@ -372,6 +395,7 @@ function structuredResult(
     ...(outcome.taskOutput === undefined ? {} : { taskOutput: outcome.taskOutput }),
     ...(outcome.error === undefined ? {} : { error: outcome.error }),
     ...(outcome.githubRequests === undefined ? {} : { githubRequests: outcome.githubRequests }),
+    ...(outcome.session === undefined ? {} : { session: outcome.session }),
     ...(outcome.textSources === undefined ? {} : { textSources: outcome.textSources }),
   };
 }
@@ -641,6 +665,22 @@ export function formatStepSummary(outcome: RunOutcome): string {
       `**GitHub requests (production Action main client; lifecycle comments use a separate client):** ${String(audit.requests)}; immutable cache hits ${String(audit.cacheHits)}; merged reads ${String(audit.coalesced)}; retries ${String(audit.retries)}; quota wait ${String(audit.waitMs)}ms.`,
       ...(audit.resetAt === undefined ? [] : [`**Quota recovery:** ${audit.resetAt}`]),
     );
+  }
+  if (outcome.session !== undefined) {
+    const session = outcome.session;
+    lines.push(
+      "",
+      `**Session:** ${inlineCode(session.mode)} / ${inlineCode(session.status)}${session.generation === undefined ? "" : `; generation ${String(session.generation)}`}. Current authority was recalculated; historical GitHub writes were not replayed.`,
+    );
+    if (session.sourceRunId !== undefined)
+      lines.push(`**Session source run:** ${String(session.sourceRunId)}`);
+    lines.push(
+      "Session artifact SDK uploads use a separate job-scoped credential; SDK transport requests are not included in the GitHub client counters.",
+    );
+    if (session.artifactName !== undefined)
+      lines.push(
+        `**Session checkpoint:** ${inlineCode(session.artifactName)}${session.expiresAt === undefined ? "" : `; expires ${session.expiresAt}`}.`,
+      );
   }
   if (outcome.error !== undefined) {
     lines.push(

@@ -77,7 +77,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.3
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-version: 0.2.0-rc.2
@@ -85,7 +85,7 @@ jobs:
 
 打开一个非 draft PR。Action 只会检出受信任的 base SHA，通过 GitHub API 读取 PR，并且不会运行 fork 中的代码。
 
-生产环境应把 `v0.9.2` 替换为正式不可变 commit `c184872f309ebfc5e57a0c5c1397c59e774709e0`。权限、版本固定、安全检出规则和完整模板见[安装指南](docs/setup.zh-CN.md)。
+生产环境应绑定对应 GitHub Release 公布的完整 commit。历史 v0.9.2 保持 `c184872f309ebfc5e57a0c5c1397c59e774709e0`，v0.9.3 单独验证与发布。权限、版本固定、安全检出规则和完整模板见[安装指南](docs/setup.zh-CN.md)。
 
 ## 核心能力
 
@@ -105,7 +105,7 @@ Native 模式并不是 unsafe 模式。它把 DSH 内部 headless composition、
 
 Action 仍拥有 trusted-workflow admission、package exact pin、lifecycle script 禁用、runtime inventory audit、Docker 与 `.git`-less workspace 边界、run-scoped DeepSeek 凭据代理、GitHub 凭据隔离、actor/repository trust、validation 与 deferred write、deadline、cancellation 和 secret redaction。Native 仍仅支持 Docker；bridge network 和 read/write mount 都是 whole-worker 能力，不是 per-extension 或 per-tool sandbox。用户自行配置并携带自有凭据的 GitHub MCP 属于受信任外部扩展，其直接副作用不享受 Controller Gateway 的 binding、revalidation、validation 或 deferred-mutation 保证。Controller-owned `command.*` 与 `github.*` 能力继续作为独立且与 mode 正交的平面。
 
-v0.9.2 保持 DSH `0.2.0-rc.2` 精确锁定，新增 [prompt-file / context-files 文本文件上下文](docs/text-files.md)、[不启动模型的配置检查](docs/configuration-check.md)及[按 run 限界的 GitHub 请求诊断](docs/github-requests.md)。写入仍须授权、验证、即时重验与结果核对。Session/Resume 和真实图片附件的接口证据与暂缓原因见[固定运行时审计](docs/v0.9.2-runtime-audit.md)。
+v0.9.3 补充[显式 Session 保存与恢复](docs/zh-CN/session.md)，在现有两种 composition 中复用 DSH 已发布的 persistence 和 Headless 接口。Controller / DSH / Gateway / validation 分层、DSH `0.2.0-rc.2` 精确锁定及 Session 默认关闭保持兼容。本次权限重新计算，旧 GitHub 写入不会重放。[文本文件上下文](docs/text-files.md)、[离线配置检查](docs/configuration-check.md)和[限界 GitHub 请求诊断](docs/github-requests.md)继续可用。真实图片与 Office 附件仍因[已记录的运行时和传输边界](docs/v0.9.2-runtime-audit.md)暂缓。
 
 ## 真实运行
 

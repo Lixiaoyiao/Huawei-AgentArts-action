@@ -101,6 +101,42 @@ export const ACTION_INPUT_CONTRACT = [
     docsGroup: "operation",
   },
   {
+    name: "session-mode",
+    runtimeKey: "sessionMode",
+    required: false,
+    default: "off",
+    description:
+      "Explicit Session opt-in: off, save, or resume. Uses the fixed DSH public persistence interface; requires Docker and a verified trusted workflow with repository-wide dsh-session concurrency.",
+    docsGroup: "runtime",
+  },
+  {
+    name: "session-key",
+    runtimeKey: "sessionKey",
+    required: false,
+    default: "",
+    description:
+      "Maintainer-selected logical Session key, 1-64 ASCII letters, digits, dot, underscore or hyphen. Bound to the repository, workflow job, task and runtime; never grants authority.",
+    docsGroup: "runtime",
+  },
+  {
+    name: "session-source-run-id",
+    runtimeKey: "sessionSourceRunId",
+    required: false,
+    default: "",
+    description:
+      "For session-mode=resume, the explicit successful producer Actions run ID. Only its verified current attempt and latest compatible checkpoint may be restored.",
+    docsGroup: "runtime",
+  },
+  {
+    name: "session-retention-days",
+    runtimeKey: "sessionRetentionDays",
+    required: false,
+    default: "3",
+    description:
+      "Checkpoint retention, 1-7 days. Only the complete raw DSH Session and a bounded provenance manifest are saved; credentials and Controller authorization are excluded.",
+    docsGroup: "runtime",
+  },
+  {
     name: "trigger-phrase",
     runtimeKey: "triggerPhrase",
     required: false,

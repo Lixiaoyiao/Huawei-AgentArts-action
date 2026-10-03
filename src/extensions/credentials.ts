@@ -14,6 +14,7 @@ import type {
 
 const forbiddenCredentialNames = new Set([
   "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+  "ACTIONS_RUNTIME_TOKEN",
   "ACTIONS_ID_TOKEN_REQUEST_URL",
   "DEEPSEEK_API_KEY",
   "GH_TOKEN",
@@ -82,7 +83,7 @@ function sensitiveValuesInJson(value: unknown, sensitive = false): string[] {
   );
 }
 
-function httpUrlSecrets(value: string): readonly string[] {
+function httpUrlSecrets(value: string, minimumLength = 4): readonly string[] {
   const url = new URL(value);
   const candidates = [
     url.username,
@@ -92,28 +93,47 @@ function httpUrlSecrets(value: string): readonly string[] {
     url.search.slice(1),
     ...url.searchParams.values(),
   ];
-  return [...new Set(candidates.flatMap((entry) => decodedVariants(entry)))].filter(
-    (entry) => entry.length >= 8,
-  );
+  const inferred = candidates
+    .flatMap((entry) => decodedVariants(entry))
+    .filter((entry) => entry.length >= Math.max(8, minimumLength));
+  // Short path components such as /mcp or /v1 are weak guesses, not identified
+  // credential values. Session adds only explicit URL credential channels.
+  const identified =
+    minimumLength < 4
+      ? [
+          url.username,
+          url.password,
+          ...[...url.searchParams].flatMap(([name, entry]) =>
+            SENSITIVE_CONFIG_NAME.test(name) ? [entry] : [],
+          ),
+        ]
+          .flatMap((entry) => decodedVariants(entry))
+          .filter((entry) => entry.length >= minimumLength)
+      : [];
+  return [...new Set([...inferred, ...identified])];
 }
 
-function configuredExplicitSecrets(values: readonly string[]): readonly string[] {
+function configuredExplicitSecrets(
+  values: readonly string[],
+  minimumLength = 4,
+): readonly string[] {
   return [
     ...new Set(
       values.flatMap((value) => [
         ...decodedVariants(value),
         ...value
           .split(/[\s,;=]+/u)
-          .filter((part) => part.length >= 4 && !AUTH_SCHEMES.has(part.toLowerCase())),
+          .filter((part) => part.length >= minimumLength && !AUTH_SCHEMES.has(part.toLowerCase())),
       ]),
     ),
-  ].filter((value) => value.length >= 4);
+  ].filter((value) => value.length >= minimumLength);
 }
 
 /** Values that must never cross a Controller log/output boundary. */
 export function configuredHttpSecrets(
   url: string,
   headers: Readonly<Record<string, string>>,
+  minimumLength = 4,
 ): readonly string[] {
   const headerValues = Object.entries(headers).flatMap(([name, value]) => {
     if (!SENSITIVE_CONFIG_NAME.test(name)) return [];
@@ -121,11 +141,11 @@ export function configuredHttpSecrets(
       ...decodedVariants(value),
       ...value
         .split(/[\s,;=]+/u)
-        .filter((part) => part.length >= 4 && !AUTH_SCHEMES.has(part.toLowerCase())),
+        .filter((part) => part.length >= minimumLength && !AUTH_SCHEMES.has(part.toLowerCase())),
     ];
   });
-  return [...new Set([...httpUrlSecrets(url), ...headerValues])].filter(
-    (entry) => entry.length >= 4,
+  return [...new Set([...httpUrlSecrets(url, minimumLength), ...headerValues])].filter(
+    (entry) => entry.length >= minimumLength,
   );
 }
 
@@ -133,6 +153,7 @@ export function configuredHttpSecrets(
 export function configuredStdioSecrets(
   args: readonly string[],
   env: Readonly<Record<string, string>>,
+  minimumLength = 4,
 ): readonly string[] {
   const values = Object.entries(env).flatMap(([name, value]) =>
     SENSITIVE_CONFIG_NAME.test(name) ? decodedVariants(value) : [],
@@ -149,41 +170,45 @@ export function configuredStdioSecrets(
       if (next !== undefined && !next.startsWith("-")) values.push(...decodedVariants(next));
     }
   }
-  return [...new Set(values.filter((value) => value.length >= 4))];
+  return [...new Set(values.filter((value) => value.length >= minimumLength))];
 }
 
 /** Credential-like values in direct Plugin configuration, keyed explicitly by the workflow. */
-export function configuredPluginSecrets(config: unknown): readonly string[] {
-  return [...new Set(sensitiveValuesInJson(config).filter((value) => value.length >= 4))];
+export function configuredPluginSecrets(config: unknown, minimumLength = 4): readonly string[] {
+  return [
+    ...new Set(sensitiveValuesInJson(config).filter((value) => value.length >= minimumLength)),
+  ];
 }
 
 /** Explicit native credential channels supplement the compatible heuristic detector. */
 export function configuredMcpDefinitionSecrets(
   server: McpServerDefinition | NativeMcpServerDefinition,
+  minimumLength = 4,
 ): readonly string[] {
   if (server.transport === "stdio") {
     return [
-      ...configuredStdioSecrets(server.args, server.env),
+      ...configuredStdioSecrets(server.args, server.env, minimumLength),
       ...("credentialEnv" in server
-        ? configuredExplicitSecrets(Object.values(server.credentialEnv))
+        ? configuredExplicitSecrets(Object.values(server.credentialEnv), minimumLength)
         : []),
     ];
   }
   return [
-    ...configuredHttpSecrets(server.url, server.headers),
+    ...configuredHttpSecrets(server.url, server.headers, minimumLength),
     ...("credentialHeaders" in server
-      ? configuredExplicitSecrets(Object.values(server.credentialHeaders))
+      ? configuredExplicitSecrets(Object.values(server.credentialHeaders), minimumLength)
       : []),
   ];
 }
 
 export function configuredPluginDefinitionSecrets(
   plugin: PluginDefinition | NativePluginDefinition,
+  minimumLength = 4,
 ): readonly string[] {
   return [
-    ...configuredPluginSecrets(plugin.config),
+    ...configuredPluginSecrets(plugin.config, minimumLength),
     ...("credentialConfig" in plugin
-      ? configuredExplicitSecrets(Object.values(plugin.credentialConfig))
+      ? configuredExplicitSecrets(Object.values(plugin.credentialConfig), minimumLength)
       : []),
   ];
 }
@@ -191,12 +216,23 @@ export function configuredPluginDefinitionSecrets(
 export function configuredExtensionSecrets(
   mcp: McpConfiguration | NativeMcpConfiguration,
   plugins: PluginConfiguration | NativePluginConfiguration,
+  minimumLength = 4,
 ): readonly string[] {
   const values = [
-    ...mcp.servers.flatMap((server) => configuredMcpDefinitionSecrets(server)),
-    ...plugins.plugins.flatMap((plugin) => configuredPluginDefinitionSecrets(plugin)),
+    ...mcp.servers.flatMap((server) => configuredMcpDefinitionSecrets(server, minimumLength)),
+    ...plugins.plugins.flatMap((plugin) =>
+      configuredPluginDefinitionSecrets(plugin, minimumLength),
+    ),
   ];
-  return [...new Set(values.filter((value) => value.length >= 4))];
+  return [...new Set(values.filter((value) => value.length >= minimumLength))];
+}
+
+/** Session lossless export refuses every nonempty identified credential, including short values. */
+export function configuredSessionExtensionSecrets(
+  mcp: McpConfiguration | NativeMcpConfiguration,
+  plugins: PluginConfiguration | NativePluginConfiguration,
+): readonly string[] {
+  return configuredExtensionSecrets(mcp, plugins, 1);
 }
 
 /** Value-free facts for authority audit construction. */

@@ -38,6 +38,22 @@ inputs:
     description: "JSON array of at most 8 explicit repository-relative text paths from the bound task revision. Attached as untrusted context, never authority; no globs, symlinks, runner paths, images, or Office files."
     required: false
     default: "[]"
+  session-mode:
+    description: "Explicit Session opt-in: off, save, or resume. Uses the fixed DSH public persistence interface; requires Docker and a verified trusted workflow with repository-wide dsh-session concurrency."
+    required: false
+    default: "off"
+  session-key:
+    description: "Maintainer-selected logical Session key, 1-64 ASCII letters, digits, dot, underscore or hyphen. Bound to the repository, workflow job, task and runtime; never grants authority."
+    required: false
+    default: ""
+  session-source-run-id:
+    description: "For session-mode=resume, the explicit successful producer Actions run ID. Only its verified current attempt and latest compatible checkpoint may be restored."
+    required: false
+    default: ""
+  session-retention-days:
+    description: "Checkpoint retention, 1-7 days. Only the complete raw DSH Session and a bounded provenance manifest are saved; credentials and Controller authorization are excluded."
+    required: false
+    default: "3"
   trigger-phrase:
     description: "Maintainer-controlled literal used for first-line comment commands. Routing only; it never grants authority."
     required: false

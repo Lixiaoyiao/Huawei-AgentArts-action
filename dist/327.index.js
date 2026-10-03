@@ -2,7 +2,7 @@ export const id = 327;
 export const ids = [327];
 export const modules = {
 
-/***/ 3327:
+/***/ 53327:
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 
@@ -11,16 +11,16 @@ __webpack_require__.d(__webpack_exports__, {
   finishFix: () => (/* binding */ finishFix)
 });
 
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js + 18 modules
-var core = __webpack_require__(6257);
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js + 13 modules
+var core = __webpack_require__(77094);
 // EXTERNAL MODULE: ./src/lifecycle/cancellation.ts
-var cancellation = __webpack_require__(3257);
+var cancellation = __webpack_require__(83257);
 // EXTERNAL MODULE: ./src/review/tracking.ts
-var tracking = __webpack_require__(4843);
+var tracking = __webpack_require__(94843);
 // EXTERNAL MODULE: ./src/github/comments.ts
-var comments = __webpack_require__(6645);
+var comments = __webpack_require__(66645);
 // EXTERNAL MODULE: ./src/security/redaction.ts
-var redaction = __webpack_require__(5275);
+var redaction = __webpack_require__(65275);
 ;// CONCATENATED MODULE: ./src/github/status.ts
 
 
@@ -38,15 +38,15 @@ async function publishStatusComment(client, target, authorId, title, message, ru
 }
 
 // EXTERNAL MODULE: ./src/write/pr.ts
-var pr = __webpack_require__(8385);
+var pr = __webpack_require__(18385);
 // EXTERNAL MODULE: ./src/write/github.ts
-var github = __webpack_require__(252);
+var github = __webpack_require__(80252);
 // EXTERNAL MODULE: ./src/write/validate.ts
-var validate = __webpack_require__(6713);
+var validate = __webpack_require__(56713);
 // EXTERNAL MODULE: ./src/write/workspace.ts + 1 modules
 var workspace = __webpack_require__(1670);
 // EXTERNAL MODULE: ./src/write/validation-deadline.ts
-var validation_deadline = __webpack_require__(4301);
+var validation_deadline = __webpack_require__(64301);
 ;// CONCATENATED MODULE: ./src/commands/fix.ts
 
 

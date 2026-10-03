@@ -72,13 +72,28 @@ try {
   ]) {
     assert.match(
       launcherSource,
-      /args: \["--json", "--", task\]/u,
+      /\["--json", "--", task\]/u,
       `${mode} must opt into JSON and bind one literal task after the option terminator`,
     );
     assert.doesNotMatch(
       launcherSource,
-      /--session-id|--(?:file|image|attachment)(?:[\s"'=]|$)/u,
-      `${mode} must not opt into resume or attachment entry points`,
+      /--(?:file|image|attachment)(?:[\s"'=]|$)/u,
+      `${mode} must not opt into unsupported attachment entry points`,
+    );
+    assert.match(
+      launcherSource,
+      /sessionPlan\?\.sessionId === undefined/u,
+      `${mode} must keep Session resume opt-in`,
+    );
+    assert.match(
+      launcherSource,
+      /\["--json", "--session-id", sessionPlan\.sessionId, "--", task\]/u,
+      `${mode} must use the published literal Headless resume argument`,
+    );
+    assert.match(
+      launcherSource,
+      /sessionEnabled \? await import\("\.\/action-session\.mjs"\) : undefined/u,
+      `${mode} must require Controller Session admission only for explicit opt-in`,
     );
     for (const row of [
       "session-telemetry-otel",

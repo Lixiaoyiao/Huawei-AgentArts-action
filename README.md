@@ -80,7 +80,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.3
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-version: 0.2.0-rc.2
@@ -88,19 +88,20 @@ jobs:
 
 Open a non-draft pull request. The Action checks out only the trusted base SHA, reads the pull request through GitHub APIs, and never executes fork code.
 
-For production, replace `v0.9.2` with its immutable release commit `c184872f309ebfc5e57a0c5c1397c59e774709e0`. See [Setup](docs/setup.md) for permissions, pinning, checkout rules, and complete templates.
+For production, pin the complete commit published in the corresponding GitHub Release. The existing v0.9.2 release remains `c184872f309ebfc5e57a0c5c1397c59e774709e0`; v0.9.3 is qualified separately. See [Setup](docs/setup.md) for permissions, pinning, checkout rules, and complete templates.
 
 ## Core capabilities
 
-| Capability              | What it does                                                                                          |
-| ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| Pull request review     | Reviews new commits, publishes one summary, and adds high-confidence inline findings                  |
-| General tasks           | Answers repository questions or performs an explicitly authorized coding task                         |
-| CI diagnosis and repair | Reads failed checks and logs; trusted workflows may validate and publish a fix                        |
-| Issue implementation    | Turns an authorized Issue request into a validated branch and pull request                            |
-| Composition modes       | Keeps the existing controlled tool profile by default and offers an experimental native DSH mode      |
-| Controlled tools        | Adds exact profiles for native, fixed-command, typed Controller GitHub, MCP, Bundle, and Plugin tools |
-| Structured results      | Keeps the schema-v1 audit envelope and can validate an optional maintainer-defined task result        |
+| Capability              | What it does                                                                                                |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Pull request review     | Reviews new commits, publishes one summary, and adds high-confidence inline findings                        |
+| General tasks           | Answers repository questions or performs an explicitly authorized coding task                               |
+| CI diagnosis and repair | Reads failed checks and logs; trusted workflows may validate and publish a fix                              |
+| Issue implementation    | Turns an authorized Issue request into a validated branch and pull request                                  |
+| Composition modes       | Keeps the existing controlled tool profile by default and offers an experimental native DSH mode            |
+| Controlled tools        | Adds exact profiles for native, fixed-command, typed Controller GitHub, MCP, Bundle, and Plugin tools       |
+| Structured results      | Keeps the schema-v1 audit envelope and can validate an optional maintainer-defined task result              |
+| Explicit Session resume | Continues a completed task in a new Actions run using a verified raw DSH checkpoint and current permissions |
 
 v0.9.2 retains the experimental `dsh-mode: native` path over the locked DSH `0.2.0-rc.2` runtime and its official ecosystem composition. Native MCP servers, Profile Bundles, direct Cordis Plugins, repository Skills, Subagents, and Workflows retain DSH-native discovery and behavior. `controlled` remains the compatible default, so workflows that omit `dsh-mode` retain their existing composition, permissions, tools, budgets, receipts, and outputs.
 
@@ -108,7 +109,7 @@ Native mode is not an unsafe mode. It returns ownership of DSH's internal headle
 
 The Action still owns trusted-workflow admission, exact package pins, lifecycle-script suppression, runtime inventory audit, Docker and `.git`-less workspace boundaries, the run-scoped DeepSeek credential proxy, GitHub credential isolation, actor/repository trust, validation and deferred writes, deadlines, cancellation, and secret redaction. Native remains Docker-only. Bridge network and read/write mounts are whole-worker capabilities, not per-extension or per-tool sandboxes. A user-configured GitHub MCP with its own credential is a trusted external extension whose direct effects do not receive the Controller Gateway's binding, revalidation, validation, or deferred-mutation guarantees. Controller-owned `command.*` and `github.*` capabilities remain a separate, mode-independent plane.
 
-v0.9.2 keeps DSH exactly pinned to `0.2.0-rc.2` and adds [prompt-file / context-files text context](docs/text-files.md), [configuration checks without a model](docs/configuration-check.md), and [bounded GitHub request diagnostics](docs/github-requests.md). Writes still require authorization, validation, fresh revalidation and reconciliation. See the [fixed-runtime audit](docs/v0.9.2-runtime-audit.md) for Session/Resume and image deferrals.
+The v0.9.3 follow-up adds [explicit Session save/resume](docs/session.md) in both existing compositions, using DSH's published persistence and Headless interfaces. It preserves Controller / DSH / Gateway / validation ownership, the exact `0.2.0-rc.2` pin and the default-off Session path. Current authority is recalculated; previous GitHub writes are not replayed. [Text file context](docs/text-files.md), [offline configuration checks](docs/configuration-check.md) and [bounded GitHub diagnostics](docs/github-requests.md) remain available. Native image and Office attachments remain deferred for the [documented runtime/transport reasons](docs/v0.9.2-runtime-audit.md).
 
 ## Live runs
 

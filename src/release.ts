@@ -1,10 +1,10 @@
 /** Release constants shared by runtime policy and repository contract checks. */
-export const ACTION_VERSION = "0.9.2" as const;
+export const ACTION_VERSION = "0.9.3" as const;
 export const ACTION_TAG = `v${ACTION_VERSION}` as const;
 export const DSH_VERSION = "0.2.0-rc.2" as const;
 export const RELEASE_CANARY_VARIABLE = "DSH_RELEASE_CANARY_SHA" as const;
 
-/** Packages loaded by the production launcher or generated controlled Profile. */
+/** Exact DSH packages imported by the Controller, launcher or generated Profile. */
 export const DSH_RUNTIME_PACKAGES = [
   "@deepseek-ai/dsh",
   "@deepseek-ai/dsh-app-boot",
@@ -24,6 +24,7 @@ export const DSH_RUNTIME_PACKAGES = [
   "@deepseek-ai/dsh-ptc-runtime",
   "@deepseek-ai/dsh-sandbox-policy",
   "@deepseek-ai/dsh-sandbox",
+  "@deepseek-ai/dsh-session-format-catalog",
   "@deepseek-ai/dsh-shell",
   "@deepseek-ai/dsh-spill",
   "@deepseek-ai/dsh-subagent",

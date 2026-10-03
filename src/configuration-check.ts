@@ -223,6 +223,19 @@ export function checkConfiguration(
     schemaVersion: 1,
     ok: !diagnostics.some(({ status }) => status === "failed"),
     scope: "static_configuration_only",
-    diagnostics: [...diagnostics, ...uncheckedDiagnostics],
+    diagnostics: [
+      ...diagnostics,
+      ...uncheckedDiagnostics,
+      ...(raw["session-mode"] === "save" || raw["session-mode"] === "resume"
+        ? [
+            {
+              id: "session_provenance",
+              status: "not_checked" as const,
+              message:
+                "Session workflow source, repository-wide concurrency, producer run/attempt, artifact integrity, retention and latest generation require fresh execution-time checks; no artifact is read by this offline check.",
+            },
+          ]
+        : []),
+    ],
   };
 }
