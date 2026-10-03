@@ -1764,7 +1764,9 @@ jobs:
             "INPUT_ALLOWED-ACTORS=$actor" 'INPUT_INCLUDE-COMMENTS-BY-ACTOR=*' \
             "INPUT_EXCLUDE-COMMENTS-BY-ACTOR=$actor,github-actions[bot]" \
             'INPUT_PERMISSION-PROFILE=custom' 'INPUT_ALLOWED-TOOLS=["workspace.edit"]' \
-            'INPUT_ALLOW-WRITE=true' 'INPUT_ISOLATION=docker' 'INPUT_MAX-TURNS=1'
+            'INPUT_ALLOW-WRITE=true' 'INPUT_ISOLATION=docker' 'INPUT_MAX-TURNS=1' \
+            'INPUT_RUN-TESTS=true' \
+            'INPUT_TEST-COMMANDS=[["npm","ci","--ignore-scripts"],["npm","run","typecheck"],["npm","test"]]'
           native_write_result="$(read_output native_write result-json)"
           jq -c '{stage:"native-write",conclusion,status,operation,trust:.policy.trust,dsh,permissions,toolPolicy,isolation,write}' <<<"$native_write_result"
           jq -e '
