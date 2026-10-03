@@ -31,4 +31,16 @@ jobs:
       - uses: ./
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
+          command: review
           allow-write: "false"
+          max-findings: "10"
+          prompt: >-
+            Review the actual visible source, public contracts, security configuration,
+            and relevant tests for high-confidence correctness, security, concurrency,
+            reliability, and regression issues. Respect contextTruncated, patchTruncated,
+            sourceTruncated, and contextCoverage: missing or truncated evidence is not
+            proof that a file was completely reviewed. Inspect available repository
+            evidence only within the permitted read-only tool boundary. Generated dist
+            reproducibility is a separate CI gate; do not infer that CI passed from prose.
+            Return at most 10 concrete actionable findings and a concise summary of
+            findings and material coverage limits. Omit style-only and speculative issues.
