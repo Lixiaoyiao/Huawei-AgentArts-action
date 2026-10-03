@@ -36,7 +36,7 @@ export function buildSessionTask(phase, challenge, memory) {
     schema: JSON.stringify({
       type: "object",
       properties: {
-        memory: { type: "string", pattern: "^[a-f0-9]{48}$" },
+        memory: { type: "string", minLength: 48, maxLength: 48 },
         challenge: { type: "string", const: challenge },
         phase: { type: "string", const: phase },
       },
