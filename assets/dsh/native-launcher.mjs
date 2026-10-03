@@ -18,7 +18,7 @@ import {
 const NAME = "dsh-action-native";
 // The Action installs the locked runtime and any admitted out-of-tree packages
 // in this run-scoped Profile directory. Its ordered Bundle layers still begin
-// with the official 0.1.7-rc.2 headless template.
+// with the official 0.2.0-rc.2 headless template.
 const PROFILE = "github-action";
 const PROFILE_ROOT_FILENAME = "action-native-root.yml";
 const INSTALL_ANCHOR = createRequire(import.meta.url).resolve("@deepseek-ai/dsh/package.json");

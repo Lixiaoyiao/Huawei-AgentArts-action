@@ -165,7 +165,7 @@ jobs:
             throw new Error("Pinned native binding must load directly from the read-only package");
           }
 
-          const expectedVersion = "0.1.7-rc.2";
+          const expectedVersion = "0.2.0-rc.2";
           const manifest = JSON.parse(await readFile("package.json", "utf8"));
           const lock = JSON.parse(await readFile("package-lock.json", "utf8"));
           const expectedPackages = Object.keys(manifest.dependencies ?? {})

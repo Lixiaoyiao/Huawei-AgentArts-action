@@ -250,7 +250,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## @deepseek-ai/dsh-app-boot@0.1.7-rc.2
+## @deepseek-ai/dsh-app-boot@0.2.0-rc.2
 
 License: MIT
 Source: git+https://github.com/deepseek-ai/deepseek-harness.git
@@ -279,7 +279,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## @deepseek-ai/dsh-atomic-write@0.1.7-rc.2
+## @deepseek-ai/dsh-atomic-write@0.2.0-rc.2
 
 License: MIT
 Source: git+https://github.com/deepseek-ai/deepseek-harness.git
@@ -308,7 +308,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## @deepseek-ai/dsh-home-paths@0.1.7-rc.2
+## @deepseek-ai/dsh-home-paths@0.2.0-rc.2
 
 License: MIT
 Source: git+https://github.com/deepseek-ai/deepseek-harness.git
@@ -1073,7 +1073,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-## undici@6.28.0
+## undici@6.29.0
 
 License: MIT
 Source: git+https://github.com/nodejs/undici.git

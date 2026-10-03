@@ -81,7 +81,7 @@ change, validate it, revalidate the bound entity, and use its own credential to
 perform an allowed mutation. A writable mount is therefore never equivalent to
 permission to commit, push, comment, or update GitHub metadata.
 
-The fixed DSH 0.1.7-rc.2 runtime creates and flushes a fresh Session for each
+The fixed DSH 0.2.0-rc.2 runtime creates and flushes a fresh Session for each
 worker turn. Session events and projection caches live only under the
 Controller's disposable runtime directory, with narrowly writable Docker
 mounts and cleanup at run completion or cancellation. No public input selects

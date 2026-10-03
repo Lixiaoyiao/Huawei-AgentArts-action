@@ -3,6 +3,25 @@
 Notable user-facing changes are recorded here. This project follows semantic
 versioning for published action releases.
 
+## [0.9.1] - 2026-10-03
+
+- Migrates the controlled and native compositions from DSH `0.1.7-rc.2` to
+  the official coherent `0.2.0-rc.2` family, retaining Cordis `4.0.4` and exact
+  package identities. The public Action contract and architecture remain
+  compatible, so this is a patch release.
+- Audits the changed base composition, optional schedule bundle, Session tool
+  recovery, Workflow PTC, Bash instructions, and Web Search account routing.
+  Existing text-only Headless, Profile, MCP, Plugin/Bundle/Skill, Subagent,
+  worker credential isolation, tool policy, and cleanup contracts remain in
+  force; see the [migration audit](docs/dsh-0.2.0-rc.2-migration.md).
+- Updates affected transitive dependencies within their published constraints.
+  Residual upstream Office and optional telemetry dependency advisories are
+  documented in the migration audit; no override or peer-resolution bypass is
+  introduced.
+- Keeps controlled as the default and native as an explicit opt-in. GitHub
+  persistent writes retain authorization, validation, immediate revalidation,
+  and reconciliation through the Controller's Gateway.
+
 ## [0.9.0]
 
 - Migrates controlled and native composition to the fixed DSH `0.1.7-rc.2`

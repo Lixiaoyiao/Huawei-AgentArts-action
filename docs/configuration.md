@@ -112,7 +112,7 @@ an actual `needs_tool` result is ineligible for terminal formatting repair.
 | Input             | Required/default                                                                                                  | Description                                                                                                                                                                                                                                               |
 | ----------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dsh-mode`        | `controlled`                                                                                                      | DSH composition ownership: controlled preserves the Controller-owned ToolRuntime policy; experimental native uses the official DSH headless Profile, MCP, Bundle, Plugin, Skill, Subagent, and Workflow graph inside the Action's Docker safety boundary. |
-| `dsh-version`     | `0.1.7-rc.2`                                                                                                      | Pinned @deepseek-ai/dsh version. The Action accepts only the audited 0.1.7-rc.2 runtime.                                                                                                                                                                  |
+| `dsh-version`     | `0.2.0-rc.2`                                                                                                      | Pinned @deepseek-ai/dsh version. The Action accepts only the audited 0.2.0-rc.2 runtime.                                                                                                                                                                  |
 | `dsh-executable`  | Empty                                                                                                             | Trusted capability input. Optional absolute path to a preinstalled DSH executable; host mode executes it without a container boundary.                                                                                                                    |
 | `isolation`       | `docker`                                                                                                          | Trusted capability input selecting the DSH isolation backend. 'none' removes the OS/container boundary; Docker is required for untrusted review data, writes, and extensions.                                                                             |
 | `container-image` | `docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059` | Trusted worker-code input. Every value must be one Docker/OCI image reference and cannot be parsed as a Docker option; extensions and writes require a full name@sha256 digest.                                                                           |
@@ -136,7 +136,7 @@ is therefore equivalent to explicitly selecting `controlled`; existing users
 do not opt into a new tool surface accidentally.
 
 `native` is an experimental `NativeComposition` over the locked official DSH
-`0.1.7-rc.2` headless composition. DSH owns its internal capability graph and
+`0.2.0-rc.2` headless composition. DSH owns its internal capability graph and
 model-facing inventory. Native is not implemented by deleting a few deny rows
 from `ControlledComposition`, and the Action does not present its controlled
 ToolRuntime allowlist as authority over DSH's complete native inventory.
@@ -717,8 +717,8 @@ proves identity, not safety; review and maintain the image separately.
 
 ### GitHub image attachments
 
-v0.9.0 does not download or forward GitHub image attachments. The exact audited
-`@deepseek-ai/dsh-headless@0.1.7-rc.2` entrypoint accepts one text `task` and
+v0.9.1 does not download or forward GitHub image attachments. The exact audited
+`@deepseek-ai/dsh-headless@0.2.0-rc.2` entrypoint accepts one text `task` and
 constructs one text content block; it exposes no formal multimodal input
 contract. Markdown image references therefore remain inert as `[image removed]`.
 Reference definitions, HTML image/source elements, and recognized raw GitHub
@@ -848,7 +848,7 @@ Failed steps set outputs before failing. Read them from a later `always()` step
 without interpolating model-derived text into a shell command:
 
 ```yaml
-- uses: Lixiaoyiao/deepseek-harness-action@v0.9.0
+- uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
   id: dsh
   with:
     deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
