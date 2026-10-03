@@ -26,13 +26,13 @@ Action 会启动与凭据隔离的 DSH worker，校验结构化结果，再由�
 | 受控工具         | 以精确工具档位提供原生、固定命令、Controller GitHub、MCP、Bundle 与 Plugin 工具 |
 | 结构化结果       | 保留 schema-v1 审计信封，并可校验维护者定义的可选 task 结果                     |
 
-v0.9.0 继续提供基于锁定 DSH `0.1.7-rc.2` runtime 的实验性 `dsh-mode: native` 路径及其官方生态 composition。Native MCP server、Profile Bundle、direct Cordis Plugin、仓库 Skills、Subagent 和 Workflow 保留 DSH-native discovery 与行为。`controlled` 仍是兼容默认值，因此未配置 `dsh-mode` 的 workflow 会继续使用原有 composition、权限、工具、budget、receipt 和输出行为。
+v0.9.1 继续提供基于锁定 DSH `0.2.0-rc.2` runtime 的实验性 `dsh-mode: native` 路径及其官方生态 composition。Native MCP server、Profile Bundle、direct Cordis Plugin、仓库 Skills、Subagent 和 Workflow 保留 DSH-native discovery 与行为。`controlled` 仍是兼容默认值，因此未配置 `dsh-mode` 的 workflow 会继续使用原有 composition、权限、工具、budget、receipt 和输出行为。
 
 Native 模式并不是 unsafe 模式。它把 DSH 内部 headless composition、capability graph 和 model-visible inventory 的 ownership 交还给 DSH。Native MCP 通过官方 `@deepseek-ai/dsh-mcp-client` 加载；Bundle 作为官方 Profile layer 组合；direct Plugin 通过 Cordis 加载；仓库 Skills、Subagent 与 Workflow 保留 DSH-native 行为。它使用 definition-only 扩展 schema 来声明 owner 和进程需求，而不是声明 Action tool、grant 或 per-tool budget。动态生态工具只通过运行时 `observedTools` 出现，native `toolPolicy` 不会虚构 Controller `effectiveTools`。
 
 Action 仍拥有 trusted-workflow admission、package exact pin、lifecycle script 禁用、runtime inventory audit、Docker 与 `.git`-less workspace 边界、run-scoped DeepSeek 凭据代理、GitHub 凭据隔离、actor/repository trust、validation 与 deferred write、deadline、cancellation 和 secret redaction。Native 仍仅支持 Docker；bridge network 和 read/write mount 都是 whole-worker 能力，不是 per-extension 或 per-tool sandbox。用户自行配置并携带自有凭据的 GitHub MCP 属于受信任外部扩展，其直接副作用不享受 Controller Gateway 的 binding、revalidation、validation 或 deferred-mutation 保证。Controller-owned `command.*` 与 `github.*` 能力继续作为独立且与 mode 正交的平面。
 
-v0.9.0 固定以 DSH `0.1.7-rc.2` 为迁移候选；选择版本本身不代表正式支持，须按[发布流程](docs/maintainer-release.md)验证同一个候选 SHA。迁移保留现有输入、输出、权限语义及主要业务路径。一次有界、无工具的结果修复不会重新运行 worker 任务；合法的 Headless NDJSON/final 事件仍须经过 Controller 的严格 schema 和业务校验。本轮不新增跨 run Session/Resume、文件/图片入口、Agent Teams、Browser/Computer Use 或 GitHub capability。既有 v0.8.2 Release 与 Tag 保持不变。
+v0.9.1 固定使用官方 DSH `0.2.0-rc.2` dependency family；须按[发布流程](docs/maintainer-release.md)验证同一个候选 SHA，[迁移审计](docs/dsh-0.2.0-rc.2-migration.md)记录上游 API 与依赖变化。迁移保留现有输入、输出、权限语义及主要业务路径。一次有界、无工具的结果修复不会重新运行 worker 任务；合法的 Headless NDJSON/final 事件仍须经过 Controller 的严格 schema 和业务校验。本轮不新增跨 run Session/Resume、文件/图片入口、Agent Teams、Browser/Computer Use 或 GitHub capability。既有 v0.9.0 Release 与 Tag 保持不变。
 
 ## 真实运行
 
@@ -73,9 +73,10 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 ```
 
 安装器会按需创建 `.github/workflows/`，如果目标 workflow 已存在则拒绝覆盖。
-它不会添加 Secret、commit 或 push 改动，也不会创建 PR。安装器 v0.3.0
-为正式 v0.9.0 发布准备；只有 Tag、GitHub Release 与 release canary 身份一致后，
-打包时才通过 `DSH_ACTION_RELEASE_SHA` 注入核验过的完整、不可变 Action commit。
+它不会添加 Secret、commit 或 push 改动，也不会创建 PR。已发布的安装器
+v0.3.0 绑定正式 v0.9.0 Action；v0.9.1 对应的安装器更新须等其 Tag、GitHub
+Release 与 release canary 身份一致后，打包时再通过 `DSH_ACTION_RELEASE_SHA`
+注入核验过的完整、不可变 Action commit。
 生成的 workflow 不会使用 candidate SHA、浮动 Tag 或分支。
 
 安装完成后，在 **Settings → Secrets and variables → Actions** 中添加 `DEEPSEEK_API_KEY`。打开或更新一个非 draft PR 即可触发 Review；使用 Coding Commands 时，把 `@dsh` 命令写在 Issue 或 PR 评论的第一行。完整 onboarding 与安全说明见[安装指南](docs/setup.zh-CN.md)。
@@ -106,15 +107,15 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.0
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
-          dsh-version: 0.1.7-rc.2
+          dsh-version: 0.2.0-rc.2
 ```
 
 打开一个非 draft PR。Action 只会检出受信任的 base SHA，通过 GitHub API 读取 PR，并且不会运行 fork 中的代码。
 
-生产环境应把 `v0.9.0` 替换为该版本发布时的完整、不可变 commit SHA。权限、版本固定、安全检出规则和完整模板见[安装指南](docs/setup.zh-CN.md)。
+生产环境应把 `v0.9.1` 替换为该版本发布时的完整、不可变 commit SHA。权限、版本固定、安全检出规则和完整模板见[安装指南](docs/setup.zh-CN.md)。
 
 ## 常用 `@dsh` 命令
 

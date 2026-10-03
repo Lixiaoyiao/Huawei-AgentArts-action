@@ -99,7 +99,7 @@ function request(overrides: Partial<DshRunRequest>): DshRunRequest {
     apiKey: "controller-real-key",
     baseUrl: "https://api.deepseek.com",
     webSearchBaseUrl: "https://api.deepseek.com/anthropic/v1",
-    dshVersion: "0.1.7-rc.2",
+    dshVersion: "0.2.0-rc.2",
     containerImage: "node:24-bookworm",
     ...overrides,
   };
@@ -290,7 +290,9 @@ describe("runDsh", () => {
   });
 
   it("binds policy patches to the audited DSH version", () => {
-    expect(() => assertSupportedDshVersion("0.1.7-rc.2")).not.toThrow();
+    expect(() => assertSupportedDshVersion("0.2.0-rc.2")).not.toThrow();
+    expect(() => assertSupportedDshVersion("0.1.7-rc.2")).toThrow(/no audited/u);
+    expect(() => assertSupportedDshVersion("0.2.1-alpha.1")).toThrow(/no audited/u);
     expect(() => assertSupportedDshVersion("0.1.1-rc.2")).toThrow();
     expect(() => assertSupportedDshVersion("latest")).toThrow(/exact semver/u);
     expect(() => assertSupportedDshVersion("0.1.0-rc.6")).toThrow(/no audited/u);

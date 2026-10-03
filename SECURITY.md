@@ -188,7 +188,7 @@ object; native DSH inventory remains DSH-owned runtime observation.
 Composition is a separate dimension. `dsh-mode: controlled` is the compatible
 default and retains the Action-generated Profile and positive ToolRuntime
 policy. Experimental `dsh-mode: native` uses the locked official DSH
-`0.1.7-rc.2` headless composition and leaves DSH in ownership of its internal
+`0.2.0-rc.2` headless composition and leaves DSH in ownership of its internal
 capability graph. `permission-profile` is neither reused nor reinterpreted as a
 composition selector, and a controlled canonical allowlist is not presented as
 complete authority over the native inventory.
@@ -305,7 +305,7 @@ maintainer configuration, `allowed-tools` and the controller policy:
 
 #### Controller-owned GitHub tools
 
-v0.9.0 retains only six exact typed operations: label and assignee replacement,
+v0.9.1 retains only six exact typed operations: label and assignee replacement,
 Issue state update, comment creation, PR metadata update, and check/status
 read. The tool input never accepts an owner, repository, entity number, head
 SHA, raw URL, REST route, GraphQL document, or credential. Those identities
@@ -333,8 +333,8 @@ before a later failure, the Controller records `partial-success` and an
 
 This section applies to `dsh-mode: controlled`.
 
-v0.4 introduced the official DSH extension mechanisms. v0.9.0 migrates them
-against the exact `@deepseek-ai/dsh@0.1.7-rc.2` package family, generates a
+v0.4 introduced the official DSH extension mechanisms. v0.9.1 migrates them
+against the exact `@deepseek-ai/dsh@0.2.0-rc.2` package family, generates a
 controlled Profile, and
 loads the approved Bundle and Cordis plugin rows from that Profile. It does not
 read extension authorization from the repository or model response and does not
@@ -343,16 +343,16 @@ patch serializes workflow values as JSON data so a configured string cannot add
 a patch row or become a YAML `!!js` expression; an approved Bundle's own patch
 remains trusted package code.
 
-The [fixed-candidate migration audit](docs/dsh-0.1.7-rc.2-migration.md) covers
+The [fixed-candidate migration audit](docs/dsh-0.2.0-rc.2-migration.md) covers
 app-boot, Profile/Bundle/Plugin, MCP, ToolRuntime, Bash, Web Search, Subagent,
 Workflow/PTC, Session lifecycle, receipts, Docker/path/timeout handling, and
 the packaged `dist` entrypoint. It records required upstream differences and
-the residual dependency advisory without approving later DSH releases.
+the dependency audit findings without approving later DSH releases.
 The separately versioned installer writes workflow files and does not run
 inside the Agent or Controller.
 
 In controlled mode, the Action starts this generated Profile through the official
-`@deepseek-ai/dsh-app-boot@0.1.7-rc.2` public API. It does not use the general
+`@deepseek-ai/dsh-app-boot@0.2.0-rc.2` public API. It does not use the general
 CLI path that discovers workspace or `$DSH_HOME` `.env` files, nor does it
 enable dynamic user patch discovery, watch or hot reload. The only Profile and
 Cordis patch inputs come from the Controller-validated run configuration.
@@ -651,14 +651,14 @@ The supplied templates use the following sets:
 | Interactive commands with fix/implement enabled | `actions: read`, `checks: read`, `contents: write`, `issues: write`, `pull-requests: write`                                                        |
 | CI auto-fix                                     | Same as the preceding row                                                                                                                          |
 | Core E2E jobs                                   | Split per job: secretless gate; bounded read/write/cancellation scopes; exact Issue/PR/ref/check scopes only for the isolated integration fixtures |
-| v0.9.0 release canary                           | Secretless `contents: read` gate; the `core-e2e` smoke job also has only `contents: read`                                                          |
+| v0.9.1 release canary                           | Secretless `contents: read` gate; the `core-e2e` smoke job also has only `contents: read`                                                          |
 
 Progress comments use the same issue or pull-request comment permission as the
 final result and require no additional token scope. Write-task comment APIs are
 not called before successful final validation.
 
 The release canary requires repository variable `DSH_RELEASE_CANARY_SHA` to be
-the lowercase full 40-character commit SHA referenced by the formal v0.9.0 tag
+the lowercase full 40-character commit SHA referenced by the formal v0.9.1 tag
 and its non-draft, non-prerelease GitHub Release. Before any environment secret
 is available, a secretless gate requires `refs/heads/main`, requires the
 run/workflow SHA to equal the live default-branch SHA, and fails if `main` is no
@@ -732,8 +732,8 @@ and destinations that are reachable through the runner's Docker bridge path.
 Use dedicated runners, network segmentation, and runner-level egress controls
 for that threat model.
 
-GitHub attachment images are not an enabled input path in v0.9.0. The exact
-audited `@deepseek-ai/dsh-headless@0.1.7-rc.2` entrypoint accepts one text task
+GitHub attachment images are not an enabled input path in v0.9.1. The exact
+audited `@deepseek-ai/dsh-headless@0.2.0-rc.2` entrypoint accepts one text task
 and constructs one text content block; it has no formal multimodal contract.
 Markdown images are rendered inert as `[image removed]`. The Controller does
 not download attachments, forward their URLs, mount their bytes, or attach
@@ -755,7 +755,7 @@ The v1 sticky marker identifies an operation result kind, not a workflow run or
 head SHA. The supplied workflows therefore use a per-PR, per-Issue or per-run
 `concurrency` group. Custom workflows should preserve that serialization; without
 it, a slow or hard-cancelled older run can overwrite a newer run's sticky state.
-A marker-level freshness guard remains deferred in v0.9.0. On `SIGTERM` or
+A marker-level freshness guard remains deferred in v0.9.1. On `SIGTERM` or
 `SIGINT`, the Controller aborts the active worker and immediately starts a
 bounded, best-effort terminal comment update while run-scoped cleanup proceeds.
 A later authoritative non-cancellation failure can correct a provisional
@@ -769,7 +769,7 @@ Controlled mode retains the binding of its generated Profile and positive
 native-tool policy to the exact DSH version whose complete tool surface was
 audited. Native mode binds its official headless composition and observed
 runtime inventory to that same pin. The Action accepts only the exact
-`@deepseek-ai/dsh@0.1.7-rc.2` package family; another tag, range, or exact
+`@deepseek-ai/dsh@0.2.0-rc.2` package family; another tag, range, or exact
 version is rejected until matching controlled and native contracts are reviewed
 and shipped. The Action's DSH
 dependency graph is installed from the committed lockfile in an ephemeral

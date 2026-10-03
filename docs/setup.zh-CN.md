@@ -35,9 +35,10 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 安装器会按需创建 `.github/workflows/`，如果目标 workflow 已存在则拒绝覆盖。
 它不会添加 `DEEPSEEK_API_KEY`、commit 或 push 改动，也不会创建 PR。安装器
-v0.3.0 只在正式 v0.9.0 Tag、GitHub Release 与 release canary 身份一致后
-构建；打包时通过 `DSH_ACTION_RELEASE_SHA` 注入从正式 Release 核验出的完整、
-不可变 commit。生成的 workflow 不会使用 candidate SHA、浮动 Tag 或分支。
+v0.3.0 已绑定正式 v0.9.0 Action；v0.9.1 对应的安装器更新须等其 Tag、GitHub
+Release 与 release canary 身份一致后再构建，打包时通过 `DSH_ACTION_RELEASE_SHA`
+注入核验出的完整、不可变 commit。生成的 workflow 不会使用 candidate SHA、
+浮动 Tag 或分支。
 
 安装成功后：
 
@@ -78,19 +79,20 @@ DEEPSEEK_API_KEY
 为了便于阅读，示例使用当前发布 Tag：
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@v0.9.0
+uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
 ```
 
 生产环境应把 Tag 替换为该版本发布时的完整、不可变 commit SHA。
-独立版本的 installer v0.3.0 生成固定到正式 v0.9.0 commit 的 workflow。
-请从正式 Release 获取该 SHA；源码中的迁移候选准备不能代替正式发布身份。
+独立版本的 installer v0.3.0 在对应更新发布前仍生成固定到正式 v0.9.0 commit
+的 workflow。使用 v0.9.1 时，请从该正式 Release 获取 Action SHA；源码中的
+迁移候选准备不能代替正式发布身份。
 
 不要使用 `main`、`latest`、版本范围、candidate SHA 或其它浮动 ref。
 `dsh-version` 必须保持为本版本审计过的精确值：
 
 ```yaml
 with:
-  dsh-version: 0.1.7-rc.2
+  dsh-version: 0.2.0-rc.2
 ```
 
 只有新的 DSH package family、Profile 和工具面完成复核并随新版本发布后，Action 才会接受不同版本。
@@ -126,10 +128,10 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.0
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
-          dsh-version: 0.1.7-rc.2
+          dsh-version: 0.2.0-rc.2
 ```
 
 `pull_request_target` 可以访问 Secret 和权限较高的 token，因此这个 workflow 只检出不可变、受信任的 base SHA。Action 通过 GitHub API 获取 PR diff 和变更文件上下文，不会检出或运行 fork revision。请保留 `persist-credentials: false`。
@@ -203,7 +205,7 @@ Docker image 本身就是可执行的 worker code。写入和扩展必须使用�
 第一次运行后，确认：
 
 1. Checkout 显示 `persist-credentials: false`，且检出的是预期受信任 SHA。
-2. Action 把 `dsh-version` 解析为 `0.1.7-rc.2`。
+2. Action 把 `dsh-version` 解析为 `0.2.0-rc.2`。
 3. 只读审查没有 workspace 写能力。
 4. 只出现预期的 Controller-owned 汇总评论和行内问题。
 5. step summary 与 `result-json` 中的 operation、权限档位、有效工具和网络路径符合预期。
