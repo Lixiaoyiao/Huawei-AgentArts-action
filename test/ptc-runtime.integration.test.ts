@@ -61,7 +61,10 @@ it("bounds real PTC output and drains its process on timeout, cancellation, and 
       runtime.resolve({
         program: `${started} while (true) {}`,
         bindings,
-        timeoutMs: 1000,
+        // Under Windows coverage load, a 1s cap can expire before PID
+        // evidence and test startup instead of process draining. Keep the
+        // real timeout/observed-PID/termination assertions on a bounded run.
+        timeoutMs: process.platform === "win32" ? 5000 : 1000,
       }),
     );
     expect(timedOut.error?.kind).toBe("timeout");
