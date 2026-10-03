@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { sessionFormatCatalog } from "@deepseek-ai/dsh-session-format-catalog";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildDshPrompt } from "../src/dsh/prompt.js";
 
 import {
   exportSessionCheckpoint,
@@ -160,6 +161,76 @@ describe("genuine bounded Session persistence", () => {
   it("keeps optional external events without substituting an event projection", () => {
     const payload = raw([opaque({ retained: ["arbitrary", "plugin", "event"] })]);
     expect(validate(payload).eventCount).toBe(1);
+  });
+
+  it.each([
+    '[header] task text with "unterminated prose',
+    '{"example":true}\nThen ordinary text with "unterminated prose',
+  ])("preserves ordinary container-prefixed task text in complete raw persistence", (text) => {
+    const events = settledEvents();
+    events[1] = { ...events[1], data: message(text) };
+    expect(validate(raw(events)).eventCount).toBe(3);
+  });
+
+  it("preserves the current rendered Controller prompt and its ordinary text context", () => {
+    const text = '[header] task text with "unterminated prose';
+    const packet = JSON.stringify({ body: text });
+    const rendered = buildDshPrompt({
+      operation: "task",
+      prompt: packet,
+      trustedInstructions: text,
+      trust: "trusted-read",
+    });
+    expect(rendered.startsWith("<")).toBe(true);
+    expect(rendered.endsWith(packet)).toBe(true);
+    const events = settledEvents();
+    events[1] = { ...events[1], data: message(rendered) };
+    // The exact rendered terminal context is valid JSON containing ordinary prose.
+    // It must also remain readable in durable plugin metadata or tool output.
+    events.push(opaque({ renderedContext: packet }, 3));
+    expect(validate(raw(events)).eventCount).toBe(4);
+  });
+
+  it("retains nested valid JSON credential and duplicate-key refusal", () => {
+    expect(() => validate(raw([opaque({ argument: '{"password":"short-value"}' })]))).toThrow(
+      /credential field/u,
+    );
+    expect(() => validate(raw([opaque({ argument: '{"value":1,"value":2}' })]))).toThrow(
+      /duplicate JSON keys \(outer JSONL record 1, embedded JSON string\)/u,
+    );
+    expect(() => validate(Buffer.from(raw([]).toString() + '{"unterminated\n'))).toThrow(
+      /malformed JSON \(outer JSONL record 1\)/u,
+    );
+  });
+
+  it("rejects complete deeply nested embedded JSON before parsing its object graph", () => {
+    const embedded = "[".repeat(1000) + "0" + "]".repeat(1000);
+    const payload = raw([opaque({ argument: embedded })]);
+    const parse = vi.spyOn(JSON, "parse");
+    try {
+      expect(() => validate(payload)).toThrow(
+        /depth limit \(outer JSONL record 1, embedded JSON string\)/u,
+      );
+      expect(parse.mock.calls.some(([input]) => input === embedded)).toBe(false);
+    } finally {
+      parse.mockRestore();
+    }
+    // The same bracket-heavy content followed by prose is ordinary text.
+    expect(
+      validate(raw([opaque({ argument: embedded + '\nExplanation with "unclosed prose' })]))
+        .eventCount,
+    ).toBe(1);
+  });
+
+  it.each([
+    "{}",
+    "[]",
+    '[true,false,null,-1,2.5,3e-4,{"value":"ordinary"}]',
+    '{"list":[{"text":"quote \\" and unicode \\u4e16"}],"empty":{}}',
+  ])("accepts complete embedded JSON without losing its raw bytes", (embedded) => {
+    expect(() => JSON.parse(embedded) as unknown).not.toThrow();
+    const payload = raw([opaque({ argument: embedded })]);
+    expect(validate(payload).sha256).toBe(createHash("sha256").update(payload).digest("hex"));
   });
 
   it.each([

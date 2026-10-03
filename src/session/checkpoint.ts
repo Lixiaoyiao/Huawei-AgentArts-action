@@ -131,7 +131,7 @@ function inspectString(value: string, secrets: readonly string[]): void {
 }
 
 /** Reject excessive depth and duplicate object keys before JSON.parse can erase evidence. */
-function preflightJson(text: string, secrets: readonly string[]): void {
+function preflightJson(text: string, secrets: readonly string[], scope: string): void {
   const stack: ({ keys: Set<string>; expectingKey: boolean } | null)[] = [];
   for (let index = 0; index < text.length; index += 1) {
     const char = text[index];
@@ -141,25 +141,26 @@ function preflightJson(text: string, secrets: readonly string[]): void {
         if (text[end] === "\\") end += 1;
         end += 1;
       }
-      if (end >= text.length) denied("contains malformed JSON");
+      if (end >= text.length) denied(`contains malformed JSON (${scope})`);
       let value: unknown;
       try {
         value = JSON.parse(text.slice(index, end + 1)) as unknown;
       } catch {
-        denied("contains malformed JSON");
+        denied(`contains malformed JSON (${scope})`);
       }
-      if (typeof value !== "string") denied("contains malformed JSON");
+      if (typeof value !== "string") denied(`contains malformed JSON (${scope})`);
       inspectString(value, secrets);
       const current = stack.at(-1);
       if (current?.expectingKey) {
-        if (current.keys.has(value)) denied("contains duplicate JSON keys");
+        if (current.keys.has(value)) denied(`contains duplicate JSON keys (${scope})`);
         current.keys.add(value);
         current.expectingKey = false;
       }
       index = end;
     } else if (char === "{" || char === "[") {
       stack.push(char === "{" ? { keys: new Set(), expectingKey: true } : null);
-      if (stack.length > SESSION_CHECKPOINT_LIMITS.depth) denied("exceeds JSON depth limit");
+      if (stack.length > SESSION_CHECKPOINT_LIMITS.depth)
+        denied(`exceeds JSON depth limit (${scope})`);
     } else if (char === "}" || char === "]") {
       stack.pop();
     } else if (char === ",") {
@@ -169,7 +170,98 @@ function preflightJson(text: string, secrets: readonly string[]): void {
   }
 }
 
-function inspectJson(value: unknown, secrets: readonly string[], counter: { nodes: number }): void {
+/** Recognize complete JSON without building an AST; the caller bounds input bytes. */
+function completeJsonDepth(text: string): number | undefined {
+  // Array: first value/end, value, comma/end. Object: first key/end,
+  // key, colon, value, comma/end. Numeric frames keep deep invalid prose bounded.
+  const frames: number[] = [];
+  const number = /-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/uy;
+  let offset = 0;
+  let depth = 0;
+  let rootRead = false;
+  const string = (): boolean => {
+    if (text[offset] !== '"') return false;
+    offset += 1;
+    for (; offset < text.length; offset += 1) {
+      const char = text[offset];
+      if (char === '"') {
+        offset += 1;
+        return true;
+      }
+      if (text.charCodeAt(offset) < 0x20) return false;
+      if (char === "\\") {
+        offset += 1;
+        if ('"\\/bfnrt'.includes(text[offset] ?? "\0")) continue;
+        if (text[offset] !== "u" || !/^[a-f0-9]{4}$/iu.test(text.slice(offset + 1, offset + 5)))
+          return false;
+        offset += 4;
+      }
+    }
+    return false;
+  };
+  for (;;) {
+    while (/[ \t\r\n]/u.test(text[offset] ?? "")) offset += 1;
+    const state = frames.at(-1);
+    const char = text[offset];
+    if (state === undefined) {
+      if (rootRead) return offset === text.length ? depth : undefined;
+      rootRead = true;
+    } else if (state === 0 || state === 1) {
+      if (state === 0 && char === "]") {
+        frames.pop();
+        offset += 1;
+        continue;
+      }
+      frames[frames.length - 1] = 2;
+    } else if (state === 2 || state === 7) {
+      if (char === ",") {
+        frames[frames.length - 1] = state === 2 ? 1 : 4;
+        offset += 1;
+        continue;
+      }
+      if (char !== (state === 2 ? "]" : "}")) return undefined;
+      frames.pop();
+      offset += 1;
+      continue;
+    } else if (state === 3 || state === 4) {
+      if (state === 3 && char === "}") {
+        frames.pop();
+        offset += 1;
+        continue;
+      }
+      if (!string()) return undefined;
+      frames[frames.length - 1] = 5;
+      continue;
+    } else if (state === 5) {
+      if (char !== ":") return undefined;
+      frames[frames.length - 1] = 6;
+      offset += 1;
+      continue;
+    } else {
+      frames[frames.length - 1] = 7;
+    }
+    if (char === "{" || char === "[") {
+      frames.push(char === "{" ? 3 : 0);
+      depth = Math.max(depth, frames.length);
+      offset += 1;
+    } else if (char === '"') {
+      if (!string()) return undefined;
+    } else if (["true", "false", "null"].some((literal) => text.startsWith(literal, offset))) {
+      offset += text.startsWith("false", offset) ? 5 : 4;
+    } else {
+      number.lastIndex = offset;
+      if (number.exec(text) === null) return undefined;
+      offset = number.lastIndex;
+    }
+  }
+}
+
+function inspectJson(
+  value: unknown,
+  secrets: readonly string[],
+  counter: { nodes: number },
+  scope = "manifest",
+): void {
   const pending: unknown[] = [value];
   while (pending.length > 0) {
     const current = pending.pop();
@@ -187,14 +279,20 @@ function inspectJson(value: unknown, secrets: readonly string[], counter: { node
       // Tool arguments and opaque plugin metadata can themselves contain JSON.
       // Inspect valid embedded objects without treating arbitrary prose as JSON.
       if (current.trimStart().startsWith("{") || current.trimStart().startsWith("[")) {
-        let nested: unknown;
-        try {
-          preflightJson(current, secrets);
-          nested = JSON.parse(current) as unknown;
-        } catch (error: unknown) {
-          if (error instanceof PolicyDeniedError) throw error;
+        const depth = completeJsonDepth(current);
+        if (depth !== undefined) {
+          const embeddedScope = `${scope}, embedded JSON string`;
+          if (depth > SESSION_CHECKPOINT_LIMITS.depth)
+            denied(`exceeds JSON depth limit (${embeddedScope})`);
+          preflightJson(current, secrets, embeddedScope);
+          let nested: unknown;
+          try {
+            nested = JSON.parse(current) as unknown;
+          } catch {
+            denied(`contains malformed JSON (${embeddedScope})`);
+          }
+          pending.push(nested);
         }
-        if (nested !== undefined) pending.push(nested);
       }
     } else if (Array.isArray(current)) {
       if (current.length > SESSION_CHECKPOINT_LIMITS.arrayItems) denied("exceeds JSON array limit");
@@ -368,21 +466,22 @@ export function validateSessionPayload(options: PayloadOptions): SessionPayloadI
   const secrets = secretValues(options.knownSecrets);
   inspectString(text, secrets);
   const counter = { nodes: 0 };
-  const rows = lines.map((line): unknown => {
+  const rows = lines.map((line, index): unknown => {
+    const scope = `outer JSONL record ${String(index)}`;
     if (
       line.trim().length === 0 ||
       Buffer.byteLength(line, "utf8") > SESSION_CHECKPOINT_LIMITS.rowBytes
     ) {
-      denied("contains an empty or oversized JSONL record");
+      denied(`contains an empty or oversized JSONL record (${scope})`);
     }
-    preflightJson(line, secrets);
+    preflightJson(line, secrets, scope);
     let row: unknown;
     try {
       row = JSON.parse(line) as unknown;
     } catch {
-      denied("contains malformed JSON");
+      denied(`contains malformed JSON (${scope})`);
     }
-    inspectJson(row, secrets, counter);
+    inspectJson(row, secrets, counter, scope);
     return row;
   });
   // A current physical row is one durable event. Bound encoded sequence ranges
