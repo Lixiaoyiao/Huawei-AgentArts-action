@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { parse } from "yaml";
 
 import {
+  parseArguments,
   runInstaller,
   type InstallerDshMode,
   type InstallerMode,
@@ -233,6 +234,74 @@ describe("create-deepseek-harness-action release build", () => {
         "dist/templates/dsh-review.yml",
       ]),
     );
+  });
+});
+
+describe("explicit maintainer validation setup", () => {
+  it.each(["controlled", "native"] as const)(
+    "writes reviewed argv and a digest for %s without executing repository code",
+    async (dshMode) => {
+      const project = await createProject();
+      const marker = join(project, "validation-ran");
+      const commands = [["node", "trusted-validator.mjs", "argument with spaces"]];
+      await writeFile(
+        join(project, "trusted-validator.mjs"),
+        `require('fs').writeFileSync(${JSON.stringify(marker)}, 'executed')`,
+        "utf8",
+      );
+      const image = `docker.io/library/node:24@sha256:${"a".repeat(64)}`;
+      const output = new OutputCapture();
+      await runInstaller({
+        argv: [
+          "--mode",
+          "both",
+          "--dsh-mode",
+          dshMode,
+          "--test-commands",
+          JSON.stringify(commands),
+          "--container-image",
+          image,
+        ],
+        cwd: project,
+        output,
+        input: Readable.from([]),
+        isTTY: false,
+        templateDirectory: join(builtPackage, "templates"),
+      });
+      const contents = await workflow(project, "dsh-commands.yml");
+      const document = parse(contents) as {
+        jobs: { command: { steps: { with?: Record<string, unknown> }[] } };
+      };
+      const withInputs = document.jobs.command.steps.at(-1)?.with;
+      expect(withInputs?.["test-commands"]).toBe(JSON.stringify(commands));
+      expect(withInputs?.["container-image"]).toBe(image);
+      expect(withInputs?.["run-tests"]).toBe("true");
+      expect(contents).toContain(`deepseek-harness-action@${RELEASE_SHA}`);
+      expect(contents).not.toContain("REQUIRED: replace test-commands");
+      await expect(readFile(marker)).rejects.toThrow();
+      expect(output.text).toContain(
+        "No repository scripts were discovered, executed, or automatically trusted",
+      );
+      expect(output.text).toContain("Not checked: credential validity/token scopes/quota, Docker");
+    },
+  );
+
+  it.each([
+    ["--test-commands", "[]"],
+    ["--test-commands", '[["REPLACE_WITH_TEST_COMMAND"]]'],
+    ["--test-commands", '[["${{ secrets.GITHUB_TOKEN }}"]]'],
+    ["--test-commands", "not-json"],
+    ["--test-commands", '[["node"]]', "--test-commands", '[["node"]]'],
+    ["--container-image", "node:24"],
+    ["--container-image", `node@sha256:${"A".repeat(64)}`],
+  ])("rejects invalid explicit write setup %j", (...argumentsList: string[]) => {
+    expect(() => parseArguments(["--mode", "commands", ...argumentsList])).toThrow();
+  });
+
+  it("rejects write setup for a review-only install", () => {
+    expect(() =>
+      parseArguments(["--mode", "review", "--test-commands", '[["node","trusted-tests.mjs"]]']),
+    ).toThrow(/commands or both/u);
   });
 });
 

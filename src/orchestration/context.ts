@@ -17,6 +17,13 @@ import { ActionConfigurationError, OperationContextError, PolicyDeniedError } fr
 import { sanitizeUntrustedText } from "../security/redaction.js";
 import { validateRefName } from "../security/refs.js";
 import { utf8Prefix } from "../security/utf8.js";
+import {
+  loadRepositoryTextFiles,
+  TEXT_FILE_LIMITS,
+  untrustedTextFiles,
+  type RepositoryTextFileAudit,
+} from "../text-files.js";
+import { getBranchHead } from "../write/github.js";
 
 export function runUrl(context: GitHubContext): string {
   const server = process.env.GITHUB_SERVER_URL ?? "https://github.com";
@@ -34,6 +41,7 @@ export function taskIdentity(
   inputs: ActionInputs,
   extensionAuditDigest: string,
   permissionDigest: string,
+  textFiles: readonly RepositoryTextFileAudit[] = [],
 ): string {
   return createHash("sha256")
     .update(
@@ -41,6 +49,20 @@ export function taskIdentity(
         operation: command.operation,
         access: command.requestedAccess,
         instructions: command.instructions,
+        ...(command.instructionFile === undefined
+          ? {}
+          : { instructionFile: command.instructionFile }),
+        ...(textFiles.length === 0
+          ? {}
+          : {
+              textFiles: textFiles.map(({ repository, sourceSha, path, blobSha, bytes }) => ({
+                repository,
+                sourceSha,
+                path,
+                blobSha,
+                bytes,
+              })),
+            }),
         permissionProfile: inputs.permissionProfile,
         allowedTools: inputs.allowedTools,
         disallowedTools: inputs.disallowedTools,
@@ -325,7 +347,40 @@ export async function buildContextPacket(
   command: RoutedCommand,
   snapshot: EntitySnapshot | undefined,
   inputs: ActionInputs,
-): Promise<unknown> {
+  repositorySha?: string,
+) {
+  const textFiles =
+    inputs.contextFiles.length === 0
+      ? []
+      : await (async () => {
+          const branch = resolveBaseBranch(context, inputs.baseBranch);
+          const sourceSha =
+            snapshot?.kind === "pull_request"
+              ? snapshot.headSha
+              : (repositorySha ??
+                (branch === undefined
+                  ? undefined
+                  : await getBranchHead(
+                      client,
+                      context.repository.owner,
+                      context.repository.repo,
+                      branch,
+                    )));
+          if (sourceSha === undefined)
+            throw new ActionConfigurationError(
+              "context-files requires an immutable task repository revision; runner checkout fallback is forbidden",
+            );
+          return untrustedTextFiles(
+            await loadRepositoryTextFiles({
+              client,
+              repository: context.repository,
+              sourceSha,
+              paths: inputs.contextFiles,
+              maximumBytes: TEXT_FILE_LIMITS.contextBytes,
+            }),
+            [inputs.githubToken, inputs.deepseekApiKey],
+          );
+        })();
   let ci: string | undefined;
   if (
     (command.operation === "diagnose" || command.operation === "fix") &&
@@ -354,6 +409,8 @@ export async function buildContextPacket(
   return {
     event: { name: context.rawEventName, action: context.eventAction },
     repository: context.repository.fullName,
+    ...(command.instructionFile === undefined ? {} : { instructionFile: command.instructionFile }),
+    ...(textFiles.length === 0 ? {} : { textFiles }),
     entity: snapshot === undefined ? undefined : sanitizedSnapshot(snapshot),
     ci: ci === undefined ? undefined : boundedText(ci, 32 * 1024),
   };

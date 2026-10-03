@@ -14,37 +14,6 @@ GitHub PR / Issue / CI  →  DeepSeek Harness  →  Review / Diagnose / Fix / Is
 
 The Action starts a credential-isolated DSH worker, validates its structured result, and lets a trusted Controller publish comments or validated changes. This is a community project, not an official DeepSeek or GitHub product. It is maintained by [@Lixiaoyiao](https://github.com/Lixiaoyiao).
 
-## Core capabilities
-
-| Capability              | What it does                                                                                          |
-| ----------------------- | ----------------------------------------------------------------------------------------------------- |
-| Pull request review     | Reviews new commits, publishes one summary, and adds high-confidence inline findings                  |
-| General tasks           | Answers repository questions or performs an explicitly authorized coding task                         |
-| CI diagnosis and repair | Reads failed checks and logs; trusted workflows may validate and publish a fix                        |
-| Issue implementation    | Turns an authorized Issue request into a validated branch and pull request                            |
-| Composition modes       | Keeps the existing controlled tool profile by default and offers an experimental native DSH mode      |
-| Controlled tools        | Adds exact profiles for native, fixed-command, typed Controller GitHub, MCP, Bundle, and Plugin tools |
-| Structured results      | Keeps the schema-v1 audit envelope and can validate an optional maintainer-defined task result        |
-
-v0.9.1 retains the experimental `dsh-mode: native` path over the locked DSH `0.2.0-rc.2` runtime and its official ecosystem composition. Native MCP servers, Profile Bundles, direct Cordis Plugins, repository Skills, Subagents, and Workflows retain DSH-native discovery and behavior. `controlled` remains the compatible default, so workflows that omit `dsh-mode` retain their existing composition, permissions, tools, budgets, receipts, and outputs.
-
-Native mode is not an unsafe mode. It returns ownership of DSH's internal headless composition, capability graph, and model-visible inventory to DSH. Native MCP servers load through official `@deepseek-ai/dsh-mcp-client`; Bundles become official Profile layers; direct Plugins load through Cordis; and repository Skills, Subagents, and Workflows retain DSH-native behavior. Its definition-only extension schema declares owners and process requirements, not Action tools, grants, or per-tool budgets. Dynamic ecosystem tools appear only in runtime `observedTools`, and native `toolPolicy` never claims Controller `effectiveTools`.
-
-The Action still owns trusted-workflow admission, exact package pins, lifecycle-script suppression, runtime inventory audit, Docker and `.git`-less workspace boundaries, the run-scoped DeepSeek credential proxy, GitHub credential isolation, actor/repository trust, validation and deferred writes, deadlines, cancellation, and secret redaction. Native remains Docker-only. Bridge network and read/write mounts are whole-worker capabilities, not per-extension or per-tool sandboxes. A user-configured GitHub MCP with its own credential is a trusted external extension whose direct effects do not receive the Controller Gateway's binding, revalidation, validation, or deferred-mutation guarantees. Controller-owned `command.*` and `github.*` capabilities remain a separate, mode-independent plane.
-
-v0.9.1 targets the official DSH `0.2.0-rc.2` dependency family. Qualification must cover the exact candidate SHA through the [release process](docs/maintainer-release.md); the [migration audit](docs/dsh-0.2.0-rc.2-migration.md) records the upstream API and dependency changes. The migration preserves existing inputs, outputs, permissions, and business paths. A bounded, tool-free result repair never reruns the worker task; valid Headless NDJSON or final events still require strict Controller schema and business validation. This work adds no cross-run Session/Resume, file/image input, Agent Teams, Browser/Computer Use, or new GitHub capability. The v0.9.0 release and tag remain unchanged.
-
-## Live runs
-
-These public runs show the comments and Actions logs produced by this repository.
-
-| Scenario                                                | Run                                                                                                                                                                   |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PR review, including a rerun without duplicate comments | [PR #3](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/3) · [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760570162) |
-| Diagnosis based on failed checks and logs               | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760603284)                                                                         |
-| Fix and validation in trusted write mode                | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31761793492)                                                                         |
-| Issue implementation followed by a pull request         | [Issue #4](https://github.com/Lixiaoyiao/deepseek-harness-action/issues/4) → [PR #5](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/5)                    |
-
 ## Quick Start
 
 Run the installer from the root of the repository you want to configure:
@@ -111,7 +80,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-version: 0.2.0-rc.2
@@ -120,6 +89,37 @@ jobs:
 Open a non-draft pull request. The Action checks out only the trusted base SHA, reads the pull request through GitHub APIs, and never executes fork code.
 
 For production, replace `v0.9.1` with its immutable release commit `80cf46ee9098158ea664c45ea6371604c47b71e6`. See [Setup](docs/setup.md) for permissions, pinning, checkout rules, and complete templates.
+
+## Core capabilities
+
+| Capability              | What it does                                                                                          |
+| ----------------------- | ----------------------------------------------------------------------------------------------------- |
+| Pull request review     | Reviews new commits, publishes one summary, and adds high-confidence inline findings                  |
+| General tasks           | Answers repository questions or performs an explicitly authorized coding task                         |
+| CI diagnosis and repair | Reads failed checks and logs; trusted workflows may validate and publish a fix                        |
+| Issue implementation    | Turns an authorized Issue request into a validated branch and pull request                            |
+| Composition modes       | Keeps the existing controlled tool profile by default and offers an experimental native DSH mode      |
+| Controlled tools        | Adds exact profiles for native, fixed-command, typed Controller GitHub, MCP, Bundle, and Plugin tools |
+| Structured results      | Keeps the schema-v1 audit envelope and can validate an optional maintainer-defined task result        |
+
+v0.9.2 retains the experimental `dsh-mode: native` path over the locked DSH `0.2.0-rc.2` runtime and its official ecosystem composition. Native MCP servers, Profile Bundles, direct Cordis Plugins, repository Skills, Subagents, and Workflows retain DSH-native discovery and behavior. `controlled` remains the compatible default, so workflows that omit `dsh-mode` retain their existing composition, permissions, tools, budgets, receipts, and outputs.
+
+Native mode is not an unsafe mode. It returns ownership of DSH's internal headless composition, capability graph, and model-visible inventory to DSH. Native MCP servers load through official `@deepseek-ai/dsh-mcp-client`; Bundles become official Profile layers; direct Plugins load through Cordis; and repository Skills, Subagents, and Workflows retain DSH-native behavior. Its definition-only extension schema declares owners and process requirements, not Action tools, grants, or per-tool budgets. Dynamic ecosystem tools appear only in runtime `observedTools`, and native `toolPolicy` never claims Controller `effectiveTools`.
+
+The Action still owns trusted-workflow admission, exact package pins, lifecycle-script suppression, runtime inventory audit, Docker and `.git`-less workspace boundaries, the run-scoped DeepSeek credential proxy, GitHub credential isolation, actor/repository trust, validation and deferred writes, deadlines, cancellation, and secret redaction. Native remains Docker-only. Bridge network and read/write mounts are whole-worker capabilities, not per-extension or per-tool sandboxes. A user-configured GitHub MCP with its own credential is a trusted external extension whose direct effects do not receive the Controller Gateway's binding, revalidation, validation, or deferred-mutation guarantees. Controller-owned `command.*` and `github.*` capabilities remain a separate, mode-independent plane.
+
+v0.9.2 keeps DSH exactly pinned to `0.2.0-rc.2` and adds [prompt-file / context-files text context](docs/text-files.md), [configuration checks without a model](docs/configuration-check.md), and [bounded GitHub request diagnostics](docs/github-requests.md). Writes still require authorization, validation, fresh revalidation and reconciliation. See the [fixed-runtime audit](docs/v0.9.2-runtime-audit.md) for Session/Resume and image deferrals.
+
+## Live runs
+
+These public runs show the comments and Actions logs produced by this repository.
+
+| Scenario                                                | Run                                                                                                                                                                   |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR review, including a rerun without duplicate comments | [PR #3](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/3) · [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760570162) |
+| Diagnosis based on failed checks and logs               | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760603284)                                                                         |
+| Fix and validation in trusted write mode                | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31761793492)                                                                         |
+| Issue implementation followed by a pull request         | [Issue #4](https://github.com/Lixiaoyiao/deepseek-harness-action/issues/4) → [PR #5](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/5)                    |
 
 ## Common `@dsh` commands
 

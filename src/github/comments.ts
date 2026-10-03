@@ -4,6 +4,7 @@
  */
 import type { GitHubClient } from "./client.js";
 import { indexTrackingComments, type TrackingKind } from "../review/tracking.js";
+import { GitHubQuotaError } from "./request-policy.js";
 
 export interface CommentTarget {
   readonly owner: string;
@@ -135,6 +136,7 @@ export async function upsertTrackingComment(
     );
     return response.data.id;
   } catch (error: unknown) {
+    if (error instanceof GitHubQuotaError) throw error;
     // A network error may be an ambiguous success. Reconcile the exact marker
     // before retrying so a rerun does not create a second sticky comment.
     const reconciled = await listOwnedTrackingComments(client, target, expectedAuthorId, options);

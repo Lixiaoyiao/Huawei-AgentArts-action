@@ -21,6 +21,7 @@ import {
   runUrl,
 } from "./context.js";
 import { outcomeContext, type RunState } from "./lifecycle.js";
+import { resolveTrustedPrompt } from "../text-files.js";
 
 type GitHubContext = ReturnType<typeof parseGitHubContext>;
 export interface AuthorizedRun {
@@ -100,7 +101,10 @@ export async function prepareAuthorizedRun(options: {
     };
   }
 
-  const client = createGitHubClient(inputs.githubToken, signal);
+  const client = createGitHubClient(inputs.githubToken, signal, {
+    deadlineMs: startedAt + inputs.timeoutMinutes * 60_000,
+  });
+  state.githubClient = client;
   throwIfCancelled(signal);
   state.phase = "authorization";
   const permissions = await checkActorPermissions(client, context, inputs.allowedBots);
@@ -143,6 +147,13 @@ export async function prepareAuthorizedRun(options: {
   });
   state.policy = policy;
   if (!policy.allowed) throw new PolicyDeniedError(policy.reason);
+
+  state.phase = "context";
+  command = await resolveTrustedPrompt({ client, repository: context.repository, command, inputs });
+  throwIfCancelled(signal);
+  core.info(
+    `Task accepted: ${command.operation}; phase=context; trust=${policy.trust}; run=${currentRunUrl}`,
+  );
 
   const issueNumber = snapshot?.number ?? pullRequest?.number;
   const deferWriteProgress = deferProgressUntilWriteValidation(command);

@@ -54,7 +54,7 @@ describe("Controller GitHub client", () => {
       requestSignal = (options.request as { signal?: AbortSignal } | undefined)?.signal;
       return new Promise<unknown>(() => undefined);
     });
-    const running = hook(request, { method: "GET", url: "/repos/o/r" });
+    const running = hook(request, { method: "GET", url: "/repos/o/r", request: {} });
     const reason = new Error("Controller deadline exhausted");
 
     controller.abort(reason);
@@ -70,6 +70,29 @@ describe("Controller GitHub client", () => {
     expect(mocks.getOctokit).toHaveBeenCalledWith("github-token", {
       userAgent: "dsh-action/0.2",
     });
-    expect(mocks.hookWrap).not.toHaveBeenCalled();
+    expect(mocks.hookWrap).toHaveBeenCalledOnce();
+  });
+
+  it("preserves the shorter invocation signal alongside the run signal", async () => {
+    const run = new AbortController();
+    const invocation = new AbortController();
+    createGitHubClient("github-token", run.signal);
+    const hook = mocks.hookWrap.mock.calls[0]?.[1] as RequestHook;
+    let received: AbortSignal | undefined;
+    const request = vi.fn((options: Record<string, unknown>) => {
+      received = (options.request as { signal: AbortSignal }).signal;
+      return new Promise<unknown>(() => undefined);
+    });
+    const running = hook(request, {
+      method: "GET",
+      url: "/repos/o/r",
+      request: { signal: invocation.signal },
+    });
+    const reason = new Error("invocation deadline");
+    invocation.abort(reason);
+    await expect(running).rejects.toBe(reason);
+    expect(received?.aborted).toBe(true);
+    expect(run.signal.aborted).toBe(false);
+    expect(request).toHaveBeenCalledOnce();
   });
 });

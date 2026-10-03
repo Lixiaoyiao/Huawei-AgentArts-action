@@ -2,13 +2,33 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { GitHubClient } from "../src/github/client.js";
 import type { PullRequestSnapshot } from "../src/github/fetch.js";
-import { publishPullRequestReview } from "../src/review/publisher.js";
+import { publishPullRequestReview, ReviewPublicationQuotaError } from "../src/review/publisher.js";
+import { GitHubQuotaError } from "../src/github/request-policy.js";
+import { describeActionFailure } from "../src/result.js";
 import type { ReviewFinding, ReviewResult } from "../src/review/schema.js";
 import { createTrackingMarker } from "../src/review/tracking.js";
 
 const BOT_ID = 41_898_282;
 const HEAD_SHA = "a".repeat(40);
 const BASE_SHA = "b".repeat(40);
+
+function quotaError(status = 429): GitHubQuotaError {
+  return new GitHubQuotaError(
+    {
+      credentialScope: "production-action",
+      clientRole: "main-controller",
+      requests: 4,
+      cacheHits: 0,
+      coalesced: 0,
+      retries: 0,
+      waitMs: 0,
+      quotaFailures: 1,
+      resetAt: "2026-10-03T10:00:00.000Z",
+      resource: "core",
+    },
+    status,
+  );
+}
 
 function finding(overrides: Partial<ReviewFinding> = {}): ReviewFinding {
   return {
@@ -336,6 +356,142 @@ describe("publishPullRequestReview", () => {
     expect(fake.issueComments[0]?.body).toContain("Publication warnings");
     expect(fake.issueComments[0]?.body).toContain("Findings carried in the summary");
     expect(fake.issueComments[0]?.body).toContain("Authorization is checked after the write");
+  });
+
+  it("stops at inline quota exhaustion and retains the first confirmed comment", async () => {
+    const fake = fakeClient();
+    const quota = quotaError();
+    const createInline = fake.createReviewComment.getMockImplementation();
+    if (createInline === undefined) throw new Error("inline fixture has no implementation");
+    fake.createReviewComment.mockImplementationOnce(createInline).mockRejectedValueOnce(quota);
+    const current = snapshot();
+    const multipleFiles = snapshot({
+      changedFiles: current.changedFiles.flatMap((file) => [
+        file,
+        { ...file, path: "src/second.ts" },
+        { ...file, path: "src/third.ts" },
+      ]),
+    });
+    const failure: unknown = await publishPullRequestReview(
+      fake.value,
+      target,
+      multipleFiles,
+      review([
+        finding(),
+        finding({ path: "src/second.ts", title: "Second authorization regression" }),
+        finding({ path: "src/third.ts", title: "Third authorization regression" }),
+      ]),
+      20,
+    ).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ReviewPublicationQuotaError);
+    if (!(failure instanceof ReviewPublicationQuotaError))
+      throw new Error("quota was not preserved");
+    expect(failure.publication).toMatchObject({
+      selected: 3,
+      inlinePublished: 1,
+      inlineUpdated: 0,
+      duplicatesSkipped: 0,
+      summaryOnly: 0,
+      failures: [expect.stringContaining("GitHub quota stopped")],
+    });
+    expect(failure.audit).toBe(quota.audit);
+    expect(failure.cause).toBe(quota);
+    const described = describeActionFailure(failure, "publication");
+    expect(described).toMatchObject({
+      code: "GITHUB_QUOTA_EXHAUSTED",
+      phase: "publication",
+    });
+    expect(described.guidance).toContain(quota.audit.resetAt);
+    expect(fake.inlineComments).toHaveLength(1);
+    expect(fake.createReviewComment).toHaveBeenCalledTimes(2);
+    expect(fake.getPull).toHaveBeenCalledTimes(2);
+    expect(fake.value.paginate).toHaveBeenCalledOnce();
+    expect(fake.createComment).not.toHaveBeenCalled();
+    expect(fake.updateComment).not.toHaveBeenCalled();
+  });
+
+  it("retains confirmed inline effects when the summary hits quota without requesting reconciliation", async () => {
+    const fake = fakeClient();
+    const quota = quotaError(403);
+    fake.createComment.mockRejectedValueOnce(quota);
+    const failure: unknown = await publishPullRequestReview(
+      fake.value,
+      target,
+      snapshot(),
+      review([finding()]),
+      20,
+    ).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ReviewPublicationQuotaError);
+    if (!(failure instanceof ReviewPublicationQuotaError))
+      throw new Error("quota was not preserved");
+    expect(failure.status).toBe(403);
+    expect(failure.publication).toMatchObject({
+      selected: 1,
+      inlinePublished: 1,
+      inlineUpdated: 0,
+      failures: [expect.stringContaining("GitHub quota stopped")],
+    });
+    expect(fake.createReviewComment).toHaveBeenCalledOnce();
+    expect(fake.createComment).toHaveBeenCalledOnce();
+    expect(fake.value.paginate).toHaveBeenCalledTimes(2);
+    expect(fake.issueComments).toHaveLength(0);
+  });
+
+  it("retains confirmed updates when final snapshot revalidation hits quota", async () => {
+    const fake = fakeClient();
+    const item = finding();
+    await publishPullRequestReview(fake.value, target, snapshot(), review([item]), 20);
+    const quota = quotaError();
+    fake.getPull.mockReset();
+    fake.getPull.mockResolvedValueOnce(pullResponse()).mockRejectedValueOnce(quota);
+    fake.createComment.mockClear();
+    fake.updateComment.mockClear();
+    const failure: unknown = await publishPullRequestReview(
+      fake.value,
+      target,
+      snapshot(),
+      review([
+        { ...item, body: "The unauthorized write remains reachable before the identity guard." },
+      ]),
+      20,
+    ).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ReviewPublicationQuotaError);
+    if (!(failure instanceof ReviewPublicationQuotaError))
+      throw new Error("quota was not preserved");
+    expect(failure.publication).toMatchObject({ inlinePublished: 0, inlineUpdated: 1 });
+    expect(fake.updateReviewComment).toHaveBeenCalledOnce();
+    expect(fake.createComment).not.toHaveBeenCalled();
+    expect(fake.updateComment).not.toHaveBeenCalled();
+    expect(fake.getPull).toHaveBeenCalledTimes(2);
+  });
+
+  it("reports no publication effects when quota stops initial comment discovery", async () => {
+    const fake = fakeClient();
+    vi.spyOn(fake.value, "paginate").mockRejectedValueOnce(quotaError());
+    const failure: unknown = await publishPullRequestReview(
+      fake.value,
+      target,
+      snapshot(),
+      review([finding()]),
+      20,
+    ).catch((error: unknown) => error);
+
+    expect(failure).toBeInstanceOf(ReviewPublicationQuotaError);
+    if (!(failure instanceof ReviewPublicationQuotaError))
+      throw new Error("quota was not preserved");
+    expect(failure.publication).toMatchObject({
+      selected: 1,
+      inlinePublished: 0,
+      inlineUpdated: 0,
+      duplicatesSkipped: 0,
+      summaryOnly: 0,
+    });
+    expect(fake.getPull).not.toHaveBeenCalled();
+    expect(fake.createReviewComment).not.toHaveBeenCalled();
+    expect(fake.createComment).not.toHaveBeenCalled();
   });
 
   it("recovers on rerun when inline succeeded but sticky summary publication failed", async () => {

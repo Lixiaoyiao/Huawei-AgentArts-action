@@ -23,6 +23,8 @@ export function parseArguments(argv: readonly string[]): {
   readonly help: boolean;
   readonly mode: InstallerMode | undefined;
   readonly dshMode: InstallerDshMode | undefined;
+  readonly testCommands?: readonly (readonly string[])[];
+  readonly containerImage?: string;
 };
 
 export function runInstaller(options?: InstallerOptions): Promise<InstallerResult>;

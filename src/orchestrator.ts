@@ -4,6 +4,7 @@
  */
 import * as core from "@actions/core";
 
+import { assertStartupConfiguration } from "./configuration-check.js";
 import { DshAbortedError } from "./dsh/errors.js";
 import { selectDshComposition } from "./dsh/select-composition.js";
 import { loadInputs, type ActionInputs } from "./inputs.js";
@@ -125,6 +126,7 @@ export async function runAction(options: RunActionOptions = {}): Promise<RunOutc
   try {
     throwIfCancelled(options.signal);
     const inputs = loadInputs();
+    assertStartupConfiguration(inputs);
     const compositionSelection = selectDshComposition(inputs.dshMode);
     const composition = compositionSelection.create();
     state.composition = composition;

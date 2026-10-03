@@ -5,6 +5,7 @@
 import type { GitHubClient } from "./client.js";
 import type { GitHubContext } from "./context.js";
 import { getActorsToCheck, isAllowedActor } from "./actors.js";
+import { GitHubQuotaError } from "./request-policy.js";
 
 export type RepositoryPermission = "none" | "read" | "triage" | "write" | "maintain" | "admin";
 
@@ -45,7 +46,8 @@ async function getActorAccess(
     if (type === "User" || type === "Bot" || type === "Organization" || type === "Mannequin") {
       accountType = type;
     }
-  } catch {
+  } catch (error: unknown) {
+    if (error instanceof GitHubQuotaError) throw error;
     // Permission lookup below remains authoritative and fails closed.
   }
 
@@ -57,7 +59,8 @@ async function getActorAccess(
         username: actor,
       });
       return normalizePermission(response.data.permission);
-    } catch {
+    } catch (error: unknown) {
+      if (error instanceof GitHubQuotaError) throw error;
       return "none";
     }
   })();

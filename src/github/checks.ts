@@ -1,5 +1,6 @@
 import type { GitHubClient } from "./client.js";
 import { utf8Prefix, utf8Suffix } from "../security/utf8.js";
+import { GitHubQuotaError } from "./request-policy.js";
 
 const MAX_FAILED_RUNS = 20;
 const MAX_FAILED_JOBS = 100;
@@ -323,7 +324,8 @@ export async function fetchCiEvidence(
         });
         rawLog = downloaded.text;
         downloadTruncated = downloaded.truncated;
-      } catch {
+      } catch (error: unknown) {
+        if (error instanceof GitHubQuotaError) throw error;
         // Do not expose signed URLs or transport errors to untrusted model input.
         rawLog = "[log unavailable: secure download failed]";
       }

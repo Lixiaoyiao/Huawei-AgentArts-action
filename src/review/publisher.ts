@@ -9,6 +9,7 @@ import { filterHighPrecisionFindings } from "./precision.js";
 import type { ReviewFinding, ReviewResult } from "./schema.js";
 import { createTrackingMarker, indexTrackingComments, stripTrackingMarkers } from "./tracking.js";
 import { upsertTrackingComment } from "../github/comments.js";
+import { GitHubQuotaError } from "../github/request-policy.js";
 
 const GITHUB_BODY_LIMIT = 65_000;
 
@@ -27,6 +28,17 @@ export interface PublicationResult {
   readonly duplicatesSkipped: number;
   readonly summaryOnly: number;
   readonly failures: readonly string[];
+}
+
+/** Keep confirmed comment effects when quota stops the remaining publication. */
+export class ReviewPublicationQuotaError extends GitHubQuotaError {
+  public constructor(
+    error: GitHubQuotaError,
+    public readonly publication: PublicationResult,
+  ) {
+    super(error.audit, error.status);
+    this.cause = error;
+  }
 }
 
 function safeBody(value: string): string {
@@ -205,99 +217,109 @@ export async function publishPullRequestReview(
   if (snapshot.headSha.length !== 40) throw new Error("A full immutable head SHA is required");
   const diff = buildDiff(snapshot);
   const findings = filterHighPrecisionFindings(result.findings, { maxFindings });
-  const existingComments = await client.paginate(client.rest.pulls.listReviewComments, {
-    owner: target.owner,
-    repo: target.repo,
-    pull_number: target.pullNumber,
-    per_page: 100,
-  });
-  const existing = indexTrackingComments(existingComments, target.expectedAuthorId).findings;
   let inlinePublished = 0;
   let inlineUpdated = 0;
   let duplicatesSkipped = 0;
   let summaryOnly = 0;
   const failures: string[] = [];
   const fallbackFindings = new Set<ReviewFinding>();
-
-  for (const finding of findings) {
-    await assertPullRequestSnapshotCurrent(client, target.owner, target.repo, snapshot);
-    const location = mapFinding(diff, finding);
-    if (location === null) {
-      summaryOnly += 1;
-      continue;
-    }
-    const anchorContext = findDiffAnchorContext(diff, location);
-    const fingerprint = fingerprintFinding({
-      ...finding,
-      ...(anchorContext === undefined ? {} : { anchorContext }),
-    });
-    const body = findingBody(finding, fingerprint);
-    const prior = existing.get(fingerprint);
-    const priorMatchesLocation =
-      prior?.commit_id === snapshot.headSha &&
-      prior.path === location.path &&
-      prior.line === location.line &&
-      prior.side === location.side;
-    try {
-      if (priorMatchesLocation) {
-        if (prior.body === body) {
-          duplicatesSkipped += 1;
-        } else {
-          await client.rest.pulls.updateReviewComment({
-            owner: target.owner,
-            repo: target.repo,
-            comment_id: prior.id,
-            body,
-          });
-          inlineUpdated += 1;
-        }
-      } else if (prior !== undefined) {
-        // GitHub cannot relocate an existing inline thread to another commit.
-        // Keep that thread, suppress a duplicate, and surface the current
-        // location/prose in the sticky summary instead.
-        duplicatesSkipped += 1;
-        summaryOnly += 1;
-        fallbackFindings.add(finding);
-      } else {
-        await client.rest.pulls.createReviewComment({
-          owner: target.owner,
-          repo: target.repo,
-          pull_number: target.pullNumber,
-          commit_id: snapshot.headSha,
-          body,
-          path: location.path,
-          line: location.line,
-          side: location.side,
-          ...(location.startLine === undefined
-            ? {}
-            : { start_line: location.startLine, start_side: location.startSide }),
-        });
-        inlinePublished += 1;
-      }
-    } catch (error) {
-      summaryOnly += 1;
-      fallbackFindings.add(finding);
-      failures.push(
-        `${sanitizeMarkdownPath(finding.path)}:${String(finding.line)} (${safeBody(finding.title)}): ${error instanceof Error ? safeBody(error.message) : "GitHub API failure"}`,
-      );
-    }
-  }
-
-  const publication: PublicationResult = {
+  const publicationResult = (): PublicationResult => ({
     selected: findings.length,
     inlinePublished,
     inlineUpdated,
     duplicatesSkipped,
     summaryOnly,
-    failures,
-  };
-  await assertPullRequestSnapshotCurrent(client, target.owner, target.repo, snapshot);
-  await upsertTrackingComment(
-    client,
-    { owner: target.owner, repo: target.repo, issueNumber: target.pullNumber },
-    target.expectedAuthorId,
-    "summary",
-    formatSummaryWithDiff(result, findings, publication, target, diff, fallbackFindings),
-  );
-  return publication;
+    failures: [...failures],
+  });
+
+  try {
+    const existingComments = await client.paginate(client.rest.pulls.listReviewComments, {
+      owner: target.owner,
+      repo: target.repo,
+      pull_number: target.pullNumber,
+      per_page: 100,
+    });
+    const existing = indexTrackingComments(existingComments, target.expectedAuthorId).findings;
+
+    for (const finding of findings) {
+      await assertPullRequestSnapshotCurrent(client, target.owner, target.repo, snapshot);
+      const location = mapFinding(diff, finding);
+      if (location === null) {
+        summaryOnly += 1;
+        continue;
+      }
+      const anchorContext = findDiffAnchorContext(diff, location);
+      const fingerprint = fingerprintFinding({
+        ...finding,
+        ...(anchorContext === undefined ? {} : { anchorContext }),
+      });
+      const body = findingBody(finding, fingerprint);
+      const prior = existing.get(fingerprint);
+      const priorMatchesLocation =
+        prior?.commit_id === snapshot.headSha &&
+        prior.path === location.path &&
+        prior.line === location.line &&
+        prior.side === location.side;
+      try {
+        if (priorMatchesLocation) {
+          if (prior.body === body) {
+            duplicatesSkipped += 1;
+          } else {
+            await client.rest.pulls.updateReviewComment({
+              owner: target.owner,
+              repo: target.repo,
+              comment_id: prior.id,
+              body,
+            });
+            inlineUpdated += 1;
+          }
+        } else if (prior !== undefined) {
+          // GitHub cannot relocate an existing inline thread to another commit.
+          // Keep that thread, suppress a duplicate, and surface the current
+          // location/prose in the sticky summary instead.
+          duplicatesSkipped += 1;
+          summaryOnly += 1;
+          fallbackFindings.add(finding);
+        } else {
+          await client.rest.pulls.createReviewComment({
+            owner: target.owner,
+            repo: target.repo,
+            pull_number: target.pullNumber,
+            commit_id: snapshot.headSha,
+            body,
+            path: location.path,
+            line: location.line,
+            side: location.side,
+            ...(location.startLine === undefined
+              ? {}
+              : { start_line: location.startLine, start_side: location.startSide }),
+          });
+          inlinePublished += 1;
+        }
+      } catch (error) {
+        failures.push(
+          `${sanitizeMarkdownPath(finding.path)}:${String(finding.line)} (${safeBody(finding.title)}): ${error instanceof Error ? safeBody(error.message) : "GitHub API failure"}`,
+        );
+        if (error instanceof GitHubQuotaError) throw error;
+        summaryOnly += 1;
+        fallbackFindings.add(finding);
+      }
+    }
+
+    const publication = publicationResult();
+    await assertPullRequestSnapshotCurrent(client, target.owner, target.repo, snapshot);
+    await upsertTrackingComment(
+      client,
+      { owner: target.owner, repo: target.repo, issueNumber: target.pullNumber },
+      target.expectedAuthorId,
+      "summary",
+      formatSummaryWithDiff(result, findings, publication, target, diff, fallbackFindings),
+    );
+    return publication;
+  } catch (error) {
+    if (!(error instanceof GitHubQuotaError)) throw error;
+    const message = safeBody(error.message);
+    if (!failures.some((failure) => failure.includes(message))) failures.push(message);
+    throw new ReviewPublicationQuotaError(error, publicationResult());
+  }
 }

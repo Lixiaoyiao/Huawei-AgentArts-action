@@ -500,7 +500,7 @@ describe("loadInputs", () => {
           command: "task",
         }),
       ),
-    ).toThrow(/prompt is required/u);
+    ).toThrow(/prompt or prompt-file is required/u);
     const result = loadInputs(
       reader({
         "deepseek-api-key": "deepseek-key",

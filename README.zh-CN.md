@@ -14,37 +14,6 @@ GitHub PR / Issue / CI  →  DeepSeek Harness  →  Review / Diagnose / Fix / Is
 
 Action 会启动与凭据隔离的 DSH worker，校验结构化结果，再由受信任的 Controller 发布评论或经过验证的改动。这是社区项目，并非 DeepSeek 或 GitHub 官方产品，由 [@Lixiaoyiao](https://github.com/Lixiaoyiao) 维护。
 
-## 核心能力
-
-| 能力             | 作用                                                                            |
-| ---------------- | ------------------------------------------------------------------------------- |
-| PR 审查          | 审查新提交，发布一条汇总，并为高置信度问题添加行内评论                          |
-| 通用任务         | 回答仓库问题，或执行经过明确授权的编码任务                                      |
-| CI 诊断与修复    | 读取失败的检查和日志；受信任 workflow 可以验证并发布修复                        |
-| Issue 实现       | 把经过授权的 Issue 请求实现为已验证的分支和 PR                                  |
-| Composition 模式 | 默认保留现有受控工具档位，并提供实验性的 DSH native 模式                        |
-| 受控工具         | 以精确工具档位提供原生、固定命令、Controller GitHub、MCP、Bundle 与 Plugin 工具 |
-| 结构化结果       | 保留 schema-v1 审计信封，并可校验维护者定义的可选 task 结果                     |
-
-v0.9.1 继续提供基于锁定 DSH `0.2.0-rc.2` runtime 的实验性 `dsh-mode: native` 路径及其官方生态 composition。Native MCP server、Profile Bundle、direct Cordis Plugin、仓库 Skills、Subagent 和 Workflow 保留 DSH-native discovery 与行为。`controlled` 仍是兼容默认值，因此未配置 `dsh-mode` 的 workflow 会继续使用原有 composition、权限、工具、budget、receipt 和输出行为。
-
-Native 模式并不是 unsafe 模式。它把 DSH 内部 headless composition、capability graph 和 model-visible inventory 的 ownership 交还给 DSH。Native MCP 通过官方 `@deepseek-ai/dsh-mcp-client` 加载；Bundle 作为官方 Profile layer 组合；direct Plugin 通过 Cordis 加载；仓库 Skills、Subagent 与 Workflow 保留 DSH-native 行为。它使用 definition-only 扩展 schema 来声明 owner 和进程需求，而不是声明 Action tool、grant 或 per-tool budget。动态生态工具只通过运行时 `observedTools` 出现，native `toolPolicy` 不会虚构 Controller `effectiveTools`。
-
-Action 仍拥有 trusted-workflow admission、package exact pin、lifecycle script 禁用、runtime inventory audit、Docker 与 `.git`-less workspace 边界、run-scoped DeepSeek 凭据代理、GitHub 凭据隔离、actor/repository trust、validation 与 deferred write、deadline、cancellation 和 secret redaction。Native 仍仅支持 Docker；bridge network 和 read/write mount 都是 whole-worker 能力，不是 per-extension 或 per-tool sandbox。用户自行配置并携带自有凭据的 GitHub MCP 属于受信任外部扩展，其直接副作用不享受 Controller Gateway 的 binding、revalidation、validation 或 deferred-mutation 保证。Controller-owned `command.*` 与 `github.*` 能力继续作为独立且与 mode 正交的平面。
-
-v0.9.1 固定使用官方 DSH `0.2.0-rc.2` dependency family；须按[发布流程](docs/maintainer-release.md)验证同一个候选 SHA，[迁移审计](docs/dsh-0.2.0-rc.2-migration.md)记录上游 API 与依赖变化。迁移保留现有输入、输出、权限语义及主要业务路径。一次有界、无工具的结果修复不会重新运行 worker 任务；合法的 Headless NDJSON/final 事件仍须经过 Controller 的严格 schema 和业务校验。本轮不新增跨 run Session/Resume、文件/图片入口、Agent Teams、Browser/Computer Use 或 GitHub capability。既有 v0.9.0 Release 与 Tag 保持不变。
-
-## 真实运行
-
-以下是本仓库的公开运行记录，可以直接查看评论和 Actions 日志。
-
-| 场景                            | 运行记录                                                                                                                                                              |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PR 审查，以及复跑时不重复发评论 | [PR #3](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/3) · [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760570162) |
-| 根据失败的检查和日志进行诊断    | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760603284)                                                                         |
-| 在受信任写模式下修复并验证      | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31761793492)                                                                         |
-| 实现 Issue 后创建 PR            | [Issue #4](https://github.com/Lixiaoyiao/deepseek-harness-action/issues/4) → [PR #5](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/5)                    |
-
 ## 快速开始
 
 在需要接入的仓库根目录运行安装器：
@@ -108,7 +77,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-version: 0.2.0-rc.2
@@ -117,6 +86,37 @@ jobs:
 打开一个非 draft PR。Action 只会检出受信任的 base SHA，通过 GitHub API 读取 PR，并且不会运行 fork 中的代码。
 
 生产环境应把 `v0.9.1` 替换为正式不可变 commit `80cf46ee9098158ea664c45ea6371604c47b71e6`。权限、版本固定、安全检出规则和完整模板见[安装指南](docs/setup.zh-CN.md)。
+
+## 核心能力
+
+| 能力             | 作用                                                                            |
+| ---------------- | ------------------------------------------------------------------------------- |
+| PR 审查          | 审查新提交，发布一条汇总，并为高置信度问题添加行内评论                          |
+| 通用任务         | 回答仓库问题，或执行经过明确授权的编码任务                                      |
+| CI 诊断与修复    | 读取失败的检查和日志；受信任 workflow 可以验证并发布修复                        |
+| Issue 实现       | 把经过授权的 Issue 请求实现为已验证的分支和 PR                                  |
+| Composition 模式 | 默认保留现有受控工具档位，并提供实验性的 DSH native 模式                        |
+| 受控工具         | 以精确工具档位提供原生、固定命令、Controller GitHub、MCP、Bundle 与 Plugin 工具 |
+| 结构化结果       | 保留 schema-v1 审计信封，并可校验维护者定义的可选 task 结果                     |
+
+v0.9.2 继续提供基于锁定 DSH `0.2.0-rc.2` runtime 的实验性 `dsh-mode: native` 路径及其官方生态 composition。Native MCP server、Profile Bundle、direct Cordis Plugin、仓库 Skills、Subagent 和 Workflow 保留 DSH-native discovery 与行为。`controlled` 仍是兼容默认值，因此未配置 `dsh-mode` 的 workflow 会继续使用原有 composition、权限、工具、budget、receipt 和输出行为。
+
+Native 模式并不是 unsafe 模式。它把 DSH 内部 headless composition、capability graph 和 model-visible inventory 的 ownership 交还给 DSH。Native MCP 通过官方 `@deepseek-ai/dsh-mcp-client` 加载；Bundle 作为官方 Profile layer 组合；direct Plugin 通过 Cordis 加载；仓库 Skills、Subagent 与 Workflow 保留 DSH-native 行为。它使用 definition-only 扩展 schema 来声明 owner 和进程需求，而不是声明 Action tool、grant 或 per-tool budget。动态生态工具只通过运行时 `observedTools` 出现，native `toolPolicy` 不会虚构 Controller `effectiveTools`。
+
+Action 仍拥有 trusted-workflow admission、package exact pin、lifecycle script 禁用、runtime inventory audit、Docker 与 `.git`-less workspace 边界、run-scoped DeepSeek 凭据代理、GitHub 凭据隔离、actor/repository trust、validation 与 deferred write、deadline、cancellation 和 secret redaction。Native 仍仅支持 Docker；bridge network 和 read/write mount 都是 whole-worker 能力，不是 per-extension 或 per-tool sandbox。用户自行配置并携带自有凭据的 GitHub MCP 属于受信任外部扩展，其直接副作用不享受 Controller Gateway 的 binding、revalidation、validation 或 deferred-mutation 保证。Controller-owned `command.*` 与 `github.*` 能力继续作为独立且与 mode 正交的平面。
+
+v0.9.2 保持 DSH `0.2.0-rc.2` 精确锁定，新增 [prompt-file / context-files 文本文件上下文](docs/text-files.md)、[不启动模型的配置检查](docs/configuration-check.md)及[按 run 限界的 GitHub 请求诊断](docs/github-requests.md)。写入仍须授权、验证、即时重验与结果核对。Session/Resume 和真实图片附件的接口证据与暂缓原因见[固定运行时审计](docs/v0.9.2-runtime-audit.md)。
+
+## 真实运行
+
+以下是本仓库的公开运行记录，可以直接查看评论和 Actions 日志。
+
+| 场景                            | 运行记录                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR 审查，以及复跑时不重复发评论 | [PR #3](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/3) · [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760570162) |
+| 根据失败的检查和日志进行诊断    | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31760603284)                                                                         |
+| 在受信任写模式下修复并验证      | [Actions run](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/31761793492)                                                                         |
+| 实现 Issue 后创建 PR            | [Issue #4](https://github.com/Lixiaoyiao/deepseek-harness-action/issues/4) → [PR #5](https://github.com/Lixiaoyiao/deepseek-harness-action/pull/5)                    |
 
 ## 常用 `@dsh` 命令
 

@@ -4,6 +4,7 @@ import type { GitHubContext } from "../github/context.js";
 import { isAutomaticReviewAction } from "../github/events.js";
 import { removeMarkdownImages } from "../security/redaction.js";
 import { parseCommand, type Operation, type RequestedAccess } from "./parse.js";
+import type { RepositoryTextFileAudit } from "../text-files.js";
 
 export interface CommandSource {
   readonly kind: "explicit-input" | "explicit-prompt" | "mention" | "automatic-event";
@@ -15,6 +16,7 @@ export interface RoutedCommand {
   readonly source: CommandSource["kind"];
   readonly instructions: string;
   readonly requestedAccess: RequestedAccess;
+  readonly instructionFile?: RepositoryTextFileAudit;
 }
 
 /**
@@ -161,7 +163,7 @@ export function routeCommand(context: GitHubContext, inputs: ActionInputs): Rout
     };
   }
 
-  if (context.kind === "automation" && inputs.prompt.trim() !== "") {
+  if (context.kind === "automation" && (inputs.prompt.trim() !== "" || inputs.promptFile !== "")) {
     return {
       operation: "task",
       source: "explicit-prompt",

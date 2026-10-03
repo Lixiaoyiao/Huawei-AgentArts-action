@@ -1,4 +1,4 @@
-name: v0.9.1 release canary
+name: v0.9.2 release canary
 
 on:
   workflow_dispatch:
@@ -67,7 +67,7 @@ jobs:
     environment: core-e2e
     timeout-minutes: 35
     env:
-      RELEASE_TAG: v0.9.1
+      RELEASE_TAG: v0.9.2
       RELEASE_SHA: ${{ vars.DSH_RELEASE_CANARY_SHA }}
     steps:
       - name: Validate protected canary secret
@@ -136,7 +136,8 @@ jobs:
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           command: task
-          prompt: "Inspect README.md with the available read-only tools and return one concise sentence describing this action. Do not change files."
+          prompt-file: examples/prompts/repository-summary.md
+          context-files: '["examples/context/release-checklist.txt"]'
           task-access: read
           allow-write: "false"
           permission-profile: strict
@@ -169,6 +170,10 @@ jobs:
             .schemaVersion == 1 and
             .conclusion == "success" and
             .operation == "task" and
+            .textSources.instruction.path == "examples/prompts/repository-summary.md" and
+            (.textSources.contexts | length == 1) and
+            .githubRequests.clientRole == "main-controller" and
+            .githubRequests.cacheHits > 0 and
             .dsh.mode == "controlled" and
             .dsh.composition == "github-action-controlled" and
             .permissions.profile == "strict" and
@@ -191,7 +196,8 @@ jobs:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-mode: native
           command: task
-          prompt: "Inspect README.md with the DSH native read-only tools and return one concise sentence describing this action. Do not change files."
+          prompt-file: examples/prompts/repository-summary.md
+          context-files: '["examples/context/release-checklist.txt"]'
           task-access: read
           allow-write: "false"
           permission-profile: strict
@@ -217,6 +223,10 @@ jobs:
             .conclusion == "success" and
             .operation == "task" and
             .dsh.mode == "native" and
+            .textSources.instruction.path == "examples/prompts/repository-summary.md" and
+            (.textSources.contexts | length == 1) and
+            .githubRequests.clientRole == "main-controller" and
+            .githubRequests.cacheHits > 0 and
             .dsh.composition == "dsh-native-headless" and
             .policy.trust == "trusted-read" and
             .permissions.profile == "strict" and

@@ -53,6 +53,44 @@ After the installer succeeds:
 
 Node.js and npm are needed locally only to run the installer. The generated workflows do not assume that the target repository is a Node.js project.
 
+## Check configuration before the first model run
+
+From a reviewed checkout of the Action source, with Node.js 24 and its locked
+dependencies installed, copy [`examples/config-check.json`](../examples/config-check.json)
+and replace its `inputs` with the literal Action input names/values from your
+workflow. Keep secrets out of that file: `credentialEnv` selects the environment
+variable holding each Controller credential.
+
+```bash
+npm run check:config -- --config examples/config-check.json
+```
+
+The checker reads only the selected JSON file (regular UTF-8 file, at most
+256 KiB). It uses the same public input/extension schemas as the Action and
+checks missing credentials, the exact DSH version, composition/isolation and
+explicit write validation configuration. It starts no model, runs no repository
+code/validation command, makes no network calls, and changes no remote state.
+Its JSON result uses `scope: static_configuration_only`; `ok: true` means only
+that the checked configuration is valid. Docker/image availability, credential
+validity and online permissions/quota, current event/SHA authority, text-file
+contents and extension activation remain `not_checked`. A write-capable `auto`
+configuration with missing validation gets a warning because read routes remain
+usable; an actual routed write fails before the model starts.
+
+At execution, missing credentials/unsupported DSH or malformed extensions fail
+during input parsing. Explicit/routed writes reject empty validation, disabled
+tests and untouched placeholders before model startup. A bounded, credential-free
+`docker info` probe reports an unavailable CLI/daemon before runtime installation.
+These checks never grant authority or replace executed Controller validation.
+
+The next installer release also accepts optional `--test-commands` JSON argv
+arrays and `--container-image name@sha256:<64 lowercase hex>` for `commands` or
+`both`. These flags are available in the source being prepared for release;
+the current published installer identity above remains unchanged until its
+independent publication. Maintainers must explicitly choose reviewed,
+credential-free commands. The installer never discovers or executes scripts,
+and omitting the flags preserves the fail-closed placeholder.
+
 ## Manual installation
 
 Use the following steps if you prefer to create the workflows yourself.
@@ -83,7 +121,7 @@ The default `github-token` is `${{ github.token }}` and is also Controller-only.
 The examples use the current release tag for readability:
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
+uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
 ```
 
 For production, replace the tag with the full immutable commit SHA resolved
@@ -139,7 +177,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-version: 0.2.0-rc.2

@@ -1,4 +1,5 @@
 import type { AgentToolManifest } from "../agent/contracts.js";
+import { assertWriteTaskConfiguration } from "../configuration-check.js";
 import type { DshComposition } from "../dsh/composition.js";
 import { PolicyDeniedError } from "../errors.js";
 import {
@@ -54,9 +55,31 @@ export async function prepareExecution(options: {
 }): Promise<PreparedExecution> {
   const { state, authorized, workspace, inputs, deadlineMs, signal } = options;
   const { client, context, command, snapshot, policy } = authorized;
+  if (command.requestedAccess === "write") assertWriteTaskConfiguration(inputs);
   const { agentWorkspace, snapshot: workspaceSnapshot } = workspace;
-  const contextPacket = await buildContextPacket(client, context, command, snapshot, inputs);
+  const contextPacket = await buildContextPacket(
+    client,
+    context,
+    command,
+    snapshot,
+    inputs,
+    workspace.boundWriteSha,
+  );
   throwIfCancelled(signal);
+  if (command.instructionFile !== undefined || contextPacket.textFiles !== undefined) {
+    state.textSources = {
+      ...(command.instructionFile === undefined ? {} : { instruction: command.instructionFile }),
+      contexts: (contextPacket.textFiles ?? []).map(
+        ({ repository, sourceSha, path, blobSha, bytes }) => ({
+          repository,
+          sourceSha,
+          path,
+          blobSha,
+          bytes,
+        }),
+      ),
+    };
+  }
   const trustedGitHubBinding = createGitHubToolBinding(context, snapshot);
   const resolvedTools = resolveEffectiveTools(inputs.allowedTools, inputs.toolConfig, policy, {
     permissionProfile: inputs.permissionProfile,
@@ -179,7 +202,13 @@ export async function prepareExecution(options: {
       state.composition.toolPolicyOwner,
     );
   }
-  const operationIdentity = taskIdentity(command, inputs, extensions.digest, permission.digest);
+  const operationIdentity = taskIdentity(
+    command,
+    inputs,
+    extensions.digest,
+    permission.digest,
+    contextPacket.textFiles,
+  );
 
   // Validate the immutable baseline before any model-controlled path can queue
   // a mutation; the Gateway repeats the gate immediately before its flush.

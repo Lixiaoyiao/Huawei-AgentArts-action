@@ -9,10 +9,12 @@ import * as core from "@actions/core";
 
 import { throwIfCancelled } from "../lifecycle/cancellation.js";
 import { settleWithin } from "../lifecycle/deadline.js";
+import { buildChildEnvironment } from "../security/argv.js";
 import {
   assertNoSecretOutput,
   assertSecretAbsent,
   buildDshWorkerEnvironment,
+  DSH_WORKER_ENV_ALLOWLIST,
   redactKnownSecrets,
 } from "../security/env.js";
 import {
@@ -39,6 +41,7 @@ import type { NativeToolId } from "../tools/schema.js";
 import {
   assertContainerImageReference,
   assertPinnedContainerImage,
+  dockerControllerEnvironment,
   dockerInstallerSpec,
   dockerWorkerSpec,
 } from "./docker-policy.js";
@@ -491,6 +494,37 @@ export async function runDsh(
       }
       return result;
     };
+
+    if (docker) {
+      try {
+        await runSetup(async () =>
+          runPhase(
+            async () =>
+              executeSetup(
+                {
+                  command: "docker",
+                  args: ["info", "--format", "{{.ServerVersion}}"],
+                  cwd: workspace,
+                  env: dockerControllerEnvironment(
+                    environment,
+                    buildChildEnvironment(environment, DSH_WORKER_ENV_ALLOWLIST),
+                  ),
+                },
+                10_000,
+              ),
+            10_000,
+          ),
+        );
+      } catch (error: unknown) {
+        if (error instanceof DshProcessError || error instanceof DshIsolationUnavailableError) {
+          throw new DshIsolationUnavailableError(
+            "Docker CLI/daemon is unavailable; verify docker info on this runner before starting the Action",
+            { cause: error },
+          );
+        }
+        throw error;
+      }
+    }
 
     let manifestBase: Record<string, unknown> | undefined;
     if (docker && runtime.installedVersion === undefined) {

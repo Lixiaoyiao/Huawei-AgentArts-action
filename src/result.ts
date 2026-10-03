@@ -25,6 +25,8 @@ import {
   type ValidationIntegritySummary,
 } from "./write/validation-integrity.js";
 import { ValidationFailureError } from "./write/validate.js";
+import { GitHubQuotaError, type GitHubRequestAudit } from "./github/request-policy.js";
+import type { RepositoryTextFileAudit } from "./text-files.js";
 
 export type ActionConclusion = "success" | "neutral" | "failure";
 export type ActionStatus =
@@ -94,6 +96,11 @@ export interface RunOutcome {
   /** Controller-validated maintainer-defined task result; never an authority input. */
   readonly taskOutput?: unknown;
   readonly error?: ActionFailure;
+  readonly githubRequests?: GitHubRequestAudit;
+  readonly textSources?: {
+    readonly instruction?: RepositoryTextFileAudit;
+    readonly contexts: readonly RepositoryTextFileAudit[];
+  };
 }
 
 interface PublicReceiptPayload {
@@ -204,6 +211,24 @@ function classifiedFailure(
 }
 
 export function describeActionFailure(error: unknown, phase: ActionPhase): ActionFailure {
+  let quotaCause: unknown = error;
+  for (
+    let depth = 0;
+    !isClassifiedActionError(error) && depth < 8 && quotaCause instanceof Error;
+    depth += 1
+  ) {
+    if (quotaCause instanceof GitHubQuotaError) {
+      error = quotaCause;
+      break;
+    }
+    quotaCause = quotaCause.cause;
+  }
+  if (error instanceof GitHubQuotaError) {
+    return classifiedFailure(error, phase, {
+      title: "GitHub request quota is exhausted",
+      guidance: `Inspect this credential scope's quota headers; recovery ${error.audit.resetAt ?? "time unknown"}. Check recorded external writes before rerunning. A different installation or release-monitor credential has a separate budget.`,
+    });
+  }
   if (error instanceof AgentDeadlineError) {
     return classifiedFailure(error, phase, {
       title: "Action execution timed out",
@@ -346,6 +371,8 @@ function structuredResult(
     ...(outcome.commentId === undefined ? {} : { commentId: outcome.commentId }),
     ...(outcome.taskOutput === undefined ? {} : { taskOutput: outcome.taskOutput }),
     ...(outcome.error === undefined ? {} : { error: outcome.error }),
+    ...(outcome.githubRequests === undefined ? {} : { githubRequests: outcome.githubRequests }),
+    ...(outcome.textSources === undefined ? {} : { textSources: outcome.textSources }),
   };
 }
 
@@ -607,6 +634,14 @@ export function formatStepSummary(outcome: RunOutcome): string {
     ...authoritySummaryLines(outcome.authority),
     ...validationSummaryLines(outcome.validation),
   ];
+  if (outcome.githubRequests !== undefined) {
+    const audit = outcome.githubRequests;
+    lines.push(
+      "",
+      `**GitHub requests (production Action main client; lifecycle comments use a separate client):** ${String(audit.requests)}; immutable cache hits ${String(audit.cacheHits)}; merged reads ${String(audit.coalesced)}; retries ${String(audit.retries)}; quota wait ${String(audit.waitMs)}ms.`,
+      ...(audit.resetAt === undefined ? [] : [`**Quota recovery:** ${audit.resetAt}`]),
+    );
+  }
   if (outcome.error !== undefined) {
     lines.push(
       "",

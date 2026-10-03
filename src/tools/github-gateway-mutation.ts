@@ -1,6 +1,7 @@
 import type { GitHubBackendRequestControl } from "./github-backend.js";
 import { callGitHubApi, type GitHubInvocationDeadline } from "./github-gateway-deadline.js";
 import { GitHubEntityRevalidationError } from "./github-gateway-revalidation.js";
+import { GitHubQuotaError } from "../github/request-policy.js";
 
 function errorStatus(error: unknown): number | undefined {
   if (typeof error !== "object" || error === null) return undefined;
@@ -9,9 +10,10 @@ function errorStatus(error: unknown): number | undefined {
 }
 
 export function isAmbiguousGitHubMutationError(error: unknown): boolean {
-  if (error instanceof GitHubEntityRevalidationError) return false;
+  if (error instanceof GitHubEntityRevalidationError || error instanceof GitHubQuotaError)
+    return false;
   const status = errorStatus(error);
-  return status === undefined || status === 408 || status === 429 || status >= 500;
+  return status === undefined || status === 408 || status >= 500;
 }
 
 export interface GitHubMutationResult<T> {
@@ -28,12 +30,12 @@ export class GitHubMutationExecutionError extends Error {
     public readonly externalEffect: "none" | "possible" | "confirmed",
     options?: ErrorOptions,
   ) {
-    super("GitHub mutation failed its bounded retry and reconciliation policy", options);
+    super("GitHub mutation failed its single-write reconciliation policy", options);
     this.name = "GitHubMutationExecutionError";
   }
 }
 
-/** Run one idempotent mutation with a bounded retry and observable postcondition. */
+/** Send a mutation once, then reconcile uncertain effects with fresh reads. */
 export async function mutateGitHubWithPostcondition<T>(options: {
   readonly invocation: GitHubInvocationDeadline;
   readonly read: (control: GitHubBackendRequestControl) => Promise<T>;
@@ -45,66 +47,47 @@ export async function mutateGitHubWithPostcondition<T>(options: {
   if (options.matches(before)) {
     return { value: before, attempts: 0, effect: "unchanged", reconciled: true };
   }
-  let attempts = 0;
-  let lastError: unknown;
-  let reconciled = false;
-  let possibleExternalEffect = false;
-  while (attempts < 2) {
-    attempts += 1;
-    const mutation = { started: false };
-    let mutationAcknowledged = false;
+  const attempts = 1;
+  const mutation = { started: false };
+  let mutationAcknowledged = false;
+  try {
+    await callGitHubApi(options.invocation, async (control) =>
+      options.mutate(control, () => {
+        mutation.started = true;
+      }),
+    );
+    mutationAcknowledged = true;
+    const after = await read();
+    if (!options.matches(after)) {
+      throw new Error("GitHub mutation postcondition did not match the requested state");
+    }
+    return { value: after, attempts, effect: "updated", reconciled: true };
+  } catch (error: unknown) {
+    if (mutationAcknowledged) {
+      throw new GitHubMutationExecutionError(attempts, false, "confirmed", {
+        cause: error,
+      });
+    }
+    if (!mutation.started || error instanceof GitHubEntityRevalidationError) {
+      throw new GitHubMutationExecutionError(attempts, false, "none", { cause: error });
+    }
+    if (options.invocation.signal?.aborted === true || !isAmbiguousGitHubMutationError(error)) {
+      const externalEffect = isAmbiguousGitHubMutationError(error) ? "possible" : "none";
+      throw new GitHubMutationExecutionError(attempts, false, externalEffect, {
+        cause: error,
+      });
+    }
     try {
-      await callGitHubApi(options.invocation, async (control) =>
-        options.mutate(control, () => {
-          mutation.started = true;
-        }),
-      );
-      mutationAcknowledged = true;
-      const after = await read();
-      if (!options.matches(after)) {
-        throw new Error("GitHub mutation postcondition did not match the requested state");
+      const value = await read();
+      if (options.matches(value)) {
+        return { value, attempts, effect: "updated", reconciled: true };
       }
-      return { value: after, attempts, effect: "updated", reconciled: true };
-    } catch (error: unknown) {
-      if (mutationAcknowledged) {
-        throw new GitHubMutationExecutionError(attempts, reconciled, "confirmed", {
-          cause: error,
-        });
-      }
-      if (!mutation.started || error instanceof GitHubEntityRevalidationError) {
-        throw new GitHubMutationExecutionError(
-          attempts,
-          reconciled,
-          possibleExternalEffect ? "possible" : "none",
-          { cause: error },
-        );
-      }
-      if (options.invocation.signal?.aborted === true || !isAmbiguousGitHubMutationError(error)) {
-        const externalEffect =
-          possibleExternalEffect || isAmbiguousGitHubMutationError(error) ? "possible" : "none";
-        throw new GitHubMutationExecutionError(attempts, reconciled, externalEffect, {
-          cause: error,
-        });
-      }
-      possibleExternalEffect = true;
-      lastError = error;
-      try {
-        const value = await read();
-        reconciled = true;
-        if (options.matches(value)) {
-          return { value, attempts, effect: "updated", reconciled: true };
-        }
-      } catch (readError: unknown) {
-        throw new GitHubMutationExecutionError(attempts, reconciled, "possible", {
-          cause: readError,
-        });
-      }
+      throw new GitHubMutationExecutionError(attempts, true, "possible", { cause: error });
+    } catch (readError: unknown) {
+      if (readError instanceof GitHubMutationExecutionError) throw readError;
+      throw new GitHubMutationExecutionError(attempts, false, "possible", {
+        cause: readError,
+      });
     }
   }
-  throw new GitHubMutationExecutionError(
-    attempts,
-    reconciled,
-    possibleExternalEffect ? "possible" : "none",
-    { cause: lastError },
-  );
 }

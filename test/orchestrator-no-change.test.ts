@@ -219,6 +219,7 @@ beforeEach(() => {
       prompt: "Check the repository and make changes only if needed",
       taskAccess: "write",
       allowWrite: true,
+      testCommands: [["npm", "test"]],
       isolation: "docker",
       progressComment: true,
       taskOutputSchema,
@@ -309,6 +310,64 @@ afterEach(() => {
 });
 
 describe("orchestrator task no-change publication", () => {
+  it.each([
+    {
+      label: "missing commands",
+      allowWrite: true,
+      runTests: true,
+      testCommands: [],
+      diagnostic: "test-commands",
+    },
+    {
+      label: "run-tests=false",
+      allowWrite: true,
+      runTests: false,
+      testCommands: [["npm", "test"]],
+      diagnostic: "run-tests=false",
+    },
+    {
+      label: "allow-write=false",
+      allowWrite: false,
+      runTests: true,
+      testCommands: [["npm", "test"]],
+      diagnostic: "allow-write=true",
+    },
+  ])(
+    "denies a write task with $label before routing, model startup or GitHub calls",
+    async ({ allowWrite, runTests, testCommands, diagnostic }) => {
+      mocks.loadInputs.mockReturnValueOnce(
+        inputs({
+          command: "task",
+          prompt: "Implement a change",
+          taskAccess: "write",
+          allowWrite,
+          runTests,
+          testCommands,
+        }),
+      );
+      const outcome = await runAction();
+      expect(outcome).toMatchObject({
+        conclusion: "failure",
+        error: {
+          code: "POLICY_DENIED",
+          category: "policy",
+          phase: "configuration",
+          retryable: false,
+        },
+      });
+      expect(outcome.error?.message).toContain(diagnostic);
+      const outputs = buildActionOutputs(outcome);
+      expect(outputs["error-code"]).toBe("POLICY_DENIED");
+      const result = JSON.parse(String(outputs["result-json"])) as { status: string };
+      expect(result.status).toBe("denied");
+      expect(mocks.readEventPayload).not.toHaveBeenCalled();
+      expect(mocks.createGitHubClient).not.toHaveBeenCalled();
+      expect(mocks.runAgentLoop).not.toHaveBeenCalled();
+      expect(mocks.createGitHubCommitFromWorkspace).not.toHaveBeenCalled();
+      expect(mocks.publishTaskAnswer).not.toHaveBeenCalled();
+    },
+  );
+
   it("copies the immutable GitHub tree through the explicit materialized-tree source contract", async () => {
     await runAction();
 
@@ -331,6 +390,7 @@ describe("orchestrator task no-change publication", () => {
         prompt: "Check the configured release branch",
         taskAccess: "write",
         allowWrite: true,
+        testCommands: [["npm", "test"]],
         isolation: "docker",
         baseBranch: "release/next",
       }),
@@ -448,6 +508,7 @@ describe("orchestrator task no-change publication", () => {
         prompt: "Inspect the repository",
         taskAccess: "write",
         allowWrite: true,
+        testCommands: [["npm", "test"]],
         isolation: "docker",
         taskOutputSchema,
       }),

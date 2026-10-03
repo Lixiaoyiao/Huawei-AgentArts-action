@@ -30,6 +30,14 @@ inputs:
     description: "Trusted task prompt. With command=auto on dispatch/schedule events, a non-empty prompt selects generic task mode."
     required: false
     default: ""
+  prompt-file:
+    description: "Explicit maintainer-selected UTF-8 task file from the repository default branch, pinned to its resolved commit SHA. Mutually exclusive with prompt; interactive command instructions keep precedence. Text only."
+    required: false
+    default: ""
+  context-files:
+    description: "JSON array of at most 8 explicit repository-relative text paths from the bound task revision. Attached as untrusted context, never authority; no globs, symlinks, runner paths, images, or Office files."
+    required: false
+    default: "[]"
   trigger-phrase:
     description: "Maintainer-controlled literal used for first-line comment commands. Routing only; it never grants authority."
     required: false

@@ -259,7 +259,12 @@ describe("orchestrator cancellation finalization", () => {
     expect(mocks.progressFail).toHaveBeenCalledWith(
       expect.objectContaining({ code: "DSH_ABORTED", phase: "agent" }),
     );
-    expect(mocks.createGitHubClient).toHaveBeenNthCalledWith(1, "token", expect.any(AbortSignal));
+    expect(mocks.createGitHubClient).toHaveBeenNthCalledWith(
+      1,
+      "token",
+      expect.any(AbortSignal),
+      expect.any(Object),
+    );
     expect(mocks.createGitHubClient).toHaveBeenNthCalledWith(2, "token");
   });
 

@@ -10,6 +10,7 @@ import { isAllowedActor } from "./actors.js";
 import type { GitHubClient } from "./client.js";
 import type { GitHubContext } from "./context.js";
 import { issueContentFingerprint } from "./issue-identity.js";
+import { GitHubQuotaError } from "./request-policy.js";
 
 const MAX_FILE_CONTEXT_BYTES = 64 * 1024;
 const MAX_TOTAL_CONTEXT_BYTES = 512 * 1024;
@@ -296,7 +297,12 @@ async function fetchBlobText(
 ): Promise<{ text?: string; bytes: number; truncated: boolean }> {
   if (remainingBytes <= 0) return { bytes: 0, truncated: true };
   try {
-    const response = await client.rest.git.getBlob({ owner, repo, file_sha: sha });
+    const response = await client.rest.git.getBlob({
+      owner,
+      repo,
+      file_sha: sha,
+      request: { dshImmutable: true },
+    });
     if (response.data.encoding !== "base64") return { bytes: 0, truncated: true };
     const raw = Buffer.from(response.data.content.replaceAll("\n", ""), "base64");
     if (raw.includes(0)) return { bytes: 0, truncated: false };
@@ -308,7 +314,8 @@ async function fetchBlobText(
       bytes: Buffer.byteLength(bounded.text, "utf8"),
       truncated: bounded.truncated || Buffer.byteLength(decoded, "utf8") < raw.byteLength,
     };
-  } catch {
+  } catch (error: unknown) {
+    if (error instanceof GitHubQuotaError) throw error;
     return { bytes: 0, truncated: true };
   }
 }
@@ -339,6 +346,10 @@ async function listRecentCommentsBounded(
   const comments: typeof first.data = [];
   let scanned = comments.length;
   for (let page = lastPage; page >= 1 && scanned < MAX_COMMENT_SCAN; page -= 1) {
+    if (page === 1) {
+      comments.unshift(...first.data);
+      break;
+    }
     const response = await client.rest.issues.listComments({
       owner,
       repo,

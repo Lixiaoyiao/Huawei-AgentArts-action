@@ -4,6 +4,17 @@
 
 This guide is for repository maintainers qualifying and publishing an Action release. A successful run proves only the exact commit SHA it tested. After any candidate change, repeat every required check against the new latest SHA.
 
+For v0.9.2, keep DSH `0.2.0-rc.2` fixed. Qualify the independent text-file,
+configuration-check and GitHub quota/cache regressions along with every existing
+gate below. The formal two-mode canary exercises real `prompt-file` and
+`context-files` loading and checks their result provenance. The offline
+configuration check never replaces online authorization or final validation.
+[Runtime evidence](v0.9.2-runtime-audit.md) distinguishes the Action-owned Resume
+engineering gap from the Headless image-input gap and records residual audits.
+Prepare the independently versioned installer 0.4.0 binding only after the
+formal canary succeeds; existing installer 0.3.1/v0.9.1 identities below remain
+historical production evidence until that separate release is qualified.
+
 v0.9.1 migrates the existing controlled and experimental native compositions
 to the fixed DSH `0.2.0-rc.2` candidate. It does not add Session/Resume, an
 Action-owned GitHub MCP backend, or another GitHub capability. Its formal
