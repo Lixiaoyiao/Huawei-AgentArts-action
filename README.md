@@ -75,11 +75,13 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 The installer creates `.github/workflows/` when needed and refuses to overwrite
 an existing target workflow. It does not add secrets, commit or push changes,
-or open a pull request. The published installer v0.3.0 binds to the formal
-v0.9.0 Action release. An installer update for v0.9.1 follows only after its
-tag, GitHub Release, and release canary agree; the verified immutable Action
-commit is supplied through `DSH_ACTION_RELEASE_SHA` when packing. Generated
-workflows never use a candidate SHA, floating tag, or branch.
+or open a pull request. Installer v0.3.1 targets the formal v0.9.1 Action
+release at `80cf46ee9098158ea664c45ea6371604c47b71e6`, with DSH `0.2.0-rc.2`
+in both controlled and native workflows. Packing receives this verified
+immutable Action commit through `DSH_ACTION_RELEASE_SHA` after the tag,
+GitHub Release, and release canary agree. Source templates and packed
+workflows must retain the exact DSH pin. Generated workflows never use a
+candidate SHA, floating tag, or branch.
 
 After installation, add `DEEPSEEK_API_KEY` under **Settings → Secrets and variables → Actions**. Open or update a non-draft pull request to trigger Review. For Coding Commands, put an `@dsh` command on the first line of an Issue or pull request comment. See [Setup](docs/setup.md) for the complete onboarding and security guide.
 
@@ -117,7 +119,7 @@ jobs:
 
 Open a non-draft pull request. The Action checks out only the trusted base SHA, reads the pull request through GitHub APIs, and never executes fork code.
 
-For production, replace `v0.9.1` with the full immutable release commit SHA. See [Setup](docs/setup.md) for permissions, pinning, checkout rules, and complete templates.
+For production, replace `v0.9.1` with its immutable release commit `80cf46ee9098158ea664c45ea6371604c47b71e6`. See [Setup](docs/setup.md) for permissions, pinning, checkout rules, and complete templates.
 
 ## Common `@dsh` commands
 

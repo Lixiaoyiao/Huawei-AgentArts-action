@@ -36,12 +36,13 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 The installer creates `.github/workflows/` when necessary and refuses to
 overwrite an existing target workflow. It does not add `DEEPSEEK_API_KEY`,
-commit or push changes, or open a pull request. The published installer v0.3.0
-binds to the formal v0.9.0 release. Its v0.9.1 companion update follows only
-after the Action tag, GitHub Release, and release canary agree; its workflows
-pin the immutable commit supplied as `DSH_ACTION_RELEASE_SHA` at pack time.
-A candidate SHA, floating tag, or branch cannot substitute for that release
-binding.
+commit or push changes, or open a pull request. Installer v0.3.1 targets the
+formal v0.9.1 Action commit `80cf46ee9098158ea664c45ea6371604c47b71e6` and
+the exact DSH `0.2.0-rc.2` pin in both composition modes. Packing must follow
+successful Action tag, GitHub Release, and release-canary identity checks and
+receive that commit as `DSH_ACTION_RELEASE_SHA`. Both source templates and
+packed artifacts must retain the exact DSH pin. A candidate SHA, floating
+tag, or branch cannot substitute for the release binding.
 
 After the installer succeeds:
 
@@ -85,11 +86,17 @@ The examples use the current release tag for readability:
 uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
 ```
 
-For production, replace the tag with the full immutable commit SHA published
-for that release. The independently versioned installer v0.3.0 generates
-workflows bound to the formal v0.9.0 commit until its companion update is
-published. For v0.9.1, obtain the exact Action SHA from its published release;
-source preparation does not establish a release identity.
+For production, replace the tag with the full immutable commit SHA resolved
+from the formal release. Installer v0.3.1 targets the v0.9.1 commit shown below;
+its separately reviewed installer source commit is a different identity:
+
+```yaml
+uses: Lixiaoyiao/deepseek-harness-action@80cf46ee9098158ea664c45ea6371604c47b71e6 # v0.9.1
+```
+
+The installer source tag and `DSH_ACTION_RELEASE_SHA` packing input must each
+be verified for their own purpose. Source preparation does not establish a
+release identity.
 
 Do not use `main`, `latest`, a version range, a candidate SHA, or another
 floating ref. Keep `dsh-version` at the Action's audited exact value:

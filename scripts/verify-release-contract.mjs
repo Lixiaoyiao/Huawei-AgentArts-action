@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
+import { parseDocument } from "yaml";
+
 import {
   ACTION_TAG,
   ACTION_VERSION,
@@ -57,8 +59,8 @@ const manifest = JSON.parse(manifestText);
 const lock = JSON.parse(lockText);
 const installerManifest = JSON.parse(installerManifestText);
 const installerLock = JSON.parse(installerLockText);
-const installerVersion = "0.3.0";
-const installerActionTag = "v0.9.0";
+const installerVersion = "0.3.1";
+const installerActionTag = "v0.9.1";
 const installerSourceTag = `create-deepseek-harness-action-v${installerVersion}`;
 const installerReleaseBinding = "DSH_ACTION_RELEASE_SHA";
 const directDependencies = {
@@ -312,6 +314,22 @@ for (const [name, template] of [
   ["review", installerReview],
   ["commands", installerCommands],
 ]) {
+  const document = parseDocument(template, { strict: true, uniqueKeys: true });
+  assert.deepEqual(document.errors, [], `${name} installer template must be valid YAML`);
+  const workflow = document.toJS({ maxAliasCount: 0 });
+  const actionSteps = Object.values(workflow.jobs ?? {})
+    .flatMap((job) => job.steps ?? [])
+    .filter(
+      (step) =>
+        typeof step.uses === "string" &&
+        step.uses.startsWith("Lixiaoyiao/deepseek-harness-action@"),
+    );
+  assert.equal(actionSteps.length, 1, `${name} installer template must contain one Action step`);
+  assert.equal(
+    actionSteps[0]?.with?.["dsh-version"],
+    DSH_VERSION,
+    `${name} installer template must select the audited exact DSH pin`,
+  );
   assert.equal(
     template.split(installerReleaseToken).length - 1,
     1,

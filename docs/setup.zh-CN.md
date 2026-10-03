@@ -35,10 +35,11 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 安装器会按需创建 `.github/workflows/`，如果目标 workflow 已存在则拒绝覆盖。
 它不会添加 `DEEPSEEK_API_KEY`、commit 或 push 改动，也不会创建 PR。安装器
-v0.3.0 已绑定正式 v0.9.0 Action；v0.9.1 对应的安装器更新须等其 Tag、GitHub
-Release 与 release canary 身份一致后再构建，打包时通过 `DSH_ACTION_RELEASE_SHA`
-注入核验出的完整、不可变 commit。生成的 workflow 不会使用 candidate SHA、
-浮动 Tag 或分支。
+v0.3.1 对应正式 v0.9.1 Action commit `80cf46ee9098158ea664c45ea6371604c47b71e6`，
+两种 composition 都保持精确 DSH `0.2.0-rc.2` pin。打包须在 Action Tag、GitHub
+Release 与 release canary 身份一致后，通过 `DSH_ACTION_RELEASE_SHA` 注入该
+核验出的完整、不可变 commit；源码模板与实际打包内容都须检查精确 DSH pin。
+生成的 workflow 不会使用 candidate SHA、浮动 Tag 或分支。
 
 安装成功后：
 
@@ -82,9 +83,15 @@ DEEPSEEK_API_KEY
 uses: Lixiaoyiao/deepseek-harness-action@v0.9.1
 ```
 
-生产环境应把 Tag 替换为该版本发布时的完整、不可变 commit SHA。
-独立版本的 installer v0.3.0 在对应更新发布前仍生成固定到正式 v0.9.0 commit
-的 workflow。使用 v0.9.1 时，请从该正式 Release 获取 Action SHA；源码中的
+生产环境应把 Tag 替换为从正式 Release 解析出的完整、不可变 commit SHA。
+installer v0.3.1 对应如下 v0.9.1 Action commit；独立审查的 installer 源码 commit
+是另一个身份：
+
+```yaml
+uses: Lixiaoyiao/deepseek-harness-action@80cf46ee9098158ea664c45ea6371604c47b71e6 # v0.9.1
+```
+
+必须分别核验 installer 源码 Tag 与 `DSH_ACTION_RELEASE_SHA` 打包输入；源码中的
 迁移候选准备不能代替正式发布身份。
 
 不要使用 `main`、`latest`、版本范围、candidate SHA 或其它浮动 ref。
