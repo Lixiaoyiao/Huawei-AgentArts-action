@@ -18,7 +18,9 @@ Quota-limited GETs may wait and retry at most twice, with at most 15 seconds of
 total waiting and enough time left in the current task budget. `retry-after`
 and exhausted primary-quota reset headers set the earliest allowed retry time.
 An unspecified secondary-limit recovery requires at least a minute, so this
-short-budget policy fails immediately. No POST/PATCH/PUT/DELETE or ambiguous
+short-budget policy fails immediately, including a secondary-limit `403` with
+no `retry-after` header. Ordinary permission-denied `403` responses retain their
+original classification. No POST/PATCH/PUT/DELETE or ambiguous
 transport error is retried by the client. Existing Gateway postcondition reads
 remain responsible for uncertain effects. The worker task is never replayed.
 

@@ -119,7 +119,13 @@ export function createRequestPolicy(
         const headers = record(record(error).response).headers;
         const remaining = integer(record(headers)["x-ratelimit-remaining"]);
         const retryAfter = integer(record(headers)["retry-after"]);
-        if (status !== 429 && !(status === 403 && (remaining === 0 || retryAfter !== undefined))) {
+        const serverMessage = record(record(record(error).response).data).message;
+        const secondaryLimit =
+          typeof serverMessage === "string" && /\bsecondary rate limit\b/iu.test(serverMessage);
+        if (
+          status !== 429 &&
+          !(status === 403 && (remaining === 0 || retryAfter !== undefined || secondaryLimit))
+        ) {
           throw error;
         }
         audit.quotaFailures += 1;

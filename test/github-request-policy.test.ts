@@ -141,6 +141,28 @@ describe("run-scoped GitHub request policy", () => {
     }
   });
 
+  it("classifies headerless secondary 403 limits without exposing the server message or retrying writes", async () => {
+    for (const method of ["GET", "POST"]) {
+      const sleep = vi.fn();
+      const policy = createRequestPolicy({ now: () => 1000000, sleep, deadlineMs: 2000000 });
+      const error = Object.assign(new Error("private error"), {
+        status: 403,
+        response: {
+          headers: { "x-ratelimit-remaining": "50" },
+          data: { message: "You have exceeded a SECONDARY RATE LIMIT. secret-token" },
+        },
+      });
+      const request = vi.fn().mockRejectedValue(error);
+      await expect(policy.run(request, { method, url: "/private/repository" })).rejects.toThrow(
+        GitHubQuotaError,
+      );
+      expect(request).toHaveBeenCalledOnce();
+      expect(sleep).not.toHaveBeenCalled();
+      expect(policy.snapshot()).toMatchObject({ quotaFailures: 1, retries: 0, waitMs: 0 });
+      expect(JSON.stringify(policy.snapshot())).not.toMatch(/secret-token|private/u);
+    }
+  });
+
   it("bounds repeated 429 reads and cancellation without replaying a task", async () => {
     let now = 1000000;
     const sleep = vi.fn((ms: number) => {
