@@ -29,6 +29,7 @@ import { outcomeContext, successfulValidation, type RunState } from "./lifecycle
 import type { AuthorizedRun } from "./prepare.js";
 import { executeWrite, type WriteOutcome } from "./write.js";
 import type { PreparedWorkspace } from "./workspace.js";
+import { prepareControllerSession } from "../session/controller.js";
 
 type FinalizedOperation =
   | { readonly kind: "review"; readonly publication: Awaited<ReturnType<typeof finishReview>> }
@@ -78,8 +79,17 @@ export async function runAgentPhase(options: {
     redact,
   } = execution;
 
+  const session = await prepareControllerSession({
+    inputs,
+    authorized,
+    state,
+    composition: selectedComposition,
+    extensions,
+    deadlineMs,
+    signal,
+  });
   state.phase = "agent";
-  const loop = await runAgentLoop(
+  const loop = await runAgentLoop<FinalizedOperation>(
     {
       operation: command.operation,
       requestedAccess: command.requestedAccess,
@@ -95,6 +105,31 @@ export async function runAgentPhase(options: {
       signal,
       ...(toolProvider === undefined ? {} : { toolProvider }),
       redact,
+      ...(session === undefined
+        ? {}
+        : {
+            onRuntimeReady: (runtime) => session.restore(runtime),
+            onRuntimeCompleted: async (runtime, completed) => {
+              // Preserve already confirmed effects if checkpoint publication fails.
+              const finalized = completed.finalization;
+              if (finalized.kind === "write")
+                state.partialWrite = { ...finalized.write, writeStatus: "partial-success" };
+              if (finalized.kind === "review") state.partialPublication = finalized.publication;
+              if (finalized.kind === "answer" && finalized.commentId !== undefined)
+                state.finalizedCommentId = finalized.commentId;
+              if (state.agent !== undefined)
+                state.agent = {
+                  ...state.agent,
+                  toolReceipts:
+                    githubAuthority?.reconcileAgentReceipts(completed.stats.toolReceipts) ??
+                    completed.stats.toolReceipts,
+                };
+              state.phase = "publication";
+              await session.save(runtime);
+              delete state.partialWrite;
+              delete state.partialPublication;
+            },
+          }),
       onTurn: async (turn, maxTurns) => {
         state.phase = "agent";
         await state.progress?.update(
@@ -128,6 +163,7 @@ export async function runAgentPhase(options: {
         };
       },
       onEngineFailure: (failure, stats) => {
+        if (state.session !== undefined) state.session = { ...state.session, status: "failed" };
         if (failure.observedTools !== undefined) {
           state.toolPolicy = buildDshToolPolicyAudit(failure.observedTools);
         }
@@ -152,6 +188,7 @@ export async function runAgentPhase(options: {
         core.warning(`Agent ${component} cleanup failed: ${redact(message)}`);
       },
       blocked: async (agentResult): Promise<FinalizedOperation> => {
+        if (state.session !== undefined) state.session = { ...state.session, status: "not_saved" };
         state.phase = "publication";
         if (
           command.operation === "task" &&

@@ -15,6 +15,7 @@ describe("DSH worker environment", () => {
         PATH: "/bin",
         GITHUB_TOKEN: "github-secret",
         GH_TOKEN: "gh-secret",
+        ACTIONS_RUNTIME_TOKEN: "artifact-controller-secret",
         DEEPSEEK_API_KEY: "raw-key",
         ATTACKER_CONTROLLED: "payload",
         NARB_DISABLE_NATIVE_CACHE: "0",
@@ -39,6 +40,7 @@ describe("DSH worker environment", () => {
     });
     expect(environment).not.toHaveProperty("GITHUB_TOKEN");
     expect(environment).not.toHaveProperty("GH_TOKEN");
+    expect(environment).not.toHaveProperty("ACTIONS_RUNTIME_TOKEN");
     expect(environment).not.toHaveProperty("ATTACKER_CONTROLLED");
     expect(environment).not.toHaveProperty("NARB_NATIVE_CACHE_DIR");
     expect(Object.values(environment)).not.toContain("raw-key");
@@ -46,6 +48,9 @@ describe("DSH worker environment", () => {
 
   it("rejects GitHub credential variables and reusing the raw key", () => {
     expect(() => assertNoGitHubCredentials({ ACTIONS_ID_TOKEN_CUSTOM: "x" })).toThrow(
+      DshEnvironmentError,
+    );
+    expect(() => assertNoGitHubCredentials({ ACTIONS_RUNTIME_TOKEN: "artifact-secret" })).toThrow(
       DshEnvironmentError,
     );
     expect(() =>

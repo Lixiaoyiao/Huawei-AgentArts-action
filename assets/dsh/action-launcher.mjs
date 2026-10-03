@@ -86,12 +86,18 @@ function inheritedEnvironment() {
 }
 
 async function main() {
-  const task = process.argv.slice(2).join(" ");
+  const sessionEnabled = process.argv.length === 4 && process.argv[3] === "--action-session";
+  const task = sessionEnabled ? process.argv[2] : process.argv.slice(2).join(" ");
   if (task.trim() === "") throw new Error("a non-empty headless task is required");
   const dshHome = process.env.DSH_HOME;
   if (dshHome === undefined || dshHome.trim() === "") {
     throw new Error("DSH_HOME must identify the Controller-owned runtime home");
   }
+  const sessionModule = sessionEnabled ? await import("./action-session.mjs") : undefined;
+  const sessionPlan = sessionModule?.readSessionPlan(
+    join(dshHome, "action-state", "session-plan.json"),
+    dshHome,
+  );
 
   // loadProfile and boot are the official 0.2.0-rc.2 Profile/Bundle and Cordis
   // entrypoints. The Action deliberately omits the product CLI's layered .env,
@@ -114,6 +120,14 @@ async function main() {
     { id: "session-log-deepseek", disabled: true },
     { id: "plugin-package-inventory-deepseek", disabled: true },
     { id: "session-telemetry-otel", disabled: true },
+    ...(sessionPlan === undefined
+      ? []
+      : [
+          {
+            id: "session-persistence-jsonl",
+            config: { root: join(dshHome, "sessions"), compression: "none" },
+          },
+        ]),
   ];
   const rootConfig = join(profile.dir, PROFILE_ROOT_FILENAME);
   const environment = createLaunchEnvironmentSnapshot([
@@ -160,6 +174,10 @@ async function main() {
       globalThis.structuredClone(patches),
       async (host) => {
         root = host;
+        if (sessionPlan !== undefined)
+          sessionModule.installSessionAdmission(host, sessionPlan, {
+            auditPath: join(dshHome, "action-state", "session-admission.json"),
+          });
         await host.plugin(PluginPackages, { resolution });
         requireAdmittedExtensions(host, admittedExtensionSelectors(profile));
         const signal = (code) => {
@@ -174,7 +192,10 @@ async function main() {
         process.on("SIGINT", signalHandlers.sigint);
         host.provide(DSH_LAUNCH_ENVIRONMENT_KEY, environment);
         provideCmdline(host, {
-          args: ["--json", "--", task],
+          args:
+            sessionPlan?.sessionId === undefined
+              ? ["--json", "--", task]
+              : ["--json", "--session-id", sessionPlan.sessionId, "--", task],
           exit: requestExit,
         });
       },

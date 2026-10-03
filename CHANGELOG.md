@@ -3,6 +3,26 @@
 Notable user-facing changes are recorded here. This project follows semantic
 versioning for published action releases.
 
+## [0.9.3] - 2026-10-04
+
+- Adds explicit `session-mode`, `session-key`, `session-source-run-id` and bounded
+  retention for genuine cross-run DSH Session continuity. The existing Controller
+  validates immutable trusted workflow/run/job/task provenance, a serialized claim,
+  latest generation, archive integrity and compatible runtime before model startup.
+- Restores only the complete settled raw v4 log in fresh Docker worker storage.
+  Public DSH lifecycle services replace historical permission and approval settings
+  before execution. Current instructions and tools apply; historical inputs and
+  GitHub writes are not replayed. No Session engine or upstream runtime is replaced.
+- Rejects credentials, pending operations, extra child Sessions, corruption,
+  incompatible state, expired checkpoints and concurrent/stale advancement. A failed
+  checkpoint save preserves already confirmed GitHub effects in the result.
+- Adds public-interface worker probes, independent regression tests and separate
+  two-run Session E2E coverage. Session remains off by default; native images and
+  Office attachments remain outside the admitted transport boundary.
+- Uses the published artifact SDK with Controller-only runtime credentials and
+  fixes its compatible `glob` dependency within the declared range. The locked DSH
+  Office/telemetry dependency findings remain disclosed in the v0.9.2 audit.
+
 ## [0.9.2] - 2026-10-03
 
 - Adds explicit `prompt-file` and `context-files` text inputs in both modes.

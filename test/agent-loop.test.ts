@@ -146,6 +146,118 @@ function repairTurnFailureEngine(
   };
 }
 
+describe("Controller Session lifecycle hooks", () => {
+  it("restores before creating a worker and saves after finalization before disposal", async () => {
+    const order: string[] = [];
+    const value = { ...runtime };
+    const result = await runAgentLoop(
+      task(),
+      inputs(),
+      {
+        deadlineMs: Date.now() + 10_000,
+        onRuntimeReady: (created) => {
+          expect(created).toBe(value);
+          order.push("restore");
+          return Promise.resolve();
+        },
+        blocked: () => Promise.resolve("blocked"),
+        finalize: () => {
+          order.push("confirmed-write");
+          return Promise.resolve("published");
+        },
+        onRuntimeCompleted: (created, completed) => {
+          expect(created).toBe(value);
+          expect(completed.finalization).toBe("published");
+          order.push("save");
+          return Promise.resolve();
+        },
+      },
+      {
+        createRuntime: () => Promise.resolve(value),
+        createEngine: () => {
+          order.push("worker");
+          return engine([output("final")], []);
+        },
+        disposeRuntime: () => {
+          order.push("dispose");
+          return Promise.resolve();
+        },
+      },
+    );
+    expect(result.finalization).toBe("published");
+    expect(order).toEqual(["restore", "worker", "confirmed-write", "save", "dispose"]);
+  });
+  it("refuses to start a worker after a corrupt checkpoint and still disposes the private runtime", async () => {
+    const createEngine = vi.fn();
+    const dispose = vi.fn(() => Promise.resolve());
+    await expect(
+      runAgentLoop(
+        task(),
+        inputs(),
+        {
+          deadlineMs: Date.now() + 10_000,
+          onRuntimeReady: () => {
+            throw new Error("corrupt checkpoint");
+          },
+          blocked: () => Promise.resolve(),
+          finalize: () => Promise.resolve(),
+        },
+        {
+          createRuntime: () => Promise.resolve({ ...runtime }),
+          createEngine,
+          disposeRuntime: dispose,
+        },
+      ),
+    ).rejects.toThrow("corrupt checkpoint");
+    expect(createEngine).not.toHaveBeenCalled();
+    expect(dispose).toHaveBeenCalledOnce();
+  });
+  it("does not publish a checkpoint for a blocked task", async () => {
+    const save = vi.fn(() => Promise.resolve());
+    await runAgentLoop(
+      task(),
+      inputs(),
+      {
+        deadlineMs: Date.now() + 10_000,
+        blocked: () => Promise.resolve(),
+        finalize: () => Promise.resolve(),
+        onRuntimeCompleted: save,
+      },
+      {
+        createRuntime: () => Promise.resolve({ ...runtime }),
+        createEngine: () => engine([output("blocked")], []),
+        disposeRuntime: () => Promise.resolve(),
+      },
+    );
+    expect(save).not.toHaveBeenCalled();
+  });
+  it("never reexecutes finalization when checkpoint publication fails after a confirmed write", async () => {
+    const finalize = vi.fn(() => Promise.resolve("confirmed-write"));
+    const createEngine = vi.fn(() => engine([output("final")], []));
+    await expect(
+      runAgentLoop(
+        task(),
+        inputs(),
+        {
+          deadlineMs: Date.now() + 10_000,
+          blocked: () => Promise.resolve("blocked"),
+          finalize,
+          onRuntimeCompleted: () => {
+            throw new Error("uncertain artifact upload");
+          },
+        },
+        {
+          createRuntime: () => Promise.resolve({ ...runtime }),
+          createEngine,
+          disposeRuntime: () => Promise.resolve(),
+        },
+      ),
+    ).rejects.toThrow("uncertain artifact upload");
+    expect(finalize).toHaveBeenCalledOnce();
+    expect(createEngine).toHaveBeenCalledOnce();
+  });
+});
+
 function validationFailure(stderr: string): ValidationFailureError {
   return new ValidationFailureError({
     argv: ["npm", "test"],

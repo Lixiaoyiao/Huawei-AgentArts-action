@@ -137,6 +137,9 @@ export async function runAction(options: RunActionOptions = {}): Promise<RunOutc
     return await runActionInternal(state, startedAt, inputs, deadline.signal, deadline.deadlineMs);
   } catch (error: unknown) {
     // Preserve an independent validation/security/write failure if cancellation races it.
+    if (state.session !== undefined && state.session.status !== "saved") {
+      state.session = { ...state.session, status: "failed" };
+    }
     const effectiveError = failureFromSignal(error, deadline?.signal);
     const failure = isCancellationError(effectiveError)
       ? describeCancellationFailure(state.phase)

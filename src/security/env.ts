@@ -24,6 +24,7 @@ const forbiddenGitHubNames = new Set([
   "GH_TOKEN",
   "ACTIONS_ID_TOKEN_REQUEST_URL",
   "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+  "ACTIONS_RUNTIME_TOKEN",
 ]);
 
 function isGitHubCredentialName(name: string): boolean {
@@ -104,12 +105,15 @@ export function buildDshWorkerEnvironment(options: DshWorkerEnvironmentOptions):
   return environment;
 }
 
-export function collectControllerSecrets(environment: NodeJS.ProcessEnv): readonly string[] {
+export function collectControllerSecrets(
+  environment: NodeJS.ProcessEnv,
+  minimumLength = 4,
+): readonly string[] {
   const secrets: string[] = [];
   for (const [name, value] of Object.entries(environment)) {
     if (
       value !== undefined &&
-      value.length >= 4 &&
+      value.length >= minimumLength &&
       (isGitHubCredentialName(name) || name === "DEEPSEEK_API_KEY")
     ) {
       secrets.push(value);

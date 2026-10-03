@@ -90,6 +90,13 @@ export interface AgentLoopHooks<TFinal> {
   readonly blocked: (result: DshRunResult, remainingMs: number) => Promise<TFinal>;
   readonly finalize: (result: DshRunResult, remainingMs: number) => Promise<TFinal>;
   readonly onTurn?: (turn: number, maxTurns: number) => void | Promise<void>;
+  /** Controller-only import, before the first official Headless worker starts. */
+  readonly onRuntimeReady?: (runtime: DshRuntime) => Promise<void>;
+  /** Called after successful validation/publication, before private runtime disposal. */
+  readonly onRuntimeCompleted?: (
+    runtime: DshRuntime,
+    result: AgentLoopResult<TFinal>,
+  ) => Promise<void>;
   readonly onValidationRetry?: (
     turn: number,
     error: ValidationFailureError,
@@ -310,6 +317,7 @@ export async function runAgentLoop<TFinal>(
     toolReceipts: [...toolReceipts],
   });
   try {
+    await hooks.onRuntimeReady?.(runtime);
     engine =
       (await dependencies.createEngine?.(runtime)) ??
       new DshAgentEngine(inputs, task.policy, runtime, task.tools.extensions);
@@ -488,11 +496,13 @@ export async function runAgentLoop<TFinal>(
       throwIfCancelled(hooks.signal);
       try {
         const finalization = await hooks.finalize(aggregate, remainingBeforeFinalize);
-        return {
+        const completed = {
           agent: aggregate,
           stats: stats(turn),
           finalization,
         };
+        await hooks.onRuntimeCompleted?.(runtime, completed);
+        return completed;
       } catch (error: unknown) {
         if (!(error instanceof ValidationFailureError)) throw error;
         pendingValidationFailure = error;

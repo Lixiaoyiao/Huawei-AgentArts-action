@@ -8,6 +8,7 @@ const secretEnvironmentNames = new Set([
   "DEEPSEEK_API_KEY",
   "ACTIONS_ID_TOKEN_REQUEST_URL",
   "ACTIONS_ID_TOKEN_REQUEST_TOKEN",
+  "ACTIONS_RUNTIME_TOKEN",
 ]);
 
 function isSecretEnvironmentName(name: string): boolean {

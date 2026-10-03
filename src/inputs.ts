@@ -32,7 +32,7 @@ import {
   parseToolConfiguration,
   validateAllowedToolReferences,
 } from "./tools/schema.js";
-import { assertContainerImageReference } from "./dsh/docker-policy.js";
+import { assertContainerImageReference, assertPinnedContainerImage } from "./dsh/docker-policy.js";
 import { validatedControllerBaseUrl } from "./dsh/base-url.js";
 import { parseTaskOutputSchema } from "./dsh/task-output.js";
 import { assertSupportedDshVersion } from "./dsh/version.js";
@@ -180,6 +180,10 @@ const actionInputsSchema = z.object({
   command: z.enum(["auto", "task", "review", "diagnose", "fix", "implement"]),
   taskAccess: z.enum(["read", "write"]),
   prompt: z.string(),
+  sessionMode: z.enum(["off", "save", "resume"]),
+  sessionKey: z.string().regex(/^(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63})?$/u),
+  sessionSourceRunId: z.string().regex(/^(?:[1-9][0-9]{0,15})?$/u),
+  sessionRetentionDays: integerInput(1, 7),
   promptFile: z.string().transform((value, context) => {
     try {
       return parsePromptFile(value);
@@ -320,6 +324,7 @@ function assertControllerSecretsAbsentFromWorkerInputs(inputs: ActionInputs): vo
     inputs.branchPrefix,
     inputs.branchNameTemplate,
     inputs.promptFile,
+    inputs.sessionKey,
     ...inputs.contextFiles,
   ];
   const configuredArgv = [
@@ -355,6 +360,26 @@ function assertInputOnlyRuntimeInvariants(inputs: ActionInputs): void {
   assertContainerImageReference(inputs.containerImage);
   validatedControllerBaseUrl(inputs.baseUrl, "DeepSeek base URL");
   validatedControllerBaseUrl(inputs.webSearchBaseUrl, "Web search base URL");
+
+  if (inputs.sessionMode === "off") {
+    if (inputs.sessionKey !== "" || inputs.sessionSourceRunId !== "") {
+      throw new Error("session-key and session-source-run-id require an explicit session-mode");
+    }
+  } else {
+    if (inputs.sessionKey === "" || inputs.isolation !== "docker") {
+      throw new Error("Session requires a maintainer-selected session-key and Docker isolation");
+    }
+    assertPinnedContainerImage(inputs.containerImage);
+    if ((inputs.sessionMode === "resume") !== (inputs.sessionSourceRunId !== "")) {
+      throw new Error("session-source-run-id is required only with session-mode=resume");
+    }
+    if (
+      inputs.sessionSourceRunId !== "" &&
+      !Number.isSafeInteger(Number(inputs.sessionSourceRunId))
+    ) {
+      throw new Error("session-source-run-id must be a safe positive integer");
+    }
+  }
 
   if (inputs.dshMode === "native") {
     if (inputs.isolation !== "docker" || inputs.dshExecutable !== "") {
@@ -412,6 +437,10 @@ export function loadInputs(reader: InputReader = core.getInput): ActionInputs {
     command: optionalInput(reader, "command"),
     taskAccess: optionalInput(reader, "taskAccess"),
     prompt: optionalInput(reader, "prompt"),
+    sessionMode: optionalInput(reader, "sessionMode"),
+    sessionKey: optionalInput(reader, "sessionKey"),
+    sessionSourceRunId: optionalInput(reader, "sessionSourceRunId"),
+    sessionRetentionDays: optionalInput(reader, "sessionRetentionDays"),
     promptFile: optionalInput(reader, "promptFile"),
     contextFiles: optionalInput(reader, "contextFiles"),
     dshVersion: optionalInput(reader, "dshVersion"),

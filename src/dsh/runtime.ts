@@ -40,6 +40,13 @@ export interface DshRuntime {
   readonly packageRoot: string;
   /** Controller-installer-only npm cache. Never mount this into the Agent worker. */
   readonly npmCache: string;
+  /** Opt-in checkpoint state. Credentials stay Controller-side and are never serialized. */
+  session?: {
+    readonly bindingDigest: string;
+    sessionId?: string;
+    checkpointEventCount?: number;
+    readonly knownSecrets: Set<string>;
+  };
   /** Immutable after the first successful call to bindDshRuntime. */
   readonly binding?: DshRuntimeBindingState;
   installedVersion?: string;

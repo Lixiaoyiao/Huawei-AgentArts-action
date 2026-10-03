@@ -126,12 +126,18 @@ function observeRootAgent(host, observationPath) {
 }
 
 async function main() {
-  const task = process.argv.slice(2).join(" ");
+  const sessionEnabled = process.argv.length === 4 && process.argv[3] === "--action-session";
+  const task = sessionEnabled ? process.argv[2] : process.argv.slice(2).join(" ");
   if (task.trim() === "") throw new Error("a non-empty headless task is required");
   const dshHome = process.env.DSH_HOME;
   if (dshHome === undefined || dshHome.trim() === "") {
     throw new Error("DSH_HOME must identify the Controller-owned runtime home");
   }
+  const sessionModule = sessionEnabled ? await import("./action-session.mjs") : undefined;
+  const sessionPlan = sessionModule?.readSessionPlan(
+    join(dshHome, "action-state", "session-plan.json"),
+    dshHome,
+  );
 
   const profile = loadProfile(NAME, PROFILE, INSTALL_ANCHOR, dshHome);
   if (profile.skippedBundles.length !== 0) {
@@ -157,6 +163,14 @@ async function main() {
     // The programmatic launcher intentionally skips the product CLI switch,
     // so preserve the Action's default-off telemetry boundary explicitly.
     { id: "session-telemetry-otel", disabled: true },
+    ...(sessionPlan === undefined
+      ? []
+      : [
+          {
+            id: "session-persistence-jsonl",
+            config: { root: join(dshHome, "sessions"), compression: "none" },
+          },
+        ]),
   ];
   const rootConfig = join(profile.dir, PROFILE_ROOT_FILENAME);
   const environment = createLaunchEnvironmentSnapshot([
@@ -203,6 +217,10 @@ async function main() {
       globalThis.structuredClone(patches),
       async (host) => {
         root = host;
+        if (sessionPlan !== undefined)
+          sessionModule.installSessionAdmission(host, sessionPlan, {
+            auditPath: join(dshHome, "action-state", "session-admission.json"),
+          });
         await host.plugin(PluginPackages, { resolution });
         requireAdmittedExtensions(host, admittedExtensionSelectors(profile));
         observeRootAgent(host, observationPath);
@@ -218,7 +236,10 @@ async function main() {
         process.on("SIGINT", signalHandlers.sigint);
         host.provide(DSH_LAUNCH_ENVIRONMENT_KEY, environment);
         provideCmdline(host, {
-          args: ["--json", "--", task],
+          args:
+            sessionPlan?.sessionId === undefined
+              ? ["--json", "--", task]
+              : ["--json", "--session-id", sessionPlan.sessionId, "--", task],
           exit: requestExit,
         });
       },

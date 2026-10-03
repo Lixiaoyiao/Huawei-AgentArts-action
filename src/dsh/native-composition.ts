@@ -352,6 +352,12 @@ export class NativeComposition implements DshComposition {
     await assertFile(launcherSourcePath, "DSH native launcher");
     const launcherDestinationPath = join(options.runtime.packageRoot, NATIVE_LAUNCHER_FILENAME);
     await copyFile(launcherSourcePath, launcherDestinationPath);
+    if (options.runtime.session !== undefined) {
+      await copyFile(
+        join(options.assetsDirectory, "action-session.mjs"),
+        join(options.runtime.packageRoot, "action-session.mjs"),
+      );
+    }
 
     const profileRoot = options.runtime.packageRoot;
     await writeNativeProfile({
@@ -390,9 +396,23 @@ export class NativeComposition implements DshComposition {
       isolation: "docker",
       launchPlan: {
         command: "node",
-        args: ["--expose-internals", CONTAINER_NATIVE_LAUNCHER, options.task],
+        args: [
+          "--expose-internals",
+          CONTAINER_NATIVE_LAUNCHER,
+          options.task,
+          ...(options.runtime.session === undefined ? [] : ["--action-session"]),
+        ],
         workdir: CONTAINER_WORKSPACE,
-        mounts: [],
+        mounts:
+          options.runtime.session === undefined
+            ? []
+            : [
+                {
+                  sourcePath: join(options.runtime.dshHome, "action-state", "session-plan.json"),
+                  destinationPath: "/dsh-home/action-state/session-plan.json",
+                  readOnly: true,
+                },
+              ],
       },
       observedTools: {
         collect: async () => await collectObservedTools(observationPath, observationOffset),

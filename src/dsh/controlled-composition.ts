@@ -255,13 +255,33 @@ export class ControlledComposition implements DshComposition {
       options.plan.plugins.length > 0 && pluginModuleSpecifiers === undefined;
     const launcherDestinationPath = join(profile.profileDir, basename(CONTAINER_LAUNCHER));
     await copyFile(assets.launcherPath, launcherDestinationPath);
+    if (options.runtime.session !== undefined) {
+      await copyFile(
+        join(options.assetsDirectory, "action-session.mjs"),
+        join(profile.profileDir, "action-session.mjs"),
+      );
+    }
     const prepared: PreparedDockerDshComposition = {
       isolation: "docker",
       launchPlan: {
         command: "node",
-        args: ["--expose-internals", CONTAINER_LAUNCHER, options.task],
+        args: [
+          "--expose-internals",
+          CONTAINER_LAUNCHER,
+          options.task,
+          ...(options.runtime.session === undefined ? [] : ["--action-session"]),
+        ],
         workdir: "/tmp",
         mounts: [
+          ...(options.runtime.session === undefined
+            ? []
+            : [
+                {
+                  sourcePath: join(options.runtime.dshHome, "action-state", "session-plan.json"),
+                  destinationPath: "/dsh-home/action-state/session-plan.json",
+                  readOnly: true,
+                },
+              ]),
           {
             sourcePath: options.runtime.packageRoot,
             destinationPath: CONTAINER_PROFILE_ROOT,
