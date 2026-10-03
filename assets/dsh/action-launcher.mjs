@@ -123,6 +123,7 @@ async function main() {
     ...(sessionPlan === undefined
       ? []
       : [
+          sessionModule.sessionHeadlessPatch(sessionPlan, task),
           {
             id: "session-persistence-jsonl",
             config: { root: join(dshHome, "sessions"), compression: "none" },

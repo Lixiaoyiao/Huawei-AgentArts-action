@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdtemp, mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -27,6 +27,13 @@ interface Agent {
 interface Plugin {
   validateSessionPlan(value: unknown): Plan;
   readSessionPlan(path: string, home: string): Plan;
+  sessionHeadlessPatch(
+    value: unknown,
+    task: string,
+  ): {
+    id: "headless-runner";
+    config: { task: string; json: true; sessionId?: string };
+  };
   installSessionAdmission(context: unknown, plan: unknown, options?: { auditPath?: string }): void;
 }
 type Created = (payload: { agent: Agent; source: string }) => void;
@@ -119,6 +126,23 @@ function fixture(options: { defaultMode?: string; approval?: string } = {}) {
 }
 
 describe("published worker Session admission", () => {
+  it("retains current task and Controller-bound identity in the final wholesale Headless config", () => {
+    const task = "literal --session-id task text";
+    expect(plugin.sessionHeadlessPatch(plan(), task)).toEqual({
+      id: "headless-runner",
+      config: { task, json: true, sessionId: SESSION_ID },
+    });
+    const fresh = plan();
+    delete fresh.sessionId;
+    delete fresh.checkpointEventCount;
+    expect(plugin.sessionHeadlessPatch(fresh, task)).toEqual({
+      id: "headless-runner",
+      config: { task, json: true },
+    });
+    expect(() => plugin.sessionHeadlessPatch(plan(), " ")).toThrow(
+      "a current headless task is required",
+    );
+  });
   it("resets historical sandbox, approval and preset before requests or tools", async () => {
     const runtime = fixture();
     const agent = subject();
@@ -279,4 +303,43 @@ describe("published worker Session admission", () => {
         currentToolGraph: true,
       });
   }, 120_000);
+
+  it("restores through the actual production Profile builders and original launchers without a new Session or old tool replay", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "dsh-session-production-report-"));
+    directories.push(directory);
+    const evidence = join(directory, "evidence.json");
+    await promisify(execFile)(
+      process.execPath,
+      ["scripts/probe-session-production-launchers.mjs", evidence],
+      { cwd: process.cwd(), timeout: 130_000, maxBuffer: 1024 * 1024, windowsHide: true },
+    );
+    const report = JSON.parse(await readFile(evidence, "utf8")) as {
+      runtimeVersion: string;
+      remoteModelCalls: number;
+      githubWrites: number;
+      titleDisabledByProbe: boolean;
+      checks: { mode: string; saveTitleRequests: number }[];
+    };
+    expect(report).toMatchObject({
+      runtimeVersion: "0.2.0-rc.2",
+      remoteModelCalls: 0,
+      githubWrites: 0,
+      titleDisabledByProbe: false,
+    });
+    expect(report.checks.map(({ mode }) => mode)).toEqual(["controlled", "native"]);
+    for (const check of report.checks)
+      expect(check).toMatchObject({
+        productionProfile: true,
+        originalLauncher: true,
+        newWorker: true,
+        sameSession: true,
+        currentPermission: "read-only/never",
+        historyRestored: true,
+        oldToolsReplayed: false,
+        extraSession: false,
+        mainRequests: 1,
+      });
+    expect(report.checks[0]?.saveTitleRequests).toBe(0);
+    expect(report.checks[1]?.saveTitleRequests).toBeGreaterThanOrEqual(1);
+  }, 140_000);
 });

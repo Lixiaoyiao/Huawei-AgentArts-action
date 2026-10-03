@@ -166,6 +166,22 @@ async function main() {
     ...(sessionPlan === undefined
       ? []
       : [
+          sessionModule.sessionHeadlessPatch(sessionPlan, task),
+          // Portable headless Session admission uses this run's Controller
+          // mode without restoring old interactive approval decisions.
+          { id: "approval", config: { policy: "never" } },
+          {
+            id: "permission",
+            config: {
+              presets: {
+                [sessionPlan.permissionMode]: {
+                  sandbox: sessionPlan.permissionMode,
+                  approval: "never",
+                },
+              },
+              defaultPreset: sessionPlan.permissionMode,
+            },
+          },
           {
             id: "session-persistence-jsonl",
             config: { root: join(dshHome, "sessions"), compression: "none" },

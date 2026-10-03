@@ -59,6 +59,20 @@ export function validateSessionPlan(value) {
   return Object.freeze({ ...value });
 }
 
+/** Cordis replaces config wholesale; Session identity must survive Profile overlays. */
+export function sessionHeadlessPatch(rawPlan, task) {
+  const plan = validateSessionPlan(rawPlan);
+  if (typeof task !== "string" || task.trim() === "") fail("a current headless task is required");
+  return {
+    id: "headless-runner",
+    config: {
+      task,
+      json: true,
+      ...(plan.sessionId === undefined ? {} : { sessionId: plan.sessionId }),
+    },
+  };
+}
+
 /** Read only the Controller-owned fixed file, before composing worker code. */
 export function readSessionPlan(path, home) {
   if (!isAbsolute(home) || resolve(path) !== resolve(home, "action-state", "session-plan.json")) {
