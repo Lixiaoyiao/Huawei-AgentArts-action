@@ -18,6 +18,25 @@ function workflowRecord(value: unknown): Readonly<Record<string, unknown>> {
   return value as Readonly<Record<string, unknown>>;
 }
 
+function candidateShellCalls(script: string): readonly { name: string; invocation: string }[] {
+  const lines = script.split(/\r?\n/u);
+  const calls: { name: string; invocation: string }[] = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    let line = lines[index];
+    if (line === undefined) continue;
+    const name = /^\s*run_candidate\s+(\w+)\s/u.exec(line)?.[1];
+    if (name === undefined) continue;
+    let invocation = line;
+    while (line.trimEnd().endsWith("\\") && index + 1 < lines.length) {
+      index += 1;
+      line = lines[index] ?? "";
+      invocation += `\n${line}`;
+    }
+    calls.push({ name, invocation });
+  }
+  return calls;
+}
+
 describe("trusted core E2E workflow", () => {
   let workflow: string;
 
@@ -134,6 +153,65 @@ describe("trusted core E2E workflow", () => {
       (step) => workflowRecord(step.with)["test-commands"] === '[["false"]]',
     );
     expect(failingValidator?.["continue-on-error"]).toBe(true);
+  });
+
+  it("requires each shell-launched write to provide its own nonempty validation argv", () => {
+    const parsed: unknown = parse(workflow);
+    const scripts = Object.values(workflowRecord(workflowRecord(parsed).jobs)).flatMap((job) => {
+      const steps = workflowRecord(job).steps;
+      return Array.isArray(steps)
+        ? steps.flatMap((step: unknown) => {
+            const run = workflowRecord(step).run;
+            return typeof run === "string" ? [run] : [];
+          })
+        : [];
+    });
+    const calls = scripts.flatMap(candidateShellCalls);
+    const writes = calls.filter(({ invocation }) =>
+      /INPUT_ALLOW-WRITE=true|INPUT_TASK-ACCESS=write|INPUT_COMMAND=(?:fix|implement)/u.test(
+        invocation,
+      ),
+    );
+    expect(writes.map(({ name }) => name)).toEqual([
+      "github",
+      "metadata",
+      "native_write",
+      "fix",
+      "implement",
+    ]);
+    for (const { name, invocation } of writes) {
+      expect(invocation, name).toContain("'INPUT_RUN-TESTS=true'");
+      const configured = /(['"])INPUT_TEST-COMMANDS=(.*?)\1/u.exec(invocation)?.[2];
+      expect(configured, name).toBeDefined();
+      if (configured === undefined) throw new Error(`Shell write ${name} lacks validation argv`);
+      if (configured === "$validation") {
+        const script = scripts.find((candidate) => candidate.includes(invocation));
+        const setup = script?.slice(0, script.indexOf(invocation));
+        expect(setup, name).toContain(
+          '\'[["node",".github/dsh-e2e-fixtures/validate-business-file.mjs",$path,$content]]\'',
+        );
+        continue;
+      }
+      const commands: unknown = JSON.parse(configured);
+      expect(commands, name).toBeInstanceOf(Array);
+      if (!Array.isArray(commands)) throw new Error(`Shell write ${name} has invalid validation`);
+      expect(commands.length, name).toBeGreaterThan(0);
+      for (const command of commands) {
+        expect(command, name).toBeInstanceOf(Array);
+        if (!Array.isArray(command)) throw new Error(`Shell write ${name} has invalid argv`);
+        expect(command.length, name).toBeGreaterThan(0);
+        expect(command.every((argument: unknown) => typeof argument === "string")).toBe(true);
+      }
+    }
+    const nativeWrite = writes.find(({ name }) => name === "native_write")?.invocation;
+    expect(nativeWrite).toContain(
+      'INPUT_TEST-COMMANDS=[["npm","ci","--ignore-scripts"],["npm","run","typecheck"],["npm","test"]]',
+    );
+    for (const script of scripts.filter((candidate) => candidate.includes("run_candidate()"))) {
+      const defaults = script.split("run_candidate() {")[1]?.split("read_output() {")[0];
+      expect(defaults).toBeDefined();
+      expect(defaults).not.toContain("INPUT_TEST-COMMANDS=");
+    }
   });
 
   it("installs candidate test dependencies separately from the trusted harness lock", () => {
