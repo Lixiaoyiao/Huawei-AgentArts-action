@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "runId": "08bb3f89-9474-4d48-ac80-b85f2706edf6",
+  "mode": "local-real-model",
+  "suiteVersion": "pr-review-boundaries-v1",
+  "suiteDigest": "56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9",
+  "caseId": "bounds-clean",
+  "caseVersion": 1,
+  "sourceDigest": "9c0ae166d18f9aed0d62002a7e1891cf964f31f693b511aa59f34aa235086c8b",
+  "source": {
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 3,
+      "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+      "headSha": "85b785703e441f74cd946e77f6cda5beca418eb7"
+    },
+    "commitIdentifiers": "synthetic-content-sha1",
+    "path": "src/bounds.ts",
+    "base": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n",
+    "head": "export function inBounds(index: number, length: number): boolean {\n  const belowUpperBound = index < length;\n  return index >= 0 && belowUpperBound;\n}\n",
+    "patch": "@@ -1,3 +1,4 @@\n export function inBounds(index: number, length: number): boolean {\n-  return index >= 0 && index < length;\n+  const belowUpperBound = index < length;\n+  return index >= 0 && belowUpperBound;\n }\n"
+  },
+  "criteria": "Return no high-precision actionable finding: the refactor retains the exclusive upper bound and the lower bound. Style suggestions are not defects.",
+  "requirements": "For nonnegative integer length, valid integer indices are 0 through length-1. Empty collections have no valid index. This readability refactor should preserve the public function contract.",
+  "oracleChecks": [
+    {
+      "name": "The fixed diff reconstructs exactly the admitted base and head source",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 3",
+      "passed": true
+    },
+    {
+      "name": "Every frozen input preserves the required behavior",
+      "passed": true
+    }
+  ],
+  "taskId": "7bd0078f-0b63-4b15-9f17-ab75dec8aba8",
+  "startedAt": "2026-10-04T13:27:18.444Z",
+  "completedAt": "2026-10-04T13:27:27.310Z",
+  "durationMs": 8866,
+  "status": "passed",
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 3,
+    "requestLimit": 6,
+    "maxOutputTokens": 2048
+  },
+  "production": {
+    "imageDigest": "sha256:796a432583400d3107c4c19504e4e26838bdb438f2b0f3185410700dce975af2",
+    "sourceCommit": "5208ce5d3bc2a929c09a2f045d14086be13b3883",
+    "operatorProvided": true
+  },
+  "budget": {
+    "approvedUsd": 1,
+    "maxCases": 4,
+    "maxModelRequestsPerCase": 6,
+    "maxOutputTokens": 2048,
+    "preflightPolicy": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    },
+    "providerRequestLimitVerified": true,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "evaluation": {
+    "caseId": "bounds-clean",
+    "kind": "clean",
+    "verdict": "passed",
+    "checks": [
+      {
+        "name": "The fixed diff reconstructs exactly the admitted base and head source",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 3",
+        "passed": true
+      },
+      {
+        "name": "Every frozen input preserves the required behavior",
+        "passed": true
+      },
+      {
+        "name": "All retained actionable findings map to admitted changed source lines",
+        "passed": true
+      },
+      {
+        "name": "Correct change has no high-precision actionable false positive",
+        "passed": true
+      }
+    ],
+    "retainedFindingCount": 0,
+    "humanReviewRequired": true,
+    "needsHumanReview": true,
+    "manualVerdict": "not-reviewed",
+    "verdictScope": "automatic-rubric-only"
+  },
+  "humanReviewRequired": true,
+  "needsHumanReview": true,
+  "manualVerdict": "not-reviewed",
+  "rawResult": {
+    "schemaVersion": 1,
+    "taskId": "7bd0078f-0b63-4b15-9f17-ab75dec8aba8",
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 3,
+      "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+      "headSha": "85b785703e441f74cd946e77f6cda5beca418eb7"
+    },
+    "dshVersion": "0.2.0-rc.2",
+    "output": {
+      "protocolVersion": 1,
+      "operation": "review",
+      "state": "final",
+      "summary": "The admitted diff refactors the return expression into a named local without changing semantics. Before: return index >= 0 && index < length. After: const belowUpperBound = index < length; return index >= 0 && belowUpperBound. Both sub-expressions are pure comparisons, so the eager evaluation of index < length versus the original short-circuit has no observable effect. The documented contract (nonnegative integer length; valid indices 0..length-1; empty collections have no valid index) is fully preserved. No defects found.",
+      "findings": []
+    },
+    "durationMs": 8854,
+    "workspaceDigest": "925946dc1238623c029f91460403d99ee2898c93a5312db7af0e3e9bd9605a53",
+    "toolReceipts": [
+      {
+        "schemaVersion": 1,
+        "callId": "call_00_eB2jBOGFaINQCIVnVGEe4045",
+        "id": "workspace.read",
+        "runtimeName": "read",
+        "provider": "builtin",
+        "counted": true,
+        "completed": true,
+        "ok": true,
+        "durationMs": 6
+      },
+      {
+        "schemaVersion": 1,
+        "callId": "call_00_XBmeDTAuCZMkgrkVZmxO2427",
+        "id": "workspace.read",
+        "runtimeName": "read",
+        "provider": "builtin",
+        "counted": true,
+        "completed": true,
+        "ok": false,
+        "durationMs": 4,
+        "code": "FS_NOT_REGULAR_FILE"
+      }
+    ],
+    "modelExecution": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestCount": 3,
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    }
+  },
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs."
+  ]
+}

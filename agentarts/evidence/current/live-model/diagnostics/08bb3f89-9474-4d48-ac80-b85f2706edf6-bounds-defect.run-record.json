@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "283efedd-b9a6-4233-891f-6ec09bdaee87",
+    "repository": "agentarts-fixtures/review-v1",
+    "pullNumber": 1,
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "Production HTTP Runtime, DSH and bound read receipts",
+      "status": "passed",
+      "startedAt": "2026-10-04T13:26:40.339Z",
+      "completedAt": "2026-10-04T13:26:55.833Z"
+    },
+    {
+      "name": "Independent protocol, provider evidence and business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-04T13:26:40.339Z",
+      "completedAt": "2026-10-04T13:26:55.834Z"
+    },
+    {
+      "name": "GitHub publication",
+      "status": "skipped",
+      "startedAt": "2026-10-04T13:26:55.834Z",
+      "completedAt": "2026-10-04T13:26:55.834Z",
+      "message": "Fixed review fixtures never publish to GitHub."
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": false,
+      "completed": true,
+      "durationMs": 6
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 7
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": false,
+      "completed": true,
+      "durationMs": 6
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 7
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "PASS: The fixed diff reconstructs exactly the admitted base and head source",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 1",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 2",
+      "PASS: At least one frozen input independently demonstrates the introduced defect",
+      "PASS: All retained actionable findings map to admitted changed source lines",
+      "PASS: The known regression has a location-bound, evidence-backed finding",
+      "PASS: No unrelated actionable finding survives the precision filter"
+    ]
+  },
+  "result": {
+    "summary": "The diff changes the upper-bound check in inBounds from `index < length` to `index <= length`, which violates the documented contract that valid integer indices are 0 through length-1. The changed source was read and confirms line 2 now reads `return index >= 0 && index <= length;`. This makes the out-of-bounds index `length` report as in bounds, and makes an empty collection (length=0) report index 0 as valid, contradicting 'Empty collections have no valid index.' This is a correctness regression in a public function contract.",
+    "error": ""
+  },
+  "runtime": {
+    "sessionId": "local-task:283efedd-b9a6-4233-891f-6ec09bdaee87",
+    "endpoint": "loopback-production-container",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 15498,
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs.",
+    "The automatic evidence rubric still requires independent human acceptance; passing is not a universal review-quality claim.",
+    "Keyword matching plus a valid diff anchor does not independently establish correctness of the model's prose. Clean-case acceptance applies only to the admitted fixed change.",
+    "Huawei AgentArts was not called; this is a local HTTP Runtime execution."
+  ]
+}

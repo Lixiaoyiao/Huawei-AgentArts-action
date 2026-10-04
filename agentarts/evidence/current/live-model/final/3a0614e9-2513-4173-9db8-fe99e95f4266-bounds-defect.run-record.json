@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "e5763cab-b810-4efb-b572-c3e3771fa3c9",
+    "repository": "agentarts-fixtures/review-v1",
+    "pullNumber": 1,
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "Production HTTP Runtime, DSH and bound read receipts",
+      "status": "passed",
+      "startedAt": "2026-10-04T14:11:25.348Z",
+      "completedAt": "2026-10-04T14:11:35.075Z"
+    },
+    {
+      "name": "Independent protocol, provider evidence and business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-04T14:11:25.348Z",
+      "completedAt": "2026-10-04T14:11:35.077Z"
+    },
+    {
+      "name": "GitHub publication",
+      "status": "skipped",
+      "startedAt": "2026-10-04T14:11:35.077Z",
+      "completedAt": "2026-10-04T14:11:35.077Z",
+      "message": "Fixed review fixtures never publish to GitHub."
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 9
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "PASS: The fixed diff reconstructs exactly the admitted base and head source",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 1",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 2",
+      "PASS: At least one frozen input independently demonstrates the introduced defect",
+      "PASS: All retained actionable findings map to admitted changed source lines",
+      "PASS: The known regression has a location-bound, evidence-backed finding",
+      "PASS: No unrelated actionable finding survives the precision filter"
+    ]
+  },
+  "result": {
+    "summary": "The diff changes the upper-bound check from `index < length` to `index <= length`, which violates the documented contract that valid indices are 0 through length-1 and that empty collections have no valid index. This is a high-confidence correctness/regression defect.",
+    "error": ""
+  },
+  "runtime": {
+    "sessionId": "local-task:e5763cab-b810-4efb-b572-c3e3771fa3c9",
+    "endpoint": "loopback-production-container",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 9730,
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs.",
+    "The automatic evidence rubric still requires independent human acceptance; passing is not a universal review-quality claim.",
+    "Keyword matching plus a valid diff anchor does not independently establish correctness of the model's prose. Clean-case acceptance applies only to the admitted fixed change.",
+    "Huawei AgentArts was not called; this is a local HTTP Runtime execution."
+  ]
+}

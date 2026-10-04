@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "de402747-c6bd-4f1d-85f7-f1f3708d1d49",
+    "repository": "agentarts-fixtures/review-v1",
+    "pullNumber": 1,
+    "headSha": "7f7d7ca5ad7d11bfae173d785f84bc6ebeeb5330",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "Production HTTP Runtime, DSH and bound read receipts",
+      "status": "passed",
+      "startedAt": "2026-10-04T14:09:39.787Z",
+      "completedAt": "2026-10-04T14:09:46.850Z"
+    },
+    {
+      "name": "Independent protocol, provider evidence and business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-04T14:09:39.787Z",
+      "completedAt": "2026-10-04T14:09:46.851Z"
+    },
+    {
+      "name": "GitHub publication",
+      "status": "skipped",
+      "startedAt": "2026-10-04T14:09:46.851Z",
+      "completedAt": "2026-10-04T14:09:46.851Z",
+      "message": "Fixed review fixtures never publish to GitHub."
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 9
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "PASS: The fixed diff reconstructs exactly the admitted base and head source",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 1",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 2",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 3",
+      "PASS: Every frozen input preserves the required behavior",
+      "PASS: All retained actionable findings map to admitted changed source lines",
+      "PASS: Correct change has no high-precision actionable false positive"
+    ]
+  },
+  "result": {
+    "summary": "The change replaces userRoles.includes(role) with a Set-based lookup in hasRequiredRoles. Behavior is preserved: Set.has uses SameValueZero equality, which for strings is identical to the case-sensitive exact string equality that Array.prototype.includes uses; requiredRoles.every returns true for an empty requirements array, preserving the empty-permits-access rule; and deduplication via the Set does not alter authorization semantics. No correctness, security, concurrency, reliability, or regression issues were identified.",
+    "error": ""
+  },
+  "runtime": {
+    "sessionId": "local-task:de402747-c6bd-4f1d-85f7-f1f3708d1d49",
+    "endpoint": "loopback-production-container",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 7065,
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs.",
+    "The automatic evidence rubric still requires independent human acceptance; passing is not a universal review-quality claim.",
+    "Keyword matching plus a valid diff anchor does not independently establish correctness of the model's prose. Clean-case acceptance applies only to the admitted fixed change.",
+    "Huawei AgentArts was not called; this is a local HTTP Runtime execution."
+  ]
+}

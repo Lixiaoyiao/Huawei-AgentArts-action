@@ -3,4 +3,6 @@ dist-agentarts
 coverage
 node_modules
 package-lock.json
+# Immutable execution evidence; preserve the recorded bytes.
+agentarts/evidence/current/live-model/
 .dsh-*-test-*/

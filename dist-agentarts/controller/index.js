@@ -74076,6 +74076,17 @@ const agentArtsFailureDiagnosticsSchema = schemas.strictObject({
         "WORKER_FAILED",
     ]),
     phase: schemas["enum"](["setup", "process", "output", "tool-audit", "workspace", "cleanup"]),
+    boundaryCode: schemas["enum"]([
+        "headless_result_invalid",
+        "result_schema_invalid",
+        "controller_tool_not_allowed",
+        "controller_tool_input_invalid",
+        "workspace_change_claim_not_allowed",
+        "test_execution_claim_not_allowed",
+        "tool_audit_invalid",
+        "workspace_changed",
+    ])
+        .optional(),
     provider: providerFailureDiagnosticsSchema,
     process: schemas.strictObject({
         exitCode: schemas.number().int().min(0).max(255).nullable(),
@@ -74146,7 +74157,7 @@ function formatRuntimeFailure(status, diagnostics) {
     const transport = [
         ...new Set(diagnostics.provider.attempts.map((attempt) => attempt.status === null ? attempt.outcome : `HTTP ${String(attempt.status)}`)),
     ].join(", ");
-    return `${prefix}; ${diagnostics.failureCode} at ${diagnostics.phase}; provider attempts ${String(diagnostics.provider.requestCount)}/${String(diagnostics.provider.requestLimit)}${transport === "" ? "" : ` (${transport})`}`;
+    return `${prefix}; ${diagnostics.failureCode} at ${diagnostics.phase}${diagnostics.boundaryCode === undefined ? "" : ` (${diagnostics.boundaryCode})`}; provider attempts ${String(diagnostics.provider.requestCount)}/${String(diagnostics.provider.requestLimit)}${transport === "" ? "" : ` (${transport})`}`;
 }
 
 ;// CONCATENATED MODULE: ./src/agentarts/client.ts
@@ -74621,7 +74632,7 @@ class AgentArtsReviewEngine {
         const output = (0,_dsh_schema_js__WEBPACK_IMPORTED_MODULE_1__/* .parseDshOutput */ .mH)(JSON.stringify(validated.output), "review");
         if (output.state !== "final" ||
             (output.changePlan?.length ?? 0) > 0 ||
-            (output.verification?.length ?? 0) > 0)
+            output.verification?.some((item) => item.status !== "skipped") === true)
             throw new _errors_js__WEBPACK_IMPORTED_MODULE_3__/* .PolicyDeniedError */ .uB("Review Runtime cannot request tools, modifications or claim executed tests");
         const toolReceipts = validated.toolReceipts.map((receipt) => {
             const { code, ...rest } = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_8__/* .readOnlyReceiptSchema */ .oW.parse(receipt);
@@ -75180,7 +75191,8 @@ function readOnlyTaskDigest(task) {
 /** Independent terminal/request check on both sides of the Runtime boundary. */
 function validateReadOnlyTaskOutput(raw, task) {
     const output = (0,_dsh_schema_js__WEBPACK_IMPORTED_MODULE_1__/* .parseDshOutput */ .mH)(JSON.stringify(raw), task.operation, task.taskOutputSchema);
-    if ((output.changePlan?.length ?? 0) > 0 || (output.verification?.length ?? 0) > 0)
+    if ((output.changePlan?.length ?? 0) > 0 ||
+        output.verification?.some((item) => item.status !== "skipped") === true)
         throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Read-only Runtime cannot claim workspace modifications or executed tests");
     if (output.toolRequest !== undefined) {
         const request = output.toolRequest;

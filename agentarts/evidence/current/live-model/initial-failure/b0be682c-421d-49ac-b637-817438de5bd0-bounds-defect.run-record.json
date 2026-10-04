@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "00831751-6dcc-4bc6-bf3d-30810c5f8643",
+    "repository": "agentarts-fixtures/review-v1",
+    "pullNumber": 1,
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "Independent protocol, provider evidence and business rubric",
+      "status": "failed",
+      "startedAt": "2026-10-04T13:03:29.511Z",
+      "completedAt": "2026-10-04T13:03:49.251Z",
+      "message": "Runtime invocation rejected; not retried"
+    },
+    {
+      "name": "GitHub publication",
+      "status": "skipped",
+      "startedAt": "2026-10-04T13:03:49.251Z",
+      "completedAt": "2026-10-04T13:03:49.251Z",
+      "message": "Fixed review fixtures never publish to GitHub."
+    }
+  ],
+  "tools": [],
+  "validation": {
+    "status": "failed",
+    "checks": [
+      "BOUNDARY_OR_EVIDENCE_REJECTED"
+    ]
+  },
+  "result": {
+    "summary": "",
+    "error": "Runtime invocation rejected; not retried"
+  },
+  "runtime": {
+    "sessionId": "local-task:00831751-6dcc-4bc6-bf3d-30810c5f8643",
+    "endpoint": "loopback-production-container",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "modelEvidence": {
+    "kind": "unverified",
+    "provider": "deepseek"
+  },
+  "durationMs": 19746,
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs.",
+    "The automatic evidence rubric still requires independent human acceptance; passing is not a universal review-quality claim.",
+    "Keyword matching plus a valid diff anchor does not independently establish correctness of the model's prose. Clean-case acceptance applies only to the admitted fixed change.",
+    "Huawei AgentArts was not called; this is a local HTTP Runtime execution."
+  ]
+}

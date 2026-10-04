@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "runId": "3a0614e9-2513-4173-9db8-fe99e95f4266",
+  "mode": "local-real-model",
+  "suiteVersion": "pr-review-boundaries-v1",
+  "suiteDigest": "56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9",
+  "caseId": "bounds-defect",
+  "caseVersion": 1,
+  "sourceDigest": "02e83a9abf05d68547faea99693b4a356a848483764e365b0c45dc5703917e58",
+  "source": {
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 1,
+      "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+      "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd"
+    },
+    "commitIdentifiers": "synthetic-content-sha1",
+    "path": "src/bounds.ts",
+    "base": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n",
+    "head": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index <= length;\n}\n",
+    "patch": "@@ -1,3 +1,3 @@\n export function inBounds(index: number, length: number): boolean {\n-  return index >= 0 && index < length;\n+  return index >= 0 && index <= length;\n }\n"
+  },
+  "criteria": "Report an actionable correctness finding on the changed upper-bound comparison, supported by the concrete index===length counterexample; no unrelated actionable finding.",
+  "requirements": "For nonnegative integer length, valid integer indices are 0 through length-1. Empty collections have no valid index. This change is intended to preserve the public function contract.",
+  "oracleChecks": [
+    {
+      "name": "The fixed diff reconstructs exactly the admitted base and head source",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+      "passed": true
+    },
+    {
+      "name": "At least one frozen input independently demonstrates the introduced defect",
+      "passed": true
+    }
+  ],
+  "taskId": "e5763cab-b810-4efb-b572-c3e3771fa3c9",
+  "startedAt": "2026-10-04T14:11:25.348Z",
+  "completedAt": "2026-10-04T14:11:35.077Z",
+  "durationMs": 9729,
+  "status": "passed",
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 2,
+    "requestLimit": 6,
+    "maxOutputTokens": 2048
+  },
+  "production": {
+    "imageDigest": "sha256:a3e1d38dd8dca372da34eb2c4c7bc3413dc0b401b1a00d7fb99f07579ca7f752",
+    "sourceCommit": "ec39f6bebbf4856ea73a66bb11a32f31dc0e320e",
+    "operatorProvided": true
+  },
+  "budget": {
+    "approvedUsd": 1,
+    "maxCases": 4,
+    "maxModelRequestsPerCase": 6,
+    "maxOutputTokens": 2048,
+    "preflightPolicy": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    },
+    "providerRequestLimitVerified": true,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "evaluation": {
+    "caseId": "bounds-defect",
+    "kind": "defect",
+    "verdict": "passed",
+    "checks": [
+      {
+        "name": "The fixed diff reconstructs exactly the admitted base and head source",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+        "passed": true
+      },
+      {
+        "name": "At least one frozen input independently demonstrates the introduced defect",
+        "passed": true
+      },
+      {
+        "name": "All retained actionable findings map to admitted changed source lines",
+        "passed": true
+      },
+      {
+        "name": "The known regression has a location-bound, evidence-backed finding",
+        "passed": true
+      },
+      {
+        "name": "No unrelated actionable finding survives the precision filter",
+        "passed": true
+      }
+    ],
+    "retainedFindingCount": 1,
+    "humanReviewRequired": true,
+    "needsHumanReview": true,
+    "manualVerdict": "not-reviewed",
+    "verdictScope": "automatic-rubric-only"
+  },
+  "humanReviewRequired": true,
+  "needsHumanReview": true,
+  "manualVerdict": "not-reviewed",
+  "rawResult": {
+    "schemaVersion": 1,
+    "taskId": "e5763cab-b810-4efb-b572-c3e3771fa3c9",
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 1,
+      "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+      "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd"
+    },
+    "dshVersion": "0.2.0-rc.2",
+    "output": {
+      "protocolVersion": 1,
+      "operation": "review",
+      "state": "final",
+      "summary": "The diff changes the upper-bound check from `index < length` to `index <= length`, which violates the documented contract that valid indices are 0 through length-1 and that empty collections have no valid index. This is a high-confidence correctness/regression defect.",
+      "findings": [
+        {
+          "title": "Off-by-one: `index === length` is incorrectly reported as in-bounds",
+          "body": "The contract states that for nonnegative integer length the valid integer indices are 0 through length-1, and empty collections have no valid index. Changing the comparison from `< length` to `<= length` makes `inBounds(length, length)` return true and makes `inBounds(0, 0)` return true for an empty collection, both of which are out of bounds. This breaks the public function contract that the change was intended to preserve.",
+          "severity": "high",
+          "category": "correctness",
+          "confidence": 0.99,
+          "path": "src/bounds.ts",
+          "line": 2,
+          "evidence": "Current source reads `return index >= 0 && index <= length;`. The diff changed `index < length` to `index <= length`. For length=0, index=0 now returns true even though an empty collection has no valid index; for length=N, index=N now returns true even though the maximum valid index is N-1.",
+          "suggestion": "Restore the strict comparison: `return index >= 0 && index < length;`"
+        }
+      ]
+    },
+    "durationMs": 9697,
+    "workspaceDigest": "88baaf28d42fd3515f6ffef5c095b227dc1442cbe8db96e89e082e33dd5caff8",
+    "toolReceipts": [
+      {
+        "schemaVersion": 1,
+        "callId": "call_00_Kz7PEeuMWr4VJtZh1Edf4726",
+        "id": "workspace.read",
+        "runtimeName": "read",
+        "provider": "builtin",
+        "counted": true,
+        "completed": true,
+        "ok": true,
+        "durationMs": 9
+      }
+    ],
+    "modelExecution": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestCount": 2,
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    }
+  },
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs."
+  ]
+}

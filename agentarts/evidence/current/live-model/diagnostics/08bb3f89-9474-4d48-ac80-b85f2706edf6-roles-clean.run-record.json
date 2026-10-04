@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "aeef11d3-3737-4745-bec9-2ed56e5f96c1",
+    "repository": "agentarts-fixtures/review-v1",
+    "pullNumber": 4,
+    "headSha": "7f7d7ca5ad7d11bfae173d785f84bc6ebeeb5330",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "Independent protocol, provider evidence and business rubric",
+      "status": "failed",
+      "startedAt": "2026-10-04T13:27:27.322Z",
+      "completedAt": "2026-10-04T13:27:38.776Z",
+      "message": "Runtime invocation rejected (HTTP 500); no result accepted or retried; DSH_CONFIGURATION at output; provider attempts 2/6 (HTTP 200)"
+    },
+    {
+      "name": "GitHub publication",
+      "status": "skipped",
+      "startedAt": "2026-10-04T13:27:38.776Z",
+      "completedAt": "2026-10-04T13:27:38.776Z",
+      "message": "Fixed review fixtures never publish to GitHub."
+    }
+  ],
+  "tools": [],
+  "validation": {
+    "status": "failed",
+    "checks": [
+      "BOUNDARY_OR_EVIDENCE_REJECTED"
+    ]
+  },
+  "result": {
+    "summary": "",
+    "error": "Runtime invocation rejected (HTTP 500); no result accepted or retried; DSH_CONFIGURATION at output; provider attempts 2/6 (HTTP 200)"
+  },
+  "runtime": {
+    "sessionId": "local-task:aeef11d3-3737-4745-bec9-2ed56e5f96c1",
+    "endpoint": "loopback-production-container",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "modelEvidence": {
+    "kind": "unverified",
+    "provider": "deepseek"
+  },
+  "durationMs": 11455,
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs.",
+    "The automatic evidence rubric still requires independent human acceptance; passing is not a universal review-quality claim.",
+    "Keyword matching plus a valid diff anchor does not independently establish correctness of the model's prose. Clean-case acceptance applies only to the admitted fixed change.",
+    "Huawei AgentArts was not called; this is a local HTTP Runtime execution."
+  ]
+}

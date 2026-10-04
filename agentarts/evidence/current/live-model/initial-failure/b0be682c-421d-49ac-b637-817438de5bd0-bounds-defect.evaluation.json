@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "runId": "b0be682c-421d-49ac-b637-817438de5bd0",
+  "mode": "local-real-model",
+  "suiteVersion": "pr-review-boundaries-v1",
+  "suiteDigest": "56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9",
+  "caseId": "bounds-defect",
+  "caseVersion": 1,
+  "sourceDigest": "02e83a9abf05d68547faea99693b4a356a848483764e365b0c45dc5703917e58",
+  "source": {
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 1,
+      "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+      "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd"
+    },
+    "commitIdentifiers": "synthetic-content-sha1",
+    "path": "src/bounds.ts",
+    "base": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n",
+    "head": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index <= length;\n}\n",
+    "patch": "@@ -1,3 +1,3 @@\n export function inBounds(index: number, length: number): boolean {\n-  return index >= 0 && index < length;\n+  return index >= 0 && index <= length;\n }\n"
+  },
+  "criteria": "Report an actionable correctness finding on the changed upper-bound comparison, supported by the concrete index===length counterexample; no unrelated actionable finding.",
+  "requirements": "For nonnegative integer length, valid integer indices are 0 through length-1. Empty collections have no valid index. This change is intended to preserve the public function contract.",
+  "oracleChecks": [
+    {
+      "name": "The fixed diff reconstructs exactly the admitted base and head source",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+      "passed": true
+    },
+    {
+      "name": "At least one frozen input independently demonstrates the introduced defect",
+      "passed": true
+    }
+  ],
+  "taskId": "00831751-6dcc-4bc6-bf3d-30810c5f8643",
+  "startedAt": "2026-10-04T13:03:29.511Z",
+  "completedAt": "2026-10-04T13:03:49.251Z",
+  "durationMs": 19746,
+  "status": "failed",
+  "failureCode": "BOUNDARY_OR_EVIDENCE_REJECTED",
+  "failureReason": "Runtime invocation rejected; not retried",
+  "modelExecution": null,
+  "production": {
+    "imageDigest": "sha256:bbddbfd69c320119d516400138b0f632e3809d769a106d27f4cb6783959156ca",
+    "sourceCommit": "d9b8dc29b158b731e7dd2cb76e682d8d54598630",
+    "operatorProvided": true
+  },
+  "budget": {
+    "approvedUsd": 1,
+    "maxCases": 4,
+    "maxModelRequestsPerCase": 6,
+    "maxOutputTokens": 2048,
+    "preflightPolicy": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    },
+    "providerRequestLimitVerified": false,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "evaluation": null,
+  "humanReviewRequired": true,
+  "needsHumanReview": true,
+  "manualVerdict": "not-reviewed",
+  "rawResult": {
+    "httpStatus": 500,
+    "errorResponse": {
+      "error": {
+        "code": "WORKER_FAILED",
+        "message": "DSH task failed; no result may be published",
+        "taskId": "00831751-6dcc-4bc6-bf3d-30810c5f8643"
+      }
+    }
+  },
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs."
+  ]
+}

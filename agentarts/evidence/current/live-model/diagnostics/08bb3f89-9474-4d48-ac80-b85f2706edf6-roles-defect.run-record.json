@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "987bb7f9-2e69-4816-ae24-44f5c4bd5ba3",
+    "repository": "agentarts-fixtures/review-v1",
+    "pullNumber": 2,
+    "headSha": "dd42c54e3064617dfd82b90122aeab71a7a749a8",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "Production HTTP Runtime, DSH and bound read receipts",
+      "status": "passed",
+      "startedAt": "2026-10-04T13:26:55.848Z",
+      "completedAt": "2026-10-04T13:27:18.433Z"
+    },
+    {
+      "name": "Independent protocol, provider evidence and business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-04T13:26:55.848Z",
+      "completedAt": "2026-10-04T13:27:18.434Z"
+    },
+    {
+      "name": "GitHub publication",
+      "status": "skipped",
+      "startedAt": "2026-10-04T13:27:18.434Z",
+      "completedAt": "2026-10-04T13:27:18.434Z",
+      "message": "Fixed review fixtures never publish to GitHub."
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": false,
+      "completed": true,
+      "durationMs": 5
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 4
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "PASS: The fixed diff reconstructs exactly the admitted base and head source",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 1",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 2",
+      "PASS: At least one frozen input independently demonstrates the introduced defect",
+      "PASS: All retained actionable findings map to admitted changed source lines",
+      "PASS: The known regression has a location-bound, evidence-backed finding",
+      "PASS: No unrelated actionable finding survives the precision filter"
+    ]
+  },
+  "result": {
+    "summary": "The diff replaces requiredRoles.every(role => userRoles.includes(role)) with requiredRoles.some(role => userRoles.includes(role)) in src/access.ts. This inverts the documented authorization semantics and does not preserve behavior. It violates the contract in two ways: (1) access now requires only one of the required roles rather than all of them, and (2) an empty requiredRoles array now denies access instead of permitting it. Both defects are introduced by the single changed line and are high-confidence.",
+    "error": ""
+  },
+  "runtime": {
+    "sessionId": "local-task:987bb7f9-2e69-4816-ae24-44f5c4bd5ba3",
+    "endpoint": "loopback-production-container",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 22587,
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs.",
+    "The automatic evidence rubric still requires independent human acceptance; passing is not a universal review-quality claim.",
+    "Keyword matching plus a valid diff anchor does not independently establish correctness of the model's prose. Clean-case acceptance applies only to the admitted fixed change.",
+    "Huawei AgentArts was not called; this is a local HTTP Runtime execution."
+  ]
+}

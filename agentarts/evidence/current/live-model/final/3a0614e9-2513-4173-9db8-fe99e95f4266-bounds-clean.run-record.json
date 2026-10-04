@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "256fa764-3501-4d6d-8853-80b763da3fb9",
+    "repository": "agentarts-fixtures/review-v1",
+    "pullNumber": 3,
+    "headSha": "85b785703e441f74cd946e77f6cda5beca418eb7",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "Production HTTP Runtime, DSH and bound read receipts",
+      "status": "passed",
+      "startedAt": "2026-10-04T14:11:47.782Z",
+      "completedAt": "2026-10-04T14:11:57.064Z"
+    },
+    {
+      "name": "Independent protocol, provider evidence and business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-04T14:11:47.782Z",
+      "completedAt": "2026-10-04T14:11:57.066Z"
+    },
+    {
+      "name": "GitHub publication",
+      "status": "skipped",
+      "startedAt": "2026-10-04T14:11:57.066Z",
+      "completedAt": "2026-10-04T14:11:57.066Z",
+      "message": "Fixed review fixtures never publish to GitHub."
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 6
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "PASS: The fixed diff reconstructs exactly the admitted base and head source",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 1",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 2",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 3",
+      "PASS: Every frozen input preserves the required behavior",
+      "PASS: All retained actionable findings map to admitted changed source lines",
+      "PASS: Correct change has no high-precision actionable false positive"
+    ]
+  },
+  "result": {
+    "summary": "The refactor extracts `index < length` into a local constant `belowUpperBound` and returns `index >= 0 && belowUpperBound`, which is semantically identical to the previous `index >= 0 && index < length`. The public contract is preserved: for nonnegative integer length, valid indices 0 through length-1 return true; empty collections (length 0) yield `index < 0` false, so no index is reported valid. No correctness, security, concurrency, reliability, or regression defects found.",
+    "error": ""
+  },
+  "runtime": {
+    "sessionId": "local-task:256fa764-3501-4d6d-8853-80b763da3fb9",
+    "endpoint": "loopback-production-container",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 9284,
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs.",
+    "The automatic evidence rubric still requires independent human acceptance; passing is not a universal review-quality claim.",
+    "Keyword matching plus a valid diff anchor does not independently establish correctness of the model's prose. Clean-case acceptance applies only to the admitted fixed change.",
+    "Huawei AgentArts was not called; this is a local HTTP Runtime execution."
+  ]
+}

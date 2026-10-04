@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "runId": "3a0614e9-2513-4173-9db8-fe99e95f4266",
+  "mode": "local-real-model",
+  "suiteVersion": "pr-review-boundaries-v1",
+  "suiteDigest": "56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9",
+  "caseId": "roles-clean",
+  "caseVersion": 1,
+  "sourceDigest": "30f73172a8ab0e73e9ed7b4d4740c3a9a78c9427a7202b911cc3b168b09a68de",
+  "source": {
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 4,
+      "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+      "headSha": "7f7d7ca5ad7d11bfae173d785f84bc6ebeeb5330"
+    },
+    "commitIdentifiers": "synthetic-content-sha1",
+    "path": "src/access.ts",
+    "base": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.every(role => userRoles.includes(role));\n}\n",
+    "head": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  const available = new Set(userRoles);\n  return requiredRoles.every(role => available.has(role));\n}\n",
+    "patch": "@@ -1,3 +1,4 @@\n export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n-  return requiredRoles.every(role => userRoles.includes(role));\n+  const available = new Set(userRoles);\n+  return requiredRoles.every(role => available.has(role));\n }\n"
+  },
+  "criteria": "Return no high-precision actionable finding: all required roles and empty requirements preserve their original semantics.",
+  "requirements": "Access requires every role in requiredRoles. Empty requirements permit access. Role comparison is case-sensitive exact string equality. Replacing includes with a Set should preserve authorization behavior.",
+  "oracleChecks": [
+    {
+      "name": "The fixed diff reconstructs exactly the admitted base and head source",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 3",
+      "passed": true
+    },
+    {
+      "name": "Every frozen input preserves the required behavior",
+      "passed": true
+    }
+  ],
+  "taskId": "46b661a2-1b74-49a8-b905-fd05422d891f",
+  "startedAt": "2026-10-04T14:11:57.077Z",
+  "completedAt": "2026-10-04T14:12:08.982Z",
+  "durationMs": 11905,
+  "status": "passed",
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 2,
+    "requestLimit": 6,
+    "maxOutputTokens": 2048
+  },
+  "production": {
+    "imageDigest": "sha256:a3e1d38dd8dca372da34eb2c4c7bc3413dc0b401b1a00d7fb99f07579ca7f752",
+    "sourceCommit": "ec39f6bebbf4856ea73a66bb11a32f31dc0e320e",
+    "operatorProvided": true
+  },
+  "budget": {
+    "approvedUsd": 1,
+    "maxCases": 4,
+    "maxModelRequestsPerCase": 6,
+    "maxOutputTokens": 2048,
+    "preflightPolicy": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    },
+    "providerRequestLimitVerified": true,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "evaluation": {
+    "caseId": "roles-clean",
+    "kind": "clean",
+    "verdict": "passed",
+    "checks": [
+      {
+        "name": "The fixed diff reconstructs exactly the admitted base and head source",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 3",
+        "passed": true
+      },
+      {
+        "name": "Every frozen input preserves the required behavior",
+        "passed": true
+      },
+      {
+        "name": "All retained actionable findings map to admitted changed source lines",
+        "passed": true
+      },
+      {
+        "name": "Correct change has no high-precision actionable false positive",
+        "passed": true
+      }
+    ],
+    "retainedFindingCount": 0,
+    "humanReviewRequired": true,
+    "needsHumanReview": true,
+    "manualVerdict": "not-reviewed",
+    "verdictScope": "automatic-rubric-only"
+  },
+  "humanReviewRequired": true,
+  "needsHumanReview": true,
+  "manualVerdict": "not-reviewed",
+  "rawResult": {
+    "schemaVersion": 1,
+    "taskId": "46b661a2-1b74-49a8-b905-fd05422d891f",
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 4,
+      "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+      "headSha": "7f7d7ca5ad7d11bfae173d785f84bc6ebeeb5330"
+    },
+    "dshVersion": "0.2.0-rc.2",
+    "output": {
+      "protocolVersion": 1,
+      "operation": "review",
+      "state": "final",
+      "summary": "The diff replaces Array.prototype.includes with a Set-based membership check in hasRequiredRoles. This is behavior-preserving for the documented contract: requiredRoles.every still requires every role; empty requiredRoles still yields true (empty access permitted); and both includes and Set.has use SameValueZero comparison, which for string roles is case-sensitive exact equality. No correctness, security, concurrency, reliability, or regression issues were identified. The change is a safe performance optimization (O(n*m) to O(n+m) expected lookup).",
+      "findings": []
+    },
+    "durationMs": 11892,
+    "workspaceDigest": "5ca42f28ba5e118c637f8879b2895c71e74a6beaad97ef570546e1be1be8c1fd",
+    "toolReceipts": [
+      {
+        "schemaVersion": 1,
+        "callId": "call_00_JzgrK2sSEWTa78aiTgVw2001",
+        "id": "workspace.read",
+        "runtimeName": "read",
+        "provider": "builtin",
+        "counted": true,
+        "completed": true,
+        "ok": true,
+        "durationMs": 11
+      }
+    ],
+    "modelExecution": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestCount": 2,
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    }
+  },
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs."
+  ]
+}

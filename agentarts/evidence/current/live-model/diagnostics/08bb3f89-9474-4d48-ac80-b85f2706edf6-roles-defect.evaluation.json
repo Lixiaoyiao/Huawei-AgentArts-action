@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "runId": "08bb3f89-9474-4d48-ac80-b85f2706edf6",
+  "mode": "local-real-model",
+  "suiteVersion": "pr-review-boundaries-v1",
+  "suiteDigest": "56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9",
+  "caseId": "roles-defect",
+  "caseVersion": 1,
+  "sourceDigest": "c463ae40bf07078a344972d021ab0885272557a6e14f7d46ce9a2bef8d1d6b5f",
+  "source": {
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 2,
+      "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+      "headSha": "dd42c54e3064617dfd82b90122aeab71a7a749a8"
+    },
+    "commitIdentifiers": "synthetic-content-sha1",
+    "path": "src/access.ts",
+    "base": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.every(role => userRoles.includes(role));\n}\n",
+    "head": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.some(role => userRoles.includes(role));\n}\n",
+    "patch": "@@ -1,3 +1,3 @@\n export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n-  return requiredRoles.every(role => userRoles.includes(role));\n+  return requiredRoles.some(role => userRoles.includes(role));\n }\n"
+  },
+  "criteria": "Report the authorization regression at the changed quantifier, with evidence that a partially qualified user is admitted or empty requirements are wrongly denied; no unrelated actionable finding.",
+  "requirements": "Access requires every role in requiredRoles, not just one. If requiredRoles is empty, access is permitted. This change must preserve authorization behavior, including empty requirements.",
+  "oracleChecks": [
+    {
+      "name": "The fixed diff reconstructs exactly the admitted base and head source",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+      "passed": true
+    },
+    {
+      "name": "At least one frozen input independently demonstrates the introduced defect",
+      "passed": true
+    }
+  ],
+  "taskId": "987bb7f9-2e69-4816-ae24-44f5c4bd5ba3",
+  "startedAt": "2026-10-04T13:26:55.848Z",
+  "completedAt": "2026-10-04T13:27:18.434Z",
+  "durationMs": 22586,
+  "status": "passed",
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 3,
+    "requestLimit": 6,
+    "maxOutputTokens": 2048
+  },
+  "production": {
+    "imageDigest": "sha256:796a432583400d3107c4c19504e4e26838bdb438f2b0f3185410700dce975af2",
+    "sourceCommit": "5208ce5d3bc2a929c09a2f045d14086be13b3883",
+    "operatorProvided": true
+  },
+  "budget": {
+    "approvedUsd": 1,
+    "maxCases": 4,
+    "maxModelRequestsPerCase": 6,
+    "maxOutputTokens": 2048,
+    "preflightPolicy": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    },
+    "providerRequestLimitVerified": true,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "evaluation": {
+    "caseId": "roles-defect",
+    "kind": "defect",
+    "verdict": "passed",
+    "checks": [
+      {
+        "name": "The fixed diff reconstructs exactly the admitted base and head source",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+        "passed": true
+      },
+      {
+        "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+        "passed": true
+      },
+      {
+        "name": "At least one frozen input independently demonstrates the introduced defect",
+        "passed": true
+      },
+      {
+        "name": "All retained actionable findings map to admitted changed source lines",
+        "passed": true
+      },
+      {
+        "name": "The known regression has a location-bound, evidence-backed finding",
+        "passed": true
+      },
+      {
+        "name": "No unrelated actionable finding survives the precision filter",
+        "passed": true
+      }
+    ],
+    "retainedFindingCount": 2,
+    "humanReviewRequired": true,
+    "needsHumanReview": true,
+    "manualVerdict": "not-reviewed",
+    "verdictScope": "automatic-rubric-only"
+  },
+  "humanReviewRequired": true,
+  "needsHumanReview": true,
+  "manualVerdict": "not-reviewed",
+  "rawResult": {
+    "schemaVersion": 1,
+    "taskId": "987bb7f9-2e69-4816-ae24-44f5c4bd5ba3",
+    "binding": {
+      "repository": "agentarts-fixtures/review-v1",
+      "pullNumber": 2,
+      "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+      "headSha": "dd42c54e3064617dfd82b90122aeab71a7a749a8"
+    },
+    "dshVersion": "0.2.0-rc.2",
+    "output": {
+      "protocolVersion": 1,
+      "operation": "review",
+      "state": "final",
+      "summary": "The diff replaces requiredRoles.every(role => userRoles.includes(role)) with requiredRoles.some(role => userRoles.includes(role)) in src/access.ts. This inverts the documented authorization semantics and does not preserve behavior. It violates the contract in two ways: (1) access now requires only one of the required roles rather than all of them, and (2) an empty requiredRoles array now denies access instead of permitting it. Both defects are introduced by the single changed line and are high-confidence.",
+      "findings": [
+        {
+          "title": "Authorization weakened: every replaced by some grants access with any single required role",
+          "body": "The contract states 'Access requires every role in requiredRoles, not just one.' The original implementation used Array.prototype.every, which requires the user to hold all required roles. The changed implementation uses Array.prototype.some, which returns true as soon as the user holds any one of the required roles, granting access to users who are missing other required roles. This is an authorization bypass / access-control regression introduced by the diff.",
+          "severity": "high",
+          "category": "security",
+          "confidence": 1,
+          "path": "src/access.ts",
+          "line": 2,
+          "side": "RIGHT",
+          "evidence": "src/access.ts line 2 now reads: return requiredRoles.some(role => userRoles.includes(role)); The diff replaced requiredRoles.every(role => userRoles.includes(role)) with requiredRoles.some(...).",
+          "suggestion": "Revert the change to return requiredRoles.every(role => userRoles.includes(role));"
+        },
+        {
+          "title": "Empty requiredRoles now denies access instead of permitting it",
+          "body": "The contract states 'If requiredRoles is empty, access is permitted.' Array.prototype.every on an empty array returns true (vacuously satisfying all requirements), but Array.prototype.some on an empty array returns false. The changed implementation therefore denies access when requiredRoles is empty, breaking the documented empty-requirements behavior.",
+          "severity": "medium",
+          "category": "correctness",
+          "confidence": 1,
+          "path": "src/access.ts",
+          "line": 2,
+          "side": "RIGHT",
+          "evidence": "src/access.ts line 2 now reads: return requiredRoles.some(role => userRoles.includes(role)); Array.prototype.some returns false for an empty array, whereas the contract requires access to be permitted when requiredRoles is empty.",
+          "suggestion": "Revert the change to return requiredRoles.every(role => userRoles.includes(role));, which returns true for an empty requiredRoles array."
+        }
+      ],
+      "diagnosis": "The diff changed the authorization predicate from every to some, inverting both required behaviors: access now requires only one of the required roles instead of all, and an empty requiredRoles list now yields false (denied) instead of true (permitted)."
+    },
+    "durationMs": 22572,
+    "workspaceDigest": "91a2ae13417853964f99a023d5604408ec0a804a5732c8a741414ad6a1364317",
+    "toolReceipts": [
+      {
+        "schemaVersion": 1,
+        "callId": "call_00_OivweVH7EvKtgfz54pr10440",
+        "id": "workspace.read",
+        "runtimeName": "read",
+        "provider": "builtin",
+        "counted": true,
+        "completed": true,
+        "ok": false,
+        "durationMs": 5,
+        "code": "FS_NOT_FOUND"
+      },
+      {
+        "schemaVersion": 1,
+        "callId": "call_00_u4vnXiYpoVUEa4yb2qjr2722",
+        "id": "workspace.read",
+        "runtimeName": "read",
+        "provider": "builtin",
+        "counted": true,
+        "completed": true,
+        "ok": true,
+        "durationMs": 4
+      }
+    ],
+    "modelExecution": {
+      "kind": "live-provider",
+      "provider": "deepseek",
+      "model": "deepseek-v4-pro",
+      "upstreamOrigin": "https://api.deepseek.com",
+      "requestCount": 3,
+      "requestLimit": 6,
+      "maxOutputTokens": 2048
+    }
+  },
+  "warnings": [
+    "Budget confirmation is approval, not a dollar-denominated enforcement mechanism.",
+    "Set the trusted supervisor AGENTARTS_MAX_MODEL_REQUESTS to no more than the approved per-case ceiling before starting.",
+    "Supervisor limits and actual provider requests are verified from each response; an invalid response cannot undo charges already incurred.",
+    "Synthetic PR context and content-hash commit IDs are not real GitHub task evidence. No GitHub publication occurs."
+  ]
+}
