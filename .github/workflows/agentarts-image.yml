@@ -1,0 +1,94 @@
+name: AgentArts production image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/agentarts-image.yml
+      - agentarts/Dockerfile
+      - agentarts/smoke.mjs
+      - .dockerignore
+      - package.json
+      - package-lock.json
+      - tsconfig.json
+      - scripts/build-agentarts.mjs
+      - src/**
+      - assets/dsh/**
+      - test/fixtures/messages-sse.*
+  pull_request:
+    paths:
+      - .github/workflows/agentarts-image.yml
+      - agentarts/Dockerfile
+      - agentarts/smoke.mjs
+      - .dockerignore
+      - package.json
+      - package-lock.json
+      - tsconfig.json
+      - scripts/build-agentarts.mjs
+      - src/**
+      - assets/dsh/**
+      - test/fixtures/messages-sse.*
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agentarts-image-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Verify the exact candidate and absence of checkout credentials
+        shell: bash
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          [[ "$CANDIDATE_SHA" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
+          ! git config --local --get-regexp '^(http\..*\.extraheader|credential\.)' >/dev/null 2>&1
+      - name: Build the pinned final Runtime image for Linux AMD64
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build --platform linux/amd64 --file agentarts/Dockerfile \
+            --tag huawei-agentarts-action:smoke .
+          docker image inspect huawei-agentarts-action:smoke \
+            --format 'Image={{.Id}} Architecture={{.Architecture}}'
+      - name: Exercise the production HTTP bundle, real DSH and timeout cleanup
+        timeout-minutes: 2
+        shell: bash
+        env:
+          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          image_id="$(docker image inspect huawei-agentarts-action:smoke --format '{{.Id}}')"
+          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
+          timeout --signal=TERM --kill-after=5s 90s \
+            docker run --rm --init --read-only --network none \
+              --cap-drop ALL --cap-add CHOWN --cap-add SETUID --cap-add SETGID \
+              --cap-add DAC_OVERRIDE --cap-add KILL \
+              --security-opt no-new-privileges --pids-limit 256 --memory 1g --cpus 2 \
+              --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \
+              --mount "type=bind,source=$GITHUB_WORKSPACE/agentarts/smoke.mjs,target=/smoke/smoke.mjs,readonly" \
+              --mount "type=bind,source=$GITHUB_WORKSPACE/test/fixtures/messages-sse.mjs,target=/smoke/messages-sse.mjs,readonly" \
+              --env SMOKE_EXPECTED_ARCH=x64 --env "SMOKE_SOURCE_SHA=$CANDIDATE_SHA" \
+              --env "SMOKE_IMAGE_ID=$image_id" --entrypoint node \
+              huawei-agentarts-action:smoke /smoke/smoke.mjs \
+            | tee "$RUNNER_TEMP/agentarts-image-smoke.jsonl"
+      - name: Preserve measured container evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agentarts-image-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agentarts-image-smoke.jsonl
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,13 +1,13 @@
 {
-  "name": "deepseek-harness-action",
+  "name": "huawei-agentarts-action",
   "version": "0.9.3",
-  "description": "DeepSeek Harness for GitHub - controlled and native DSH composition, coding tasks, review, and safe automation",
+  "description": "Huawei AgentArts Runtime adaptation of DeepSeek Harness for GitHub; review-only first delivery",
   "author": "Lixiaoyiao",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Lixiaoyiao/deepseek-harness-action.git"
+    "url": "git+https://github.com/Lixiaoyiao/Huawei-AgentArts-action.git"
   },
-  "private": false,
+  "private": true,
   "license": "MIT",
   "keywords": [
     "github-action",
@@ -35,7 +35,10 @@
     "test:release-contract": "node scripts/verify-release-contract.mjs",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "check": "npm run test:generated && npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:release-contract && npm run test:dsh-config && npm run build:check"
+    "check": "npm run test:generated && npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:release-contract && npm run test:dsh-config && npm run build:check",
+    "build:agentarts": "node scripts/build-agentarts.mjs",
+    "test:agentarts": "vitest run agentarts-",
+    "prove:local": "node dist-agentarts/local-proof/index.js"
   },
   "dependencies": {
     "@actions/artifact": "6.2.1",

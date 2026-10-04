@@ -5,3 +5,9 @@ coverage/
 .dsh-action/
 .dsh-*-test-*/
 work/
+dist-agentarts/
+!dist-agentarts/
+dist-agentarts/*
+!dist-agentarts/controller/
+agentarts-run-record.json
+agentarts/evidence/*.json

@@ -3,7 +3,15 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**", "coverage/**", "eslint.config.js", "scripts/**"],
+    ignores: [
+      "dist/**",
+      "dist-agentarts/**",
+      "node_modules/**",
+      "coverage/**",
+      "eslint.config.js",
+      "scripts/**",
+      "agentarts/demo/**",
+    ],
   },
   eslint.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -22,7 +30,7 @@ export default tseslint.config(
     },
   },
   {
-    files: [".github/e2e/**/*.mjs", "assets/**/*.mjs", "test/fixtures/**/*.mjs"],
+    files: [".github/e2e/**/*.mjs", "assets/**/*.mjs", "test/fixtures/**/*.mjs", "agentarts/*.mjs"],
     languageOptions: {
       parserOptions: { projectService: false },
       globals: {
@@ -30,6 +38,7 @@ export default tseslint.config(
         Buffer: "readonly",
         clearTimeout: "readonly",
         process: "readonly",
+        fetch: "readonly",
         setTimeout: "readonly",
       },
     },

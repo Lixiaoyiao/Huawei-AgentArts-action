@@ -1,0 +1,12 @@
+{
+  "project": "Huawei-AgentArts-action",
+  "derivativeVersion": "0.1.0-dev",
+  "upstream": "https://github.com/Lixiaoyiao/deepseek-harness-action.git",
+  "upstreamCommit": "891570ef2254334dff8de22af948f3f0105e933e",
+  "upstreamPackageVersion": "0.9.3",
+  "dshVersion": "0.2.0-rc.2",
+  "huaweiRuntimeProtocol": "HTTP /invocations, /ping; API_KEY; explicit version alias",
+  "huaweiSdkRuntimeDependency": null,
+  "documentationChecked": "2026-10-04",
+  "cloudVerified": false
+}

@@ -1,0 +1,44 @@
+name: AgentArts DSH review
+on:
+  pull_request_target:
+    types: [opened, synchronize, ready_for_review, reopened]
+permissions:
+  contents: read
+  pull-requests: write
+concurrency:
+  group: agentarts-review-${{ github.repository }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Install this workflow only in the NEW repository, after reviewing this source commit.
+      # For self-use this base checkout contains this Action, never the untrusted PR head.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+      # Build only trusted workflow code. Credentials are passed in the later review step.
+      - run: npm ci --ignore-scripts
+      - run: npm run build:agentarts
+      - uses: ./agentarts
+        id: review
+        with:
+          runtime-origin: ${{ vars.AGENTARTS_RUNTIME_ORIGIN }}
+          runtime-name: ${{ vars.AGENTARTS_RUNTIME_NAME }}
+          runtime-endpoint: ${{ vars.AGENTARTS_RUNTIME_ENDPOINT }}
+          runtime-api-key: ${{ secrets.AGENTARTS_RUNTIME_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          timeout-minutes: "10"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.review.outputs.run-record != ''
+        with:
+          name: agentarts-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.review.outputs.run-record }}
+          retention-days: 14

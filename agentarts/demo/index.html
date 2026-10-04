@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>AgentArts × DSH · 运行记录</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f3f5f8;
+        --panel: #fff;
+        --ink: #1a2537;
+        --sub: #586577;
+        --line: #dfe5ed;
+        --accent: #395fe9;
+        --tint: #edf1ff;
+        --green: #176b4e;
+        --green-bg: #e9f6ef;
+        --red: #ae353d;
+        --red-bg: #fceced;
+        --amber: #936018;
+        --amber-bg: #fff5de;
+        --shadow: 0 12px 32px #172c5510;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          14px/1.6 system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          "Microsoft YaHei",
+          sans-serif;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 4px;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .shell {
+        max-width: 1240px;
+        margin: auto;
+        padding: 28px 36px 42px;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 40px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+      .brand-mark {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: var(--accent);
+        color: white;
+        font-size: 13px;
+      }
+      .brand small {
+        display: block;
+        color: var(--sub);
+        font-weight: 400;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+      .top-note {
+        color: var(--sub);
+        font-size: 12px;
+      }
+      .intro {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 28px;
+        margin-bottom: 25px;
+      }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin: 0 0 8px;
+      }
+      h1 {
+        font-size: clamp(27px, 4vw, 38px);
+        line-height: 1.25;
+        letter-spacing: -0.04em;
+        margin: 0 0 12px;
+      }
+      h2 {
+        font-size: 16px;
+        margin: 0;
+      }
+      h3 {
+        font-size: 14px;
+        margin: 0;
+      }
+      .intro p {
+        max-width: 620px;
+        margin: 0;
+        color: var(--sub);
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+        padding-top: 10px;
+      }
+      .button {
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        padding: 9px 14px;
+        background: var(--panel);
+        color: var(--ink);
+        font-weight: 600;
+        line-height: 1.4;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+      }
+      .button:hover {
+        filter: brightness(0.97);
+      }
+      .button:disabled {
+        cursor: wait;
+        opacity: 0.6;
+      }
+      .file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        overflow: hidden;
+      }
+      .message {
+        border-radius: 9px;
+        padding: 10px 14px;
+        background: var(--amber-bg);
+        color: var(--amber);
+        margin-bottom: 16px;
+      }
+      .message.error {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .message[hidden] {
+        display: none;
+      }
+      .meta-strip {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--panel);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        padding: 13px 18px;
+        margin-bottom: 20px;
+        min-height: 55px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border-radius: 6px;
+        padding: 3px 9px;
+        font-size: 11px;
+        font-weight: 700;
+        white-space: nowrap;
+        background: var(--tint);
+        color: var(--accent);
+      }
+      .badge.neutral {
+        background: var(--bg);
+        color: var(--sub);
+      }
+      .badge.success {
+        background: var(--green-bg);
+        color: var(--green);
+      }
+      .badge.error {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .badge.warning {
+        background: var(--amber-bg);
+        color: var(--amber);
+      }
+      .meta-strip .source {
+        color: var(--sub);
+        font-size: 12px;
+      }
+      .meta-strip time {
+        margin-left: auto;
+        color: var(--sub);
+        font-size: 12px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+        gap: 20px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 19px 22px;
+        border-bottom: 1px solid var(--line);
+      }
+      .panel-head .minor {
+        color: var(--sub);
+        font-size: 11px;
+      }
+      .panel-body {
+        padding: 22px;
+      }
+      .full {
+        grid-column: 1/-1;
+      }
+      .task-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: start;
+      }
+      .task-name {
+        font-size: 22px;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+        letter-spacing: -0.025em;
+        margin: 0 0 5px;
+      }
+      .task-desc {
+        color: var(--sub);
+        margin: 0 0 16px;
+        font-size: 13px;
+      }
+      .field-row {
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+      .field {
+        min-width: 120px;
+      }
+      .field-label {
+        display: block;
+        color: var(--sub);
+        font-size: 11px;
+        margin-bottom: 3px;
+      }
+      .field-value {
+        font-size: 12px;
+        overflow-wrap: anywhere;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+      }
+      .duration {
+        padding: 12px 20px;
+        border-left: 1px solid var(--line);
+        text-align: right;
+      }
+      .duration strong {
+        font-size: 26px;
+        letter-spacing: -0.04em;
+        display: block;
+        line-height: 1.3;
+      }
+      .duration span {
+        color: var(--sub);
+        font-size: 11px;
+      }
+      .placeholder {
+        color: var(--sub);
+        font-size: 13px;
+        margin: 0;
+      }
+      .stages {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .stage {
+        display: grid;
+        grid-template-columns: 26px minmax(0, 1fr);
+        gap: 13px;
+        position: relative;
+        padding-bottom: 25px;
+      }
+      .stage:last-child {
+        padding-bottom: 0;
+      }
+      .stage:not(:last-child):before {
+        content: "";
+        position: absolute;
+        left: 12px;
+        top: 28px;
+        bottom: 4px;
+        width: 1px;
+        background: var(--line);
+      }
+      .stage-dot {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: var(--bg);
+        color: var(--sub);
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid var(--line);
+      }
+      .stage-dot.passed {
+        background: var(--green-bg);
+        color: var(--green);
+        border-color: transparent;
+      }
+      .stage-dot.failed {
+        background: var(--red-bg);
+        color: var(--red);
+        border-color: transparent;
+      }
+      .stage-dot.running {
+        background: var(--tint);
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .stage-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding-top: 2px;
+      }
+      .stage-time {
+        color: var(--sub);
+        font-size: 11px;
+        margin: 5px 0 0;
+        overflow-wrap: anywhere;
+      }
+      .stage-message {
+        font-size: 12px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        color: var(--sub);
+        margin: 7px 0 0;
+      }
+      .side-stack {
+        display: grid;
+        gap: 20px;
+        align-content: start;
+      }
+      .validation-summary {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .check-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 9px;
+      }
+      .check-list li {
+        position: relative;
+        padding-left: 17px;
+        color: var(--sub);
+        font-size: 12px;
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+      }
+      .check-list li:before {
+        content: "·";
+        position: absolute;
+        left: 3px;
+        top: 0;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .result-summary {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 0;
+        color: var(--sub);
+        font-size: 13px;
+        max-height: 280px;
+        overflow: auto;
+      }
+      .result-error {
+        padding: 12px;
+        background: var(--red-bg);
+        color: var(--red);
+        border-radius: 8px;
+        font-size: 12px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 14px 0 0;
+      }
+      .result-link {
+        margin-top: 18px;
+      }
+      .table-wrap {
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 12px;
+      }
+      th {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--sub);
+        padding: 0 0 11px;
+      }
+      td {
+        padding: 12px 0;
+        border-top: 1px solid var(--line);
+        vertical-align: top;
+      }
+      td:first-child {
+        overflow-wrap: anywhere;
+        max-width: 450px;
+        padding-right: 12px;
+      }
+      td:last-child,
+      th:last-child {
+        text-align: right;
+        white-space: nowrap;
+      }
+      .runtime-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 24px;
+      }
+      .runtime-grid .field {
+        min-width: 0;
+      }
+      .runtime-grid .wide {
+        grid-column: 1/-1;
+      }
+      .warnings {
+        border-top: 1px solid var(--line);
+        margin-top: 18px;
+        padding-top: 15px;
+      }
+      .warnings p {
+        font-size: 12px;
+        color: var(--amber);
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 5px 0;
+      }
+      .empty {
+        padding: 40px 25px;
+        text-align: center;
+      }
+      .empty-icon {
+        display: grid;
+        place-items: center;
+        margin: 0 auto 15px;
+        width: 60px;
+        height: 60px;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: var(--bg);
+        font-size: 27px;
+        color: var(--accent);
+      }
+      .empty h2 {
+        font-size: 18px;
+        margin-bottom: 9px;
+      }
+      .empty p {
+        color: var(--sub);
+        margin: 0 auto;
+        max-width: 580px;
+        font-size: 13px;
+      }
+      .empty .schema {
+        display: block;
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--sub);
+      }
+      footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        margin-top: 26px;
+        color: var(--sub);
+        font-size: 11px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .status-note {
+        font-size: 11px;
+        color: var(--sub);
+        margin: 12px 0 0;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+      label.button:focus-within {
+        outline: 3px solid var(--accent);
+        outline-offset: 4px;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          color-scheme: dark;
+          --bg: #101823;
+          --panel: #182230;
+          --ink: #e5eaf2;
+          --sub: #a3b0c2;
+          --line: #2c394b;
+          --accent: #93a8ff;
+          --tint: #283659;
+          --green: #91d5b4;
+          --green-bg: #203c33;
+          --red: #f5a0a5;
+          --red-bg: #472d33;
+          --amber: #e6c383;
+          --amber-bg: #3e3524;
+          --shadow: 0 12px 32px #0002;
+        }
+        .brand-mark,
+        .button.primary {
+          color: #152148;
+          background: #93a8ff;
+        }
+      }
+      @media (max-width: 850px) {
+        .shell {
+          padding: 22px 22px 32px;
+        }
+        .intro {
+          display: block;
+        }
+        .actions {
+          margin-top: 18px;
+        }
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .full {
+          grid-column: auto;
+        }
+        .topbar {
+          margin-bottom: 30px;
+        }
+        .top-note {
+          display: none;
+        }
+        .panel-head {
+          padding: 16px 18px;
+        }
+        .panel-body {
+          padding: 18px;
+        }
+        .meta-strip time {
+          margin-left: 0;
+        }
+        .task-body {
+          grid-template-columns: 1fr;
+        }
+        .duration {
+          border-left: 0;
+          border-top: 1px solid var(--line);
+          text-align: left;
+          padding: 14px 0 0;
+        }
+        .duration strong {
+          font-size: 23px;
+        }
+        .runtime-grid {
+          grid-template-columns: 1fr;
+        }
+        .runtime-grid .wide {
+          grid-column: auto;
+        }
+        footer {
+          display: block;
+        }
+        footer span {
+          display: block;
+          margin-bottom: 6px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">A</span>
+          <div>AgentArts × DSH<small>GITHUB TASK RUN INSPECTOR</small></div>
+        </div>
+        <span class="top-note">真实记录 · 独立验证 · 可追溯结果</span>
+      </header>
+      <section class="intro" aria-labelledby="title">
+        <div>
+          <p class="eyebrow">RUN OBSERVATORY</p>
+          <h1 id="title">让每一步执行都有依据。</h1>
+          <p>
+            查看 GitHub 任务、DSH
+            工具调用与控制端验证。页面只展示运行记录中的数据，云端、本地和模拟运行会明确标识。
+          </p>
+        </div>
+        <div class="actions">
+          <label class="button primary" for="recordFile"
+            >载入运行记录<input
+              class="file-input"
+              id="recordFile"
+              type="file"
+              accept=".json,application/json" /></label
+          ><button class="button" id="connect" type="button">连接本地记录</button>
+        </div>
+      </section>
+      <div id="message" class="message" role="status" hidden></div>
+      <div class="meta-strip">
+        <span class="badge neutral" id="mode">未载入</span
+        ><span class="badge neutral" id="sourceBadge">等待记录</span
+        ><span class="source" id="source">选择导出的 run-record.json，或连接本地记录服务。</span
+        ><time id="updated"></time>
+      </div>
+      <section id="empty" class="panel empty" aria-label="等待运行记录">
+        <div class="empty-icon" aria-hidden="true">↳</div>
+        <h2>还没有运行记录</h2>
+        <p>
+          载入真实任务记录后，这里会显示阶段、工具、验证和 GitHub
+          结果。完成的历史记录会标明「历史回放」；页面不会播放模拟执行动画。
+        </p>
+        <span class="schema mono">run-record.json · schemaVersion: 1</span>
+      </section>
+      <div id="content" class="grid hidden">
+        <section class="panel full" aria-labelledby="taskHeading">
+          <div class="panel-head">
+            <h2 id="taskHeading">GitHub 任务</h2>
+            <span class="badge neutral" id="taskStatus">—</span>
+          </div>
+          <div class="panel-body task-body">
+            <div>
+              <p id="taskName" class="task-name"></p>
+              <p id="taskDesc" class="task-desc"></p>
+              <div class="field-row">
+                <div class="field">
+                  <span class="field-label">Task ID</span
+                  ><span id="taskId" class="field-value mono"></span>
+                </div>
+                <div class="field">
+                  <span class="field-label">绑定提交</span
+                  ><span id="headSha" class="field-value mono"></span>
+                </div>
+              </div>
+            </div>
+            <div class="duration">
+              <strong id="duration">—</strong><span>记录中的运行耗时</span>
+            </div>
+          </div>
+        </section>
+        <section class="panel" aria-labelledby="stagesHeading">
+          <div class="panel-head">
+            <h2 id="stagesHeading">执行阶段</h2>
+            <span class="minor" id="stageCount">—</span>
+          </div>
+          <div class="panel-body">
+            <ol id="stages" class="stages"></ol>
+            <p id="stageEmpty" class="placeholder">暂无阶段记录。</p>
+          </div>
+        </section>
+        <div class="side-stack">
+          <section class="panel" aria-labelledby="validationHeading">
+            <div class="panel-head"><h2 id="validationHeading">控制端独立验证</h2></div>
+            <div class="panel-body">
+              <div class="validation-summary">
+                <span id="validationStatus" class="badge neutral">尚未验证</span>
+              </div>
+              <ul id="checks" class="check-list"></ul>
+              <p id="checksEmpty" class="placeholder">暂无验证检查记录。</p>
+              <p class="status-note">验证状态来自控制端记录；工具执行成功不代表验证通过。</p>
+            </div>
+          </section>
+          <section class="panel" aria-labelledby="resultHeading">
+            <div class="panel-head"><h2 id="resultHeading">最终结果</h2></div>
+            <div class="panel-body">
+              <p id="resultSummary" class="result-summary"></p>
+              <p id="resultError" class="result-error hidden"></p>
+              <div id="resultLink" class="result-link hidden"></div>
+            </div>
+          </section>
+        </div>
+        <section class="panel" aria-labelledby="toolsHeading">
+          <div class="panel-head">
+            <h2 id="toolsHeading">工具调用</h2>
+            <span class="minor" id="toolCount">—</span>
+          </div>
+          <div class="panel-body">
+            <div id="toolTable" class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">调用 / 工具 ID</th>
+                    <th scope="col">状态</th>
+                    <th scope="col">耗时</th>
+                  </tr>
+                </thead>
+                <tbody id="tools"></tbody>
+              </table>
+            </div>
+            <p id="toolsEmpty" class="placeholder">暂无工具调用记录。</p>
+          </div>
+        </section>
+        <section class="panel" aria-labelledby="runtimeHeading">
+          <div class="panel-head">
+            <h2 id="runtimeHeading">运行追踪</h2>
+            <span class="minor">按记录核对云端运行</span>
+          </div>
+          <div class="panel-body">
+            <div class="runtime-grid">
+              <div class="field">
+                <span class="field-label">Runtime Session</span
+                ><span id="session" class="field-value mono"></span>
+              </div>
+              <div class="field">
+                <span class="field-label">DSH 版本</span
+                ><span id="dshVersion" class="field-value mono"></span>
+              </div>
+              <div class="field wide">
+                <span class="field-label">Runtime Endpoint</span
+                ><span id="endpoint" class="field-value mono"></span>
+              </div>
+              <div class="field wide">
+                <span class="field-label">Cloud Request ID</span
+                ><span id="requestId" class="field-value mono"></span>
+              </div>
+            </div>
+            <div id="warnings" class="warnings hidden"></div>
+          </div>
+        </section>
+      </div>
+      <footer>
+        <span>展示的是记录中的事实；空白字段表示没有提供证据。</span
+        ><span>凭证与完整日志不应写入演示记录。</span>
+      </footer>
+    </main>
+    <script>
+      "use strict";
+      const $ = (id) => document.getElementById(id);
+      const MAX_BYTES = 2 * 1024 * 1024;
+      const statuses = {
+        running: ["执行中", ""],
+        passed: ["通过", "success"],
+        failed: ["失败", "error"],
+        skipped: ["跳过", "neutral"],
+      };
+      let timer,
+        live = false,
+        lastPayload = "",
+        lastLoadedAt;
+      const str = (value, fallback = "—") =>
+        typeof value === "string" && value.trim() ? value : fallback;
+      const finite = (value) => typeof value === "number" && Number.isFinite(value) && value >= 0;
+      const duration = (value) =>
+        finite(value)
+          ? value < 1000
+            ? `${Math.round(value)} ms`
+            : value < 60000
+              ? `${(value / 1000).toFixed(1)} s`
+              : `${(value / 60000).toFixed(1)} min`
+          : "—";
+      const date = (value) => {
+        if (typeof value !== "string") return "—";
+        const d = new Date(value);
+        return Number.isFinite(d.getTime()) ? d.toLocaleString("zh-CN", { hour12: false }) : "—";
+      };
+      const node = (tag, text, className) => {
+        const el = document.createElement(tag);
+        if (text !== undefined) el.textContent = text;
+        if (className) el.className = className;
+        return el;
+      };
+      function badge(el, text, kind = "neutral") {
+        el.textContent = text;
+        el.className = `badge ${kind}`;
+      }
+      function message(text, error = false) {
+        $("message").textContent = text;
+        $("message").className = `message${error ? " error" : ""}`;
+        $("message").hidden = !text;
+      }
+      function githubUrl(value) {
+        if (typeof value !== "string") return null;
+        try {
+          const u = new URL(value);
+          return u.protocol === "https:" &&
+            u.hostname === "github.com" &&
+            !u.username &&
+            !u.password &&
+            !u.port
+            ? u.href
+            : null;
+        } catch {
+          return null;
+        }
+      }
+      function validate(record) {
+        if (
+          !record ||
+          typeof record !== "object" ||
+          Array.isArray(record) ||
+          record.schemaVersion !== 1
+        )
+          throw new Error("记录格式不受支持：需要 schemaVersion: 1。");
+        if (!["cloud", "local", "simulation"].includes(record.mode))
+          throw new Error("记录缺少明确的 cloud / local / simulation 运行模式。");
+        if (!record.task || typeof record.task !== "object" || Array.isArray(record.task))
+          throw new Error("记录缺少 task 对象。");
+        if (!Array.isArray(record.stages) || !Array.isArray(record.tools))
+          throw new Error("记录中的 stages 和 tools 必须是数组。");
+        if (record.stages.length > 1000 || record.tools.length > 10000)
+          throw new Error("记录项目过多，无法在演示页面安全展示。");
+        if (
+          record.stages.some(
+            (s) => !s || typeof s !== "object" || !Object.hasOwn(statuses, s.status),
+          )
+        )
+          throw new Error("阶段状态不受支持，已停止载入。");
+        if (record.tools.some((t) => !t || typeof t !== "object" || typeof t.ok !== "boolean"))
+          throw new Error("工具记录必须包含布尔值 ok。");
+        if (
+          !record.validation ||
+          !["passed", "failed", "not-run"].includes(record.validation.status) ||
+          !Array.isArray(record.validation.checks) ||
+          record.validation.checks.some((c) => typeof c !== "string")
+        )
+          throw new Error("记录缺少有效的独立验证结果。");
+        if (
+          record.warnings !== undefined &&
+          (!Array.isArray(record.warnings) || record.warnings.some((w) => typeof w !== "string"))
+        )
+          throw new Error("warnings 必须是字符串数组。");
+        if (record.validation.checks.length > 1000 || (record.warnings || []).length > 1000)
+          throw new Error("验证检查或警告条目过多，已停止载入。");
+        return record;
+      }
+      function render(record, source) {
+        $("empty").classList.add("hidden");
+        $("content").classList.remove("hidden");
+        const modes = {
+          cloud: ["云端运行", ""],
+          local: ["本地运行", "neutral"],
+          simulation: ["模拟运行", "warning"],
+        };
+        badge($("mode"), ...modes[record.mode]);
+        badge($("sourceBadge"), source === "file" ? "历史回放" : "文件记录 · 自动刷新", "neutral");
+        $("source").textContent =
+          source === "file"
+            ? "已载入文件快照；不会重演任务。"
+            : "每 2 秒读取本地 run-record.json；页面不负责触发任务。";
+        lastLoadedAt = new Date();
+        $("updated").textContent =
+          `读取于 ${lastLoadedAt.toLocaleTimeString("zh-CN", { hour12: false })}`;
+        $("updated").dateTime = lastLoadedAt.toISOString();
+        $("taskName").textContent = str(record.task.repository, "未提供仓库");
+        const taskUrl = githubUrl(record.task.url);
+        $("taskDesc").replaceChildren(
+          node(
+            "span",
+            Number.isInteger(record.task.pullNumber) && record.task.pullNumber > 0
+              ? `Pull Request #${record.task.pullNumber}`
+              : "未提供 PR 编号",
+          ),
+        );
+        if (taskUrl) {
+          $("taskDesc").append(node("span", " · "));
+          const a = node("a", "查看任务 ↗");
+          a.href = taskUrl;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          $("taskDesc").append(a);
+        }
+        $("taskId").textContent = str(record.task.id);
+        $("headSha").textContent = str(record.task.headSha);
+        $("duration").textContent = duration(record.durationMs);
+        const outcome = record.stages.some((s) => s.status === "failed")
+          ? ["含失败阶段", "error"]
+          : record.stages.some((s) => s.status === "running")
+            ? ["含执行中阶段", ""]
+            : record.stages.length &&
+                record.stages.every((s) => s.status === "passed" || s.status === "skipped")
+              ? ["阶段已结束", "neutral"]
+              : ["暂无阶段", "neutral"];
+        badge($("taskStatus"), ...outcome);
+        $("stages").replaceChildren();
+        $("stageEmpty").classList.toggle("hidden", !!record.stages.length);
+        $("stageCount").textContent = `${record.stages.length} 个已记录阶段`;
+        record.stages.forEach((s, i) => {
+          const li = node("li", undefined, "stage");
+          li.append(
+            node(
+              "span",
+              s.status === "passed" ? "✓" : s.status === "failed" ? "×" : String(i + 1),
+              `stage-dot ${s.status}`,
+            ),
+          );
+          const body = node("div");
+          const heading = node("div", undefined, "stage-heading");
+          heading.append(node("h3", str(s.name, "未命名阶段")));
+          const state = node("span");
+          badge(state, ...statuses[s.status]);
+          heading.append(state);
+          body.append(
+            heading,
+            node(
+              "p",
+              `开始 ${date(s.startedAt)}${s.completedAt ? ` · 结束 ${date(s.completedAt)}` : ""}`,
+              "stage-time",
+            ),
+          );
+          if (typeof s.message === "string" && s.message)
+            body.append(node("p", s.message, "stage-message"));
+          li.append(body);
+          $("stages").append(li);
+        });
+        const validation = {
+          passed: ["验证通过", "success"],
+          failed: ["验证失败", "error"],
+          "not-run": ["尚未验证", "neutral"],
+        };
+        badge($("validationStatus"), ...validation[record.validation.status]);
+        $("checks").replaceChildren(...record.validation.checks.map((c) => node("li", c)));
+        $("checksEmpty").classList.toggle("hidden", !!record.validation.checks.length);
+        const result = record.result && typeof record.result === "object" ? record.result : {};
+        $("resultSummary").textContent = str(result.summary, "暂无结果摘要。");
+        $("resultError").textContent = str(result.error, "");
+        $("resultError").classList.toggle("hidden", !$("resultError").textContent);
+        $("resultLink").replaceChildren();
+        const resultUrl = githubUrl(result.githubUrl);
+        $("resultLink").classList.toggle("hidden", !resultUrl);
+        if (resultUrl) {
+          const a = node("a", "查看 GitHub 结果 ↗", "button");
+          a.href = resultUrl;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          $("resultLink").append(a);
+        }
+        $("tools").replaceChildren();
+        $("toolCount").textContent = `${record.tools.length} 次调用`;
+        $("toolsEmpty").classList.toggle("hidden", !!record.tools.length);
+        $("toolTable").classList.toggle("hidden", !record.tools.length);
+        record.tools.forEach((t) => {
+          const tr = node("tr");
+          tr.append(node("td", str(t.id, "未提供 ID"), "mono"));
+          const td = node("td"),
+            state = node("span");
+          badge(state, t.ok ? "成功" : "失败", t.ok ? "success" : "error");
+          td.append(state);
+          tr.append(td, node("td", duration(t.durationMs), "mono"));
+          $("tools").append(tr);
+        });
+        const runtime = record.runtime && typeof record.runtime === "object" ? record.runtime : {};
+        for (const [id, key] of [
+          ["session", "sessionId"],
+          ["endpoint", "endpoint"],
+          ["dshVersion", "dshVersion"],
+          ["requestId", "requestId"],
+        ])
+          $(id).textContent = str(runtime[key]);
+        const warnings = [...(record.warnings || [])];
+        if (record.mode === "cloud" && (!runtime.sessionId || !runtime.requestId))
+          warnings.push(
+            "这份云端记录缺少 Session 或 Cloud Request ID；请结合控制端日志核对，页面本身不能证明云端链路完成。",
+          );
+        if (result.githubUrl && !resultUrl)
+          warnings.push("结果链接不是有效的 https://github.com 地址，已隐藏。");
+        if (resultUrl && record.validation.status !== "passed")
+          warnings.push("记录提供了 GitHub 结果链接，但独立验证未通过；请核查控制端行为。");
+        $("warnings").replaceChildren(...warnings.map((w) => node("p", w)));
+        $("warnings").classList.toggle("hidden", !warnings.length);
+      }
+      function stop() {
+        live = false;
+        clearTimeout(timer);
+        $("connect").textContent = "连接本地记录";
+        if (!$("content").classList.contains("hidden")) {
+          badge($("sourceBadge"), "历史快照 · 刷新已停止", "neutral");
+          $("source").textContent = "当前显示最后一次成功读取的记录。";
+        }
+      }
+      async function poll() {
+        if (!live) return;
+        try {
+          const response = await fetch("/run-record.json", {
+            cache: "no-store",
+            signal: AbortSignal.timeout(5000),
+          });
+          if (response.status === 404) {
+            stop();
+            message("服务没有配置运行记录。可以载入文件，或使用 --record 指定记录路径后重新连接。");
+            return;
+          }
+          if (!response.ok) throw new Error(`记录服务返回 HTTP ${response.status}。`);
+          const text = await response.text();
+          if (new TextEncoder().encode(text).length > MAX_BYTES)
+            throw new Error("运行记录超过 2 MiB。");
+          const record = validate(JSON.parse(text));
+          if (!live) return;
+          if (text !== lastPayload) {
+            render(record, "server");
+            lastPayload = text;
+          }
+          message("");
+        } catch (error) {
+          if (!live) return;
+          message(
+            `读取失败，保留上次成功载入的记录：${error instanceof Error ? error.message : "未知错误"}`,
+            true,
+          );
+        }
+        if (live) timer = setTimeout(poll, 2000);
+      }
+      $("connect").addEventListener("click", () => {
+        if (live) {
+          stop();
+          badge($("sourceBadge"), "历史快照 · 刷新已停止", "neutral");
+          $("source").textContent = "当前显示最后一次成功读取的记录。";
+          return;
+        }
+        if (location.protocol === "file:") {
+          message("连接本地记录需要先运行 serve.mjs；直接打开文件时请使用「载入运行记录」。");
+          return;
+        }
+        live = true;
+        lastPayload = "";
+        $("connect").textContent = "停止刷新";
+        poll();
+      });
+      $("recordFile").addEventListener("change", async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        stop();
+        try {
+          if (file.size > MAX_BYTES) throw new Error("运行记录超过 2 MiB。");
+          const record = validate(JSON.parse(await file.text()));
+          render(record, "file");
+          message("");
+        } catch (error) {
+          message(`未载入记录：${error instanceof Error ? error.message : "未知错误"}`, true);
+        }
+        event.target.value = "";
+      });
+      if (location.protocol === "http:" || location.protocol === "https:") {
+        $("connect").click();
+      }
+    </script>
+  </body>
+</html>

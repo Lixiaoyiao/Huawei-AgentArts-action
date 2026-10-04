@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "89ce37c9-8d80-448c-aa99-b93cf2459833",
+    "repository": "local-fixture/off-by-one",
+    "pullNumber": 1,
+    "headSha": "432ef852e015345e914d7a4d794f0bd94e2c4ddc",
+    "url": ""
+  },
+  "stages": [
+    {
+      "name": "准备固定版本的本地审查任务",
+      "status": "passed",
+      "startedAt": "2026-10-04T07:15:25.896Z",
+      "completedAt": "2026-10-04T07:15:25.919Z"
+    },
+    {
+      "name": "本地 HTTP Runtime → 真实 DSH → 真实只读工具",
+      "status": "passed",
+      "startedAt": "2026-10-04T07:15:25.919Z",
+      "completedAt": "2026-10-04T07:15:27.619Z"
+    },
+    {
+      "name": "控制端独立协议、权限和业务验收",
+      "status": "passed",
+      "startedAt": "2026-10-04T07:15:27.619Z",
+      "completedAt": "2026-10-04T07:15:27.620Z"
+    },
+    {
+      "name": "GitHub 发布（本地证明不执行）",
+      "status": "skipped",
+      "startedAt": "2026-10-04T07:15:27.620Z",
+      "completedAt": "2026-10-04T07:15:27.620Z",
+      "message": "No real GitHub task or credentials were used; no external result URL exists."
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 23
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "Shared Controller engine accepted strict protocol, task/repository/base/head binding and unchanged workspace digest.",
+      "The only allowed read tool completed through real DSH and its original policy receipt was reconciled.",
+      "The expected correctness finding survived upstream precision filtering and mapped to the actual added diff line.",
+      "Independent fixture oracle confirms index === length is accepted by <= and rejected by <.",
+      "No workspace writes, repository tests, GitHub publication or cloud success are claimed."
+    ]
+  },
+  "result": {
+    "summary": "The deterministic fixture reports the intentionally introduced off-by-one boundary at src/example.ts:2.",
+    "error": ""
+  },
+  "runtime": {
+    "sessionId": "local-task:89ce37c9-8d80-448c-aa99-b93cf2459833",
+    "endpoint": "loopback-local",
+    "dshVersion": "0.2.0-rc.2"
+  },
+  "durationMs": 1725,
+  "warnings": [
+    "Real local DSH and local HTTP Runtime protocol executed. Huawei AgentArts was not called.",
+    "Model responses, PR context and repository/commit identifiers are deterministic fixtures; this is not a model-quality benchmark.",
+    "The local fixture uses the explicit test-only UID bypass; Linux cloud UID separation and Runtime deployment remain unverified.",
+    "No GitHub API publication was attempted. The local task correlation ID is not an AgentArts Session ID."
+  ],
+  "environment": {
+    "node": "v24.15.0",
+    "platform": "win32",
+    "linuxIsolationVerified": false
+  }
+}
