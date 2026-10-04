@@ -271,6 +271,35 @@ describe("fixed PR review cases and independent business oracle", () => {
 });
 
 describe("metered execution gates and honest modes", () => {
+  it("selects one failed fixed case without rerunning the other paid cases", async () => {
+    const fetcher = vi.fn<typeof fetch>();
+    const result = await runLiveReviewSuite(
+      await loadReviewSuite(),
+      await options({ execute: false, maxCases: 1, caseIds: ["roles-clean"] }),
+      { fetchImplementation: fetcher },
+    );
+    expect(result.plan.cases.map((item) => item.id)).toEqual(["roles-clean"]);
+    expect(result.plan.maximumRuntimeInvocations).toBe(1);
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(
+      parseLiveReviewArguments(["--case-ids", "roles-clean", "--max-cases", "1"]).caseIds,
+    ).toEqual(["roles-clean"]);
+  });
+
+  it.each([
+    { caseIds: ["unknown-case"] },
+    { caseIds: ["roles-clean", "roles-clean"] },
+    { caseIds: [""] },
+    { caseIds: ["roles-clean", "bounds-clean"] },
+  ])("rejects invalid case selection $caseIds before HTTP", async ({ caseIds }) => {
+    const fetcher = vi.fn<typeof fetch>();
+    await expect(
+      runLiveReviewSuite(await loadReviewSuite(), await options({ caseIds, maxCases: 1 }), {
+        fetchImplementation: fetcher,
+      }),
+    ).rejects.toThrow();
+    expect(fetcher).not.toHaveBeenCalled();
+  });
   it("defaults to dry-run and exports cloud tasks without any credential read or HTTP", async () => {
     const suite = await loadReviewSuite();
     const fetcher = vi.fn<typeof fetch>();

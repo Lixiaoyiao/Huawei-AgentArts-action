@@ -207,6 +207,25 @@ describe("AgentArts Review controller boundary (simulated transport)", () => {
     },
   );
 
+  it("accepts explicit skipped tests without treating them as executed validation", async () => {
+    const test = engine({
+      transform: (reply) => ({
+        ...reply,
+        output: {
+          protocolVersion: 1,
+          operation: "review",
+          state: "final",
+          summary: "Explicit skipped test fixture",
+          findings: [],
+          verification: [{ command: "npm test", status: "skipped", summary: "Not run" }],
+        },
+      }),
+    });
+    const result = await test.instance.runTurn(request());
+    expect(result.output.verification?.[0]?.status).toBe("skipped");
+    expect(test.onValidated).toHaveBeenCalledTimes(1);
+  });
+
   it.each(["task", "repository", "head", "base", "workspace"])(
     "rejects a cloud reply with a mismatched %s binding",
     async (field) => {
@@ -235,6 +254,7 @@ describe("AgentArts Review controller boundary (simulated transport)", () => {
     },
     { state: "blocked" },
     { changePlan: [{ path: "src/access.ts", summary: "Overwrite the guard" }] },
+    { verification: [{ command: "npm test", status: "failed" }] },
     {
       verification: [
         { command: "npm test", status: "passed", summary: "Claimed but never executed" },

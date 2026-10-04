@@ -1,7 +1,7 @@
 {
   "name": "huawei-agentarts-action",
   "version": "0.9.3",
-  "description": "Huawei AgentArts Runtime adaptation of DeepSeek Harness for GitHub; review-only first delivery",
+  "description": "Huawei AgentArts Runtime migration of DeepSeek Harness for GitHub automation",
   "author": "Lixiaoyiao",
   "repository": {
     "type": "git",

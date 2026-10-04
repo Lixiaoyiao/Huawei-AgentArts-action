@@ -85,6 +85,8 @@ export interface LiveReviewOptions {
   readonly runtimeOrigin?: string;
   readonly cloud?: Omit<RuntimeClientConfig, "apiKey">;
   readonly maxCases: number;
+  /** Explicit fixed-case selection allows failed cases to be rerun without repeating paid calls. */
+  readonly caseIds?: readonly string[];
   readonly timeoutMs: number;
   readonly maxModelRequestsPerCase: number;
   readonly maxOutputTokens: number;
@@ -322,6 +324,14 @@ export function assertLiveReviewOptions(options: LiveReviewOptions): void {
   if (!Number.isSafeInteger(options.maxCases) || options.maxCases < 1 || options.maxCases > 4)
     throw new DshConfigurationError("maxCases must be an integer from 1 to 4");
   if (
+    options.caseIds !== undefined &&
+    (options.caseIds.length < 1 ||
+      options.caseIds.length > options.maxCases ||
+      new Set(options.caseIds).size !== options.caseIds.length ||
+      options.caseIds.some((id) => !/^[a-z][a-z0-9-]{1,63}$/u.test(id)))
+  )
+    throw new DshConfigurationError("Case selection must be unique, bounded fixed-case IDs");
+  if (
     !Number.isSafeInteger(options.timeoutMs) ||
     options.timeoutMs < 1000 ||
     options.timeoutMs > MAX_RUNTIME_MS
@@ -515,7 +525,15 @@ export async function runLiveReviewSuite(
   for (const fixture of parsed.cases)
     if (evaluateFixtureOracle(fixture).some((check) => !check.passed))
       throw new DshConfigurationError("Fixture oracle failed before execution");
-  const selected = parsed.cases.slice(0, options.maxCases);
+  const selected =
+    options.caseIds === undefined
+      ? parsed.cases.slice(0, options.maxCases)
+      : options.caseIds.map((id) => {
+          const fixture = parsed.cases.find((item) => item.id === id);
+          if (fixture === undefined)
+            throw new DshConfigurationError("Unknown fixed case; no Runtime invocation allowed");
+          return fixture;
+        });
   const suiteDigest = digest(JSON.stringify(parsed));
   const plan = {
     schemaVersion: 1,
@@ -880,6 +898,7 @@ export function parseLiveReviewArguments(args: readonly string[]): LiveReviewOpt
     "--runtime-name",
     "--endpoint",
     "--max-cases",
+    "--case-ids",
     "--timeout-ms",
     "--max-model-requests-per-case",
     "--max-output-tokens",
@@ -928,6 +947,7 @@ export function parseLiveReviewArguments(args: readonly string[]): LiveReviewOpt
     mode,
     execute,
     maxCases: Number(values.get("--max-cases") ?? 4),
+    ...(values.has("--case-ids") ? { caseIds: (values.get("--case-ids") ?? "").split(",") } : {}),
     timeoutMs: Number(values.get("--timeout-ms") ?? 120_000),
     maxModelRequestsPerCase: Number(values.get("--max-model-requests-per-case") ?? 12),
     maxOutputTokens: Number(values.get("--max-output-tokens") ?? 4096),

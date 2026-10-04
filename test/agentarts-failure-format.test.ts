@@ -42,6 +42,22 @@ const diagnostics = agentArtsFailureDiagnosticsSchema.parse({
   process: { exitCode: 1, signal: null },
 });
 describe("safe Runtime failure facts", () => {
+  it("shows a validated boundary classification without parsing worker text", () => {
+    expect(
+      formatRuntimeFailure(500, { ...diagnostics, boundaryCode: "result_schema_invalid" }),
+    ).toContain("at process (result_schema_invalid)");
+    expect(
+      runtimeFailureDiagnostics(
+        {
+          error: {
+            taskId: task.taskId,
+            diagnostics: { ...diagnostics, boundaryCode: "raw-secret-text" },
+          },
+        },
+        task.taskId,
+      ),
+    ).toBeUndefined();
+  });
   it("binds failure diagnostics to this invocation while ignoring raw messages", () => {
     const raw = {
       error: { taskId: task.taskId, message: "sensitive-fixture-never-display", diagnostics },

@@ -111,6 +111,115 @@ describe("AgentArts Runtime DSH worker boundaries", () => {
     ).toBeUndefined();
   });
 
+  it.each([
+    {
+      output: { ...output, state: "needs_tool", toolRequest: { id: "workspace.read", input: {} } },
+      boundary: "controller_tool_not_allowed",
+    },
+    {
+      output: { ...output, changePlan: [{ path: "src/divide.ts", summary: "Changed file" }] },
+      boundary: "workspace_change_claim_not_allowed",
+    },
+    {
+      output: { ...output, verification: [{ command: "npm test", status: "passed" }] },
+      boundary: "test_execution_claim_not_allowed",
+    },
+    {
+      output: { ...output, verification: [{ command: "npm test", status: "failed" }] },
+      boundary: "test_execution_claim_not_allowed",
+    },
+  ])(
+    "identifies only the trusted rejecting boundary $boundary",
+    async ({ output: rejected, boundary }) => {
+      let failure: unknown;
+      try {
+        await runAgentArtsReview(task(), {
+          environment,
+          allowInsecureTestOnly: true,
+          executeProcess: () =>
+            Promise.resolve({
+              stdout: JSON.stringify(rejected),
+              stderr: "",
+              exitCode: 0,
+              signal: null,
+            }),
+        });
+      } catch (error: unknown) {
+        failure = error;
+      }
+      expect(getAgentArtsFailureDiagnostics(failure)).toMatchObject({
+        schemaVersion: 1,
+        failureCode: "DSH_CONFIGURATION",
+        phase: "output",
+        boundaryCode: boundary,
+        provider: { requestCount: 0, attempts: [] },
+        process: { exitCode: 0, signal: null },
+      });
+    },
+  );
+
+  it("permits explicit skipped verification without executing a command and puts read-only rules before task text", async () => {
+    const result = await runAgentArtsReview(task({ instructions: "CASE_USER_INSTRUCTION" }), {
+      environment,
+      allowInsecureTestOnly: true,
+      executeProcess: (spec) => {
+        const prompt = spec.args.at(-1) ?? "";
+        expect(prompt).toContain("verification must be omitted, [] or contain only status=skipped");
+        expect(prompt.indexOf("Tests are not executed here")).toBeLessThan(
+          prompt.indexOf("CASE_USER_INSTRUCTION"),
+        );
+        return Promise.resolve({
+          stdout: JSON.stringify({
+            ...output,
+            verification: [
+              {
+                command: "npm test",
+                status: "skipped",
+                summary: "Not executed in read-only review.",
+              },
+            ],
+          }),
+          stderr: "",
+          exitCode: 0,
+          signal: null,
+        });
+      },
+    });
+    expect(result.output).toMatchObject({
+      verification: [{ command: "npm test", status: "skipped" }],
+    });
+    expect(result.toolReceipts).toEqual([]);
+  });
+
+  it("separates a headless projection failure from an invalid business result schema", async () => {
+    for (const [stdout, boundary] of [
+      [
+        JSON.stringify({ type: "session", sessionId: "fixture", cwd: "unused" }),
+        "headless_result_invalid",
+      ],
+      [
+        JSON.stringify({ ...output, verification: [{ command: "npm test", status: "not_run" }] }),
+        "result_schema_invalid",
+      ],
+    ] as const) {
+      let failure: unknown;
+      try {
+        await runAgentArtsReview(task(), {
+          environment,
+          allowInsecureTestOnly: true,
+          executeProcess: () => Promise.resolve({ stdout, stderr: "", exitCode: 0, signal: null }),
+        });
+      } catch (error: unknown) {
+        failure = error;
+      }
+      expect(getAgentArtsFailureDiagnostics(failure)).toMatchObject({
+        failureCode: "DSH_MALFORMED_OUTPUT",
+        phase: "output",
+        boundaryCode: boundary,
+      });
+    }
+  });
+
   it("reports rejected provider status and attempted requests on process failure without raw body or stderr", async () => {
     const raw = "DO_NOT_EXPOSE_PROVIDER_BODY_OR_STDERR";
     const baseUrl = await listen(
@@ -343,7 +452,7 @@ describe("AgentArts Runtime DSH worker boundaries", () => {
             signal: null,
           }),
       }),
-    ).rejects.toThrow("claim workspace");
+    ).rejects.toThrow("claim executed tests");
     await expect(
       runAgentArtsReview(task(), {
         environment,

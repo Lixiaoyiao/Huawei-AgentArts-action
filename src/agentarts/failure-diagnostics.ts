@@ -72,6 +72,18 @@ export const agentArtsFailureDiagnosticsSchema = z.strictObject({
     "WORKER_FAILED",
   ]),
   phase: z.enum(["setup", "process", "output", "tool-audit", "workspace", "cleanup"]),
+  boundaryCode: z
+    .enum([
+      "headless_result_invalid",
+      "result_schema_invalid",
+      "controller_tool_not_allowed",
+      "controller_tool_input_invalid",
+      "workspace_change_claim_not_allowed",
+      "test_execution_claim_not_allowed",
+      "tool_audit_invalid",
+      "workspace_changed",
+    ])
+    .optional(),
   provider: providerFailureDiagnosticsSchema,
   process: z
     .strictObject({

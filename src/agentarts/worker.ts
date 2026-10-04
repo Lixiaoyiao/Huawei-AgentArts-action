@@ -100,6 +100,7 @@ function diagnosedFailure(
   phase: AgentArtsFailurePhase,
   provider: AgentArtsFailureDiagnostics["provider"],
   processStatus: AgentArtsFailureDiagnostics["process"],
+  boundaryCode?: AgentArtsFailureDiagnostics["boundaryCode"],
 ): Error {
   const failure = error instanceof Error ? error : new Error("Runtime worker failed");
   const diagnostics = agentArtsFailureDiagnosticsSchema.safeParse({
@@ -113,6 +114,7 @@ function diagnosedFailure(
     phase,
     provider,
     ...(processStatus === undefined ? {} : { process: processStatus }),
+    ...(boundaryCode === undefined ? {} : { boundaryCode }),
   });
   // Diagnostics are best effort and can never weaken or replace a rejection.
   if (diagnostics.success) failureDiagnostics.set(failure, diagnostics.data);
@@ -342,6 +344,7 @@ async function executeReadOnlyDsh(
   const modelTransport = budgetedModelFetch(policy, signal);
   let phase: AgentArtsFailurePhase = "setup";
   let processStatus: AgentArtsFailureDiagnostics["process"];
+  let boundaryCode: AgentArtsFailureDiagnostics["boundaryCode"];
   let primaryFailure: Error | undefined;
   let completedResult:
     | {
@@ -388,7 +391,13 @@ async function executeReadOnlyDsh(
       prompt: JSON.stringify(task.context, (_key, value: unknown) =>
         typeof value === "string" ? removeMarkdownImages(value) : value,
       ),
-      trustedInstructions: removeMarkdownImages(task.instructions),
+      trustedInstructions: [
+        "This Runtime is read-only. Return changePlan omitted or []. Tests are not executed here: verification must be omitted, [] or contain only status=skipped; never claim passed or failed.",
+        task.schemaVersion === 1
+          ? "Review must finish with state=final and no toolRequest. Direct runtime tools are only the admitted workspace.read/search tools."
+          : "Direct runtime tools are only the admitted workspace.read/search tools. To request a Controller tool, use state=needs_tool with an exact admitted catalog id and empty input; never call Controller tools directly.",
+        removeMarkdownImages(task.instructions),
+      ].join("\n\n"),
       trust: task.trust,
       toolCatalog: configuration.toolCatalog,
       toolPolicy: { policyOwner: "controller", nativeTools },
@@ -498,35 +507,77 @@ async function executeReadOnlyDsh(
       );
     }
     phase = "output";
-    const resultText = headlessResultText(processResult.stdout, allSecrets);
-    const parsedOutput = parseDshOutput(
-      resultText,
-      configuration.operation,
-      configuration.taskOutputSchema,
-    );
-    const output =
-      task.schemaVersion === 2 ? validateReadOnlyTaskOutput(parsedOutput, task) : parsedOutput;
-    if (
-      task.schemaVersion === 1 &&
-      (output.toolRequest !== undefined ||
-        (output.changePlan?.length ?? 0) > 0 ||
-        (output.verification?.length ?? 0) > 0)
-    ) {
+    let resultText: string;
+    try {
+      resultText = headlessResultText(processResult.stdout, allSecrets);
+    } catch (error: unknown) {
+      boundaryCode = "headless_result_invalid";
+      throw error;
+    }
+    let parsedOutput: ReturnType<typeof parseDshOutput>;
+    try {
+      parsedOutput = parseDshOutput(
+        resultText,
+        configuration.operation,
+        configuration.taskOutputSchema,
+      );
+    } catch (error: unknown) {
+      boundaryCode = "result_schema_invalid";
+      throw error;
+    }
+    if ((parsedOutput.changePlan?.length ?? 0) > 0) {
+      boundaryCode = "workspace_change_claim_not_allowed";
       throw new DshConfigurationError(
         "Cloud review must not request Controller tools or claim workspace modifications/tests",
       );
     }
+    if (parsedOutput.verification?.some((test) => test.status !== "skipped") === true) {
+      boundaryCode = "test_execution_claim_not_allowed";
+      throw new DshConfigurationError("Read-only Runtime must not claim executed tests");
+    }
+    if (parsedOutput.toolRequest !== undefined) {
+      if (
+        task.schemaVersion === 1 ||
+        task.trust === "untrusted" ||
+        !task.toolCatalog.some((tool) => tool.id === parsedOutput.toolRequest?.id)
+      ) {
+        boundaryCode = "controller_tool_not_allowed";
+        throw new DshConfigurationError(
+          "Cloud review must not request Controller tools or claim workspace modifications/tests",
+        );
+      }
+      // Current Controller manifests are strictly closed, empty-input schemas.
+      if (Object.keys(parsedOutput.toolRequest.input ?? {}).length > 0) {
+        boundaryCode = "controller_tool_input_invalid";
+        throw new DshConfigurationError(
+          "Controller tool input does not match its trusted empty-input schema",
+        );
+      }
+    }
+    const output =
+      task.schemaVersion === 2 ? validateReadOnlyTaskOutput(parsedOutput, task) : parsedOutput;
     phase = "tool-audit";
-    const receipts = await readToolReceipts(profile.auditPath, 0);
-    assertNoSecretOutput("tool receipt", JSON.stringify(receipts), allSecrets);
-    reconcileToolAudit(
-      emptyInvocationCounts(),
-      await readInvocationCounts(profile.statePath, profile.rules),
-      receipts,
-      true,
-    );
+    let receipts: Awaited<ReturnType<typeof readToolReceipts>>;
+    try {
+      receipts = await readToolReceipts(profile.auditPath, 0);
+      assertNoSecretOutput("tool receipt", JSON.stringify(receipts), allSecrets);
+      reconcileToolAudit(
+        emptyInvocationCounts(),
+        await readInvocationCounts(profile.statePath, profile.rules),
+        receipts,
+        true,
+      );
+    } catch (error: unknown) {
+      boundaryCode = "tool_audit_invalid";
+      throw error;
+    }
     phase = "workspace";
-    await verifyContext(workspace, task.files);
+    try {
+      await verifyContext(workspace, task.files);
+    } catch (error: unknown) {
+      boundaryCode = "workspace_changed";
+      throw error;
+    }
     check();
     completedResult = {
       dshVersion: DSH_VERSION,
@@ -543,7 +594,13 @@ async function executeReadOnlyDsh(
     } catch (deadlineError: unknown) {
       rejection = deadlineError;
     }
-    primaryFailure = diagnosedFailure(rejection, phase, providerDiagnostics(), processStatus);
+    primaryFailure = diagnosedFailure(
+      rejection,
+      phase,
+      providerDiagnostics(),
+      processStatus,
+      boundaryCode,
+    );
   } finally {
     clearTimeout(timer);
     try {

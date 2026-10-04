@@ -151,7 +151,10 @@ export function readOnlyTaskDigest(task: ReadOnlyTask): string {
 /** Independent terminal/request check on both sides of the Runtime boundary. */
 export function validateReadOnlyTaskOutput(raw: unknown, task: ReadOnlyTask): DshOutput {
   const output = parseDshOutput(JSON.stringify(raw), task.operation, task.taskOutputSchema);
-  if ((output.changePlan?.length ?? 0) > 0 || (output.verification?.length ?? 0) > 0)
+  if (
+    (output.changePlan?.length ?? 0) > 0 ||
+    output.verification?.some((item) => item.status !== "skipped") === true
+  )
     throw new DshConfigurationError(
       "Read-only Runtime cannot claim workspace modifications or executed tests",
     );

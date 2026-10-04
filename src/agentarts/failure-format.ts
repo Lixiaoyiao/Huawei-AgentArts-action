@@ -35,5 +35,5 @@ export function formatRuntimeFailure(
       ),
     ),
   ].join(", ");
-  return `${prefix}; ${diagnostics.failureCode} at ${diagnostics.phase}; provider attempts ${String(diagnostics.provider.requestCount)}/${String(diagnostics.provider.requestLimit)}${transport === "" ? "" : ` (${transport})`}`;
+  return `${prefix}; ${diagnostics.failureCode} at ${diagnostics.phase}${diagnostics.boundaryCode === undefined ? "" : ` (${diagnostics.boundaryCode})`}; provider attempts ${String(diagnostics.provider.requestCount)}/${String(diagnostics.provider.requestLimit)}${transport === "" ? "" : ` (${transport})`}`;
 }

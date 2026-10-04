@@ -145,7 +145,7 @@ export class AgentArtsReviewEngine implements AgentEngine<DshOutput, DshTurnMeta
     if (
       output.state !== "final" ||
       (output.changePlan?.length ?? 0) > 0 ||
-      (output.verification?.length ?? 0) > 0
+      output.verification?.some((item) => item.status !== "skipped") === true
     )
       throw new PolicyDeniedError(
         "Review Runtime cannot request tools, modifications or claim executed tests",

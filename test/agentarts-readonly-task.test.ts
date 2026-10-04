@@ -318,6 +318,13 @@ describe("v2 read-only protocol and schema authority", () => {
         toolRequest: { id: "command.bash", input: { argv: ["sh"] } },
       }),
       output("task", { verification: [{ command: "npm test", status: "passed" }] }),
+      output("task", { verification: [{ command: "npm test", status: "failed" }] }),
+      output("task", {
+        verification: [
+          { command: "npm test", status: "skipped" },
+          { command: "other", status: "passed" },
+        ],
+      }),
       output("task", { changePlan: [{ path: "src/explanation.ts", summary: "changed" }] }),
       output("diagnose"),
     ])
@@ -326,6 +333,13 @@ describe("v2 read-only protocol and schema authority", () => {
 });
 
 describe("read-only AgentEngine adaptation", () => {
+  it("accepts skipped test declarations without granting test execution", () => {
+    const result = validateReadOnlyTaskOutput(
+      output("task", { verification: [{ command: "npm test", status: "skipped" }] }),
+      task(),
+    );
+    expect(result.verification?.[0]?.status).toBe("skipped");
+  });
   it.each(["task", "diagnose"] as const)(
     "transfers admitted evidence for %s and keeps the outer callback separate",
     async (operation) => {

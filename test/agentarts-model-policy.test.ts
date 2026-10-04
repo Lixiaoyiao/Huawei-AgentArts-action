@@ -181,6 +181,7 @@ describe("trusted AgentArts model policy", () => {
       { stderr: "raw provider credential" },
       { failureCode: "MODEL_COMMANDED_RELEASE" },
       { phase: "instructions" },
+      { boundaryCode: "raw model output or credential" },
     ])
       expect(
         agentArtsFailureDiagnosticsSchema.safeParse({ ...diagnostics, ...changes }).success,
