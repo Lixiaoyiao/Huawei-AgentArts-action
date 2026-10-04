@@ -1328,11 +1328,12 @@ jobs:
   integration:
     name: GitHub integration contracts
     needs: [gate, read_only, write, cancellation]
-    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (>-)
-      needs.gate.outputs.run_e2e == 'true' &&
+    if: >-
+      github.repository == 'Lixiaoyiao/deepseek-harness-action' &&
+      (needs.gate.outputs.run_e2e == 'true' &&
       needs.read_only.result == 'success' &&
       needs.write.result == 'success' &&
-      needs.cancellation.result == 'success'
+      needs.cancellation.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 75
     permissions:
