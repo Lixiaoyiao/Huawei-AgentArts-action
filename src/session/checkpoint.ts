@@ -313,6 +313,68 @@ function inspectJson(
 
 type RestoredArtifact = ReturnType<ReturnType<typeof sessionFormatCatalog.createRestore>["finish"]>;
 
+/** Published image/file blocks reference worker-local attachment bytes outside the raw log. */
+function assertPortableTextHistory(artifact: RestoredArtifact): void {
+  const record = (value: unknown): Record<string, unknown> =>
+    value !== null && typeof value === "object" && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {};
+  const content = (value: unknown): void => {
+    if (!Array.isArray(value)) return;
+    for (const block of value) {
+      const type = record(block).type;
+      if (type === "image" || type === "file") {
+        denied(
+          "contains nonportable image or file attachment content; portable checkpoints require text history",
+        );
+      }
+    }
+  };
+  const message = (value: unknown): void => content(record(value).content);
+  // These are the released Session/LLM content slots. Tool-private meta, opaque
+  // plugin records and JSON inside text blocks are business data, not content.
+  for (const event of artifact.events) {
+    const data = record(event.data);
+    switch (event.type) {
+      case "user/message":
+        message(data);
+        break;
+      case "system/message":
+      case "developer/message":
+      case "tool/result":
+        message(data.message);
+        break;
+      case "assistant/message":
+      case "assistant/attempt":
+        if (event.type === "assistant/message") message(data.message);
+        // Assistant attempts also persist completed stream blocks outside the surface.
+        if (Array.isArray(data.stream)) {
+          for (const entry of data.stream) {
+            const timed = record(entry);
+            const chunk = record(timed.chunk);
+            if (timed.type === "chunk" && chunk.type === "block-end") content([chunk.block]);
+          }
+        }
+        break;
+      case "compaction/summary":
+        content(data.summary);
+        content(data.rawOutput);
+        break;
+      case "tool/ptc-dispatch":
+        content(data.content);
+        break;
+      case "agent/inbox/spliced":
+      case "session/title-llm-request": {
+        const messages = event.type === "agent/inbox/spliced" ? data.inserted : data.messages;
+        if (Array.isArray(messages)) messages.forEach(message);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+}
+
 /** Only settled history is portable; resume must not repair or consume old work. */
 function assertSettled(artifact: RestoredArtifact): void {
   let openTurn = false;
@@ -561,6 +623,7 @@ export function validateSessionPayload(options: PayloadOptions): SessionPayloadI
       denied("has an unsupported inherited or oversized event history");
     }
     assertSettled(artifact);
+    assertPortableTextHistory(artifact);
     return {
       sessionId: artifact.header.id,
       eventCount: artifact.events.length,

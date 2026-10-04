@@ -120,6 +120,246 @@ function checkpoint(payload = raw()): SessionCheckpoint {
   };
 }
 
+function attachment(type: "image" | "file") {
+  const attachmentId = `sha256:${"a".repeat(64)}`;
+  return type === "image"
+    ? { type, attachment: { attachmentId, mediaType: "image/png", bytes: 68, width: 1, height: 1 } }
+    : { type, attachment: { attachmentId, name: "document.pdf", bytes: 100 } };
+}
+
+const contentSlots = [
+  "user",
+  "system",
+  "developer",
+  "assistant",
+  "tool",
+  "ptc",
+  "stream",
+  "compaction-summary",
+  "compaction-raw-output",
+  "inbox",
+] as const;
+type ContentSlot = (typeof contentSlots)[number];
+
+function contentFixture(slot: ContentSlot, block: unknown): Buffer {
+  const user = message("Read the file", "user-1");
+  const step: [string, unknown][] = [
+    ["turn/start", { turn: 1 }],
+    ["step/start", { turn: 1, step: 1 }],
+    [
+      "request/header",
+      { header: { config: { provider: "fixture", model: "fixture" } }, reason: "initial" },
+    ],
+  ];
+  const completed: [string, unknown] = ["turn/end", { turn: 1, reason: { kind: "completed" } }];
+  const end: [string, unknown][] = [["step/end", { turn: 1, step: 1 }], completed];
+  const assistant = {
+    turn: 1,
+    step: 1,
+    message: {
+      id: "assistant-1",
+      role: "assistant",
+      content: [block],
+      source: { kind: "model", provider: "fixture", model: "fixture" },
+    },
+    stream: [],
+  };
+  let events: [string, unknown][];
+  switch (slot) {
+    case "user":
+      events = [
+        ["turn/start", { turn: 1 }],
+        ["user/message", { ...user, content: [block] }],
+        completed,
+      ];
+      break;
+    case "system":
+    case "developer":
+      events = [
+        ...step,
+        ...(slot === "developer" ? [["user/message", user] as [string, unknown]] : []),
+        [
+          `${slot}/message`,
+          {
+            turn: 1,
+            step: 1,
+            message: {
+              id: `${slot}-1`,
+              role: slot,
+              content: [block],
+              source: { kind: slot === "system" ? "system-prompt" : "fixture" },
+            },
+          },
+        ],
+        ...end,
+      ];
+      break;
+    case "assistant":
+      events = [...step, ["user/message", user], ["assistant/message", assistant], ...end];
+      break;
+    case "tool":
+    case "ptc":
+      events = [
+        ...step,
+        ["user/message", user],
+        [
+          "assistant/message",
+          {
+            ...assistant,
+            message: {
+              ...assistant.message,
+              content: [
+                {
+                  type: "tool-call",
+                  id: "call-1",
+                  name: slot === "ptc" ? "run_code" : "read_image",
+                  arguments: "{}",
+                },
+              ],
+            },
+          },
+        ],
+        [
+          "tool/call",
+          {
+            turn: 1,
+            step: 1,
+            callId: "call-1",
+            name: slot === "ptc" ? "run_code" : "read_image",
+            arguments: "{}",
+          },
+        ],
+        ...(slot === "ptc"
+          ? ([
+              [
+                "tool/ptc-dispatch-start",
+                {
+                  rootCallId: "call-1",
+                  parentCallId: "call-1",
+                  subCallId: "call-1:ptc:1",
+                  name: "read_image",
+                  arguments: {},
+                },
+              ],
+              [
+                "tool/ptc-dispatch",
+                {
+                  rootCallId: "call-1",
+                  parentCallId: "call-1",
+                  subCallId: "call-1:ptc:1",
+                  name: "read_image",
+                  arguments: {},
+                  content: [block],
+                  isError: false,
+                },
+              ],
+            ] as [string, unknown][])
+          : []),
+        [
+          "tool/result",
+          {
+            turn: 1,
+            step: 1,
+            message: {
+              id: "result-1",
+              role: "tool",
+              toolCallId: "call-1",
+              source: { kind: "tool", callId: "call-1" },
+              content:
+                slot === "ptc" ? [{ type: "text", text: "Nested invocation completed" }] : [block],
+            },
+          },
+        ],
+        ...end,
+      ];
+      break;
+    case "stream":
+      events = [
+        ...step,
+        [
+          "assistant/attempt",
+          {
+            turn: 1,
+            step: 1,
+            stream: [
+              { type: "chunk", time: now + 3, chunk: { type: "block-end", index: 0, block } },
+            ],
+          },
+        ],
+        ...end,
+      ];
+      break;
+    case "compaction-summary":
+    case "compaction-raw-output":
+      events = [
+        ["turn/start", { turn: 1 }],
+        ["user/message", user],
+        completed,
+        ["compaction/start", { compactionId: "compact-1", turn: null }],
+        [
+          "compaction/summary",
+          {
+            compactionId: "compact-1",
+            summary: slot === "compaction-summary" ? [block] : [{ type: "text", text: "summary" }],
+            rawOutput:
+              slot === "compaction-raw-output" ? [block] : [{ type: "text", text: "summary" }],
+            shadowedRange: { start: 1, end: 1 },
+            shadowedSeqs: [1],
+            shadowedTokenCount: 1,
+            provider: "fixture",
+            model: "fixture",
+          },
+        ],
+        ["user/message", { ...user, id: "summary-1" }],
+        ["compaction/end", { compactionId: "compact-1", turn: null }],
+      ];
+      break;
+    case "inbox":
+      events = [
+        [
+          "agent/inbox/spliced",
+          { target: "next-turn", start: 0, inserted: [{ ...user, content: [block] }] },
+        ],
+        [
+          "agent/inbox/spliced",
+          { target: "next-turn", start: 0, removedCount: 1, inserted: [], outcome: "canceled" },
+        ],
+      ];
+      break;
+  }
+  return raw(
+    events.map(([type, data], seq) => ({
+      type,
+      data,
+      seq,
+      time: now + seq,
+      ...([
+        "user/message",
+        "system/message",
+        "developer/message",
+        "assistant/message",
+        "tool/result",
+      ].includes(type)
+        ? { surfaceOp: "append" }
+        : {}),
+    })),
+  );
+}
+
+function assertPublicCodecAccepts(payload: Buffer): void {
+  const rows = payload
+    .toString("utf8")
+    .trimEnd()
+    .split("\n")
+    .map((line: string) => JSON.parse(line) as unknown);
+  const restore = sessionFormatCatalog.createRestore(rows[0], {
+    recovery: "strict",
+    validation: "current",
+  });
+  for (const row of rows.slice(1)) restore.decodeRow(row);
+  restore.finish();
+}
+
 const temporary: string[] = [];
 afterEach(async () => {
   for (const root of temporary.splice(0)) await rm(root, { recursive: true, force: true });
@@ -321,6 +561,92 @@ describe("genuine bounded Session persistence", () => {
     expect(raw(events).byteLength).toBeLessThan(128 * 1024);
     expect(() => validate(raw(events))).toThrow(/expanded event reference limit/u);
   });
+});
+
+describe("portable text Session admission", () => {
+  it.each(
+    contentSlots.flatMap((slot) => (["image", "file"] as const).map((type) => ({ slot, type }))),
+  )(
+    "refuses released typed $type references in the $slot content slot without echoing reference data",
+    ({ slot, type }) => {
+      const block = attachment(type);
+      const payload = contentFixture(slot, block);
+      assertPublicCodecAccepts(payload);
+      let diagnostic = "";
+      try {
+        validate(payload);
+      } catch (error: unknown) {
+        diagnostic = error instanceof Error ? error.message : "";
+      }
+      expect(diagnostic).toContain("nonportable image or file attachment content");
+      expect(diagnostic).not.toContain(block.attachment.attachmentId);
+      expect(diagnostic).not.toContain("document.pdf");
+    },
+  );
+
+  it.each(["image", "file"] as const)(
+    "refuses settled native tool %s references on collection, export and import without rewriting history",
+    async (type) => {
+      const payload = contentFixture("tool", attachment(type));
+      assertPublicCodecAccepts(payload);
+      const fixture = await stored(payload);
+      await expect(
+        inspectStoredSession({
+          persistenceRoot: fixture.root,
+          sessionId,
+          workspacePath,
+          knownSecrets: [],
+        }),
+      ).rejects.toThrow(/nonportable image or file/u);
+      await expect(
+        exportSessionCheckpoint({
+          persistenceRoot: fixture.root,
+          manifest,
+          workspacePath,
+          knownSecrets: [],
+          now,
+        }),
+      ).rejects.toThrow(/nonportable image or file/u);
+      const destination = await directory();
+      await expect(
+        importSessionCheckpoint({
+          persistenceRoot: destination,
+          checkpoint: checkpoint(payload),
+          binding,
+          source,
+          workspacePath,
+          knownSecrets: [],
+          now,
+        }),
+      ).rejects.toThrow(/nonportable image or file/u);
+      expect(await readFile(fixture.log)).toEqual(payload);
+    },
+  );
+
+  it.each(["image", "file"] as const)(
+    "preserves %s-shaped ordinary JSON text, tool business metadata and opaque events",
+    (type) => {
+      const block = attachment(type);
+      expect(
+        validate(contentFixture("user", { type: "text", text: JSON.stringify(block) })).eventCount,
+      ).toBe(3);
+      const payload = contentFixture("tool", {
+        type: "text",
+        text: "document.pdf is a plain filename",
+      });
+      const rows = payload
+        .toString("utf8")
+        .trimEnd()
+        .split("\n")
+        .map((line: string) => JSON.parse(line) as Record<string, unknown>);
+      const result = rows.find((row) => row.type === "tool/result");
+      if (result === undefined) throw new Error("Fixture must contain a tool result");
+      (result.data as Record<string, unknown>).meta = { content: [block], business: block };
+      const withMetadata = Buffer.from(rows.map((row) => JSON.stringify(row)).join("\n") + "\n");
+      expect(validate(withMetadata).eventCount).toBe(9);
+      expect(validate(raw([opaque({ content: [block], business: block })])).eventCount).toBe(1);
+    },
+  );
 });
 
 describe("credential export refusal", () => {
