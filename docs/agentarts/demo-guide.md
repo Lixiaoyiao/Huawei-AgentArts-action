@@ -46,6 +46,19 @@ node agentarts/demo/serve.mjs --record "$PWD/agentarts/evidence/local-run-record
 
 无记录时页面保持空状态。无效 JSON、未知模式或不支持的格式会拒绝载入；读取失败保留上一份成功记录并显示错误。录像中保留这些提示，不把旧结果当新结果。结束用 `Ctrl+C` 停止本机服务。
 
+### 准备在线展示文件
+
+先检查记录已经脱敏、适合公开；当前可用本地记录验证导出，但要保留本地模式和固定模型夹具说明。使用明确的新输出目录：
+
+```powershell
+$demoRecord = (Resolve-Path .\agentarts\evidence\local-run-record.json).Path
+node agentarts/demo/export.mjs --record "$demoRecord" --out "$PWD/../demo-site"
+```
+
+Linux/macOS 使用同样的 `--record`/`--out` 参数和绝对路径。输出目录的父目录需已存在；已有目录、错误 schema、未知字段及 `container` 原始证据均会拒绝，不覆盖文件或伪造转换。命令生成静态 HTML 和原字节的 JSON，不自动托管或发布。输出中包含哈希 CSP，静态托管应提供 `index.html` 和同目录 `run-record.json`；项目子路径可用。
+
+这种页面显示「历史回放 · 静态页面」，首次读取后不轮询，可手动重新读取或导入另一条真实记录。在线浏览和交互不意味着在线执行了 AgentArts。用真实云记录替换展示数据时也保持历史标识。公开部署前审查所有已知字符串中的私人信息，并取得发布授权；服务需要额外的防嵌入响应头时由托管配置提供。
+
 ## 3. 展示生产容器 CI 证据
 
 打开已经核实的 [AMD64 生产镜像 CI 运行](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37187847055)，展示镜像构建步骤、实际 DSH smoke 步骤和 artifact；再查看 [保存的容器记录](../../agentarts/evidence/container-amd64.json)。该记录绑定源 commit `3957bbe4e6b589c7fd790a1a05ff86394d11be9f`，DSH `0.2.0-rc.2`，实际架构 `x64`，耗时 `8863 ms`。这是那一次测量，不能套用到其他 commit、镜像或架构。

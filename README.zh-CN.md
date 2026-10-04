@@ -4,6 +4,8 @@
 
 **请先读 [AgentArts README](agentarts/README.md)**：当前只开放 PR Review，真实云端验收尚未完成。代码、部署/清理、Demo、评测和维护说明均在该入口。根目录旧 Action/installer/examples 为上游参考，不能当成 AgentArts 使用指南或云端运行证据。
 
+已按本届官方规则整理 [ICT 创新赛赛题 2 对照](docs/agentarts/ict-track2.md)，包含交付要求、真实证据缺口及后续验收顺序。
+
 以下保留原项目文档，便于理解继承实现与后续同步。
 
 ---

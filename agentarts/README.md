@@ -2,6 +2,8 @@
 
 将 DeepSeek Harness（DSH）托管到华为云 AgentArts 的 GitHub Action 衍生项目。保留原项目的事件授权、不可变上下文、结构化结果检查和 GitHub 审查发布，不另建 Agent 平台。
 
+参赛路线已依据第十一届官方赛题 2 核对，见 [赛事要求与项目对照](../docs/agentarts/ict-track2.md)。
+
 **当前支持 PR Review。云端真实验收尚未完成，不能据此宣称生产可用。** 本地可运行真实锁定版本 DSH；确定性模型服务、模拟 GitHub、Linux 隔离和真实云端分别记录。CI 修复、Issue→PR、Gateway/MCP 和平台评估属于后续阶段，本版本不开放这些云端能力。
 
 ## 第一条链路
@@ -42,6 +44,14 @@ node agentarts/demo/serve.mjs --record /absolute/path/to/agentarts/evidence/loca
 生产最终镜像另有 [AMD64 容器 CI 实际通过记录](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37186465878)：真实 DSH、独立 UID、read 回执、重复任务拒绝和超时后子进程清理均已检查，模型与 PR 仍为夹具。双架构及云端状态以 [验证记录](../docs/agentarts/verification.md) 为准。演示步骤见 [Demo 指南](../docs/agentarts/demo-guide.md)。
 
 Demo 在 `http://127.0.0.1:4173`。默认空白，可导入 JSON；文件导入显示“历史回放”。通过 `--record` 读取实际更新的记录，不用动画推测执行进度。工具显示的是已接收到的回执，后台任务内部不会凭空生成实时步骤。
+
+可以将已审查、已脱敏的实际记录导出为静态站点，输出目录必须是新目录，父目录已存在：
+
+```bash
+node agentarts/demo/export.mjs --record /absolute/path/to/agentarts-run-record.json --out /absolute/path/to/new-demo-site
+```
+
+生成 `index.html` 与原样的 `run-record.json`，支持静态托管的项目子路径，附带脚本/样式哈希 CSP。页面标为静态历史回放，不触发任务、不持续轮询。导出拒绝原始 HTTP/容器记录和未知字段，但已知字符串仍可能含私人内容，发布前必须人工检查；命令不自动脱敏或公开发布。浏览器端不需要 GitHub token 或 Runtime API Key。云端任务仍由 GitHub 事件和受信 Controller 启动。
 
 ## 部署
 

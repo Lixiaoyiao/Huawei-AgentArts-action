@@ -17,6 +17,8 @@
 
 Windows 测试快照覆盖率：Statements 84.75%，Branches 78.07%，Functions 92.63%，Lines 86.84%。上面链接的 Linux CI 为 84.76%、78.14%、92.63%、86.87%。这些仅表示自动化测试覆盖，不表示模型成功率或修复正确率。
 
+随后新增静态 Demo 导出：22 项针对性测试实际通过，涵盖原始记录字节一致、严格字段/UTF-8、重复及转义等价 JSON 键、大小/深度/扫描节点限制、已有输出拒绝、CSP 哈希、子路径和静态回放不轮询。HTTP viewer 实测 200、CSP 与实际脚本/样式匹配、记录字节未变。此阶段没有公开部署、没有浏览器视觉验收，也没有调用云端；不能把它加入真实云任务成功率。
+
 双架构记录都绑定源码 `3957bbe4e6b589c7fd790a1a05ff86394d11be9f`。AMD64 镜像 ID 为 `sha256:a24ef93ffc9f255564706a4919c81f5cbca590d54e4d5f7f7367761f93da1e95`，总耗时 8863 ms；ARM64 QEMU 镜像 ID 为 `sha256:67b3f0ab8c8c174c6e7f5488fb4fb7db16310403a5373a49f2cc804eaad3e0ab`，总耗时 33295 ms。总耗时包含两种架构各自的超时案例，不能作为正常云任务延迟。原始 Actions artifact 和保存的 JSON 对应这次实际构建，没有推送 SWR。
 
 [AMD64 首次通过记录](../../agentarts/evidence/container-amd64-initial.json) 的源 commit 为 `d845474a236685300e751e77301112775297b5bb`，实际 image ID 为 `sha256:f96f9aa55a0f8c54dc2b5a2d02aeda34cf638146a9d7b4dd2d1300e00f7c9c85`，测量总耗时 8804 ms（含超时案例）。它是本地 Docker image ID，不是已推送的 SWR digest；仅对应那次构建。矩阵新增 QEMU Action 固定 commit、binfmt digest，并在证据中显式记录是否模拟执行。
