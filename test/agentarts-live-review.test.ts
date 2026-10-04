@@ -131,7 +131,8 @@ function transport(
     expect(typeof init?.body).toBe("string");
     const task = reviewTaskSchema.parse(JSON.parse(init?.body as string) as unknown);
     tasks.push(task);
-    const fixture = suite.cases[invocations++];
+    invocations += 1;
+    const fixture = suite.cases.find((item) => item.head === task.files[0]?.content);
     expect(fixture).toBeDefined();
     if (fixture === undefined) throw new Error("No offline case remains");
     expect(task.binding.repository).toBe("agentarts-fixtures/review-v1");
@@ -414,6 +415,18 @@ describe("metered execution gates and honest modes", () => {
 });
 
 describe("offline production HTTP contract, evidence and stop behavior", () => {
+  it("executes only the selected case with a new invocation binding", async () => {
+    const suite = await loadReviewSuite();
+    const test = transport(suite);
+    const result = await runLiveReviewSuite(
+      suite,
+      await options({ maxCases: 1, caseIds: ["roles-clean"] }),
+      { fetchImplementation: test.fetcher },
+    );
+    expect(result.status).toBe("passed");
+    expect(result.records.map((item) => item.caseId)).toEqual(["roles-clean"]);
+    expect(test.tasks).toHaveLength(1);
+  });
   it("validates all four simulated results and writes separate redacted evaluation and Demo records", async () => {
     const suite = await loadReviewSuite();
     const opts = await options();

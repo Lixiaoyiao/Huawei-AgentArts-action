@@ -299,6 +299,8 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
     expect(element("sourceBadge").textContent).toBe("历史回放 · 静态页面");
     expect(element("source").textContent).toContain("不会执行或跟踪任务");
     expect(element("connect").textContent).toBe("重新读取静态记录");
+    expect(element("resultLink").classList.contains("hidden")).toBe(true);
+    expect(element("resultLinkEmpty").classList.contains("hidden")).toBe(false);
     expect(scheduled).not.toHaveBeenCalled();
     element("connect").click();
     await new Promise<void>((done) => setImmediate(done));

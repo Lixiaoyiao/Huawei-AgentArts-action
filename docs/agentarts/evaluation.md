@@ -63,6 +63,8 @@ supervisor通过 `AGENTARTS_MAX_MODEL_REQUESTS`/`AGENTARTS_MAX_OUTPUT_TOKENS` �
 
 CLI不自动完成人工审查，不计算successRate，不发布GitHub。本地imageDigest当前为操作者记录的image ID，不是已上传SWR digest；source commit/record是声明，不是cryptographic attestation。真实模型及当前代码的实际执行状态以 [验证记录](verification.md) 的独立本轮记录为准。
 
+本轮经用户批准最多4case/每case6次provider请求/2048输出tokens/120s与1美元参考预算，已尝试一次local-real-model：首例bounds-defect在19730ms返回HTTP500 WORKER_FAILED，后三例not-run。失败记录modelExecution为null，根因、真实provider请求数、token与成本未知，没有可判读的业务成功结果。没有AgentArts或GitHub调用，后续安全诊断/新runId执行单独留证；这次不能计作完整suite通过或模型成功率。详见 [验证记录](verification.md)。
+
 ## 真实 GitHub 云端候选：尚未执行
 
 以下为 `cloud-github-review-candidates-v1`，不是上面的自动四case套件。在用户批准的衍生仓库或专用测试仓库建立这些真实PR；每条固定实际base/head SHA、源文件、diff和成功标准，不把分支名当版本。没有授权前不向原项目提交测试PR；本轮不公开发布、不推送。所有候选在初次真实运行前均为not-run。

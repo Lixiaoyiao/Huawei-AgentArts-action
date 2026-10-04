@@ -752,6 +752,7 @@
               <p id="resultSummary" class="result-summary"></p>
               <p id="resultError" class="result-error hidden"></p>
               <div id="resultLink" class="result-link hidden"></div>
+              <p id="resultLinkEmpty" class="placeholder">记录未提供 GitHub 结果链接。</p>
             </div>
           </section>
         </div>
@@ -1084,6 +1085,7 @@
         $("resultLink").replaceChildren();
         const resultUrl = githubUrl(result.githubUrl);
         $("resultLink").classList.toggle("hidden", !resultUrl);
+        $("resultLinkEmpty").classList.toggle("hidden", Boolean(resultUrl));
         if (resultUrl) {
           const a = node("a", "查看 GitHub 结果 ↗", "button");
           a.href = resultUrl;

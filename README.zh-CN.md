@@ -6,6 +6,8 @@
 
 **PR Review 是第一条接入与验收链路。账号准入审批中，真实 GitHub → AgentArts → DSH → GitHub 验收尚未完成。** 本轮同时适配原只读 `task`/`diagnose` 的 v2 协议并实现受检工作区传输原型；当前验证与准入状态见 [能力迁移表](docs/agentarts/capability-matrix.md)，写操作仍关闭。原有能力未默默删减。既有容器 CI、各次本地运行和云端验收分开记录。本轮修改仅保留本地，不是新的公开发布。
 
+clean源码 `d9b8dc2` 的本地AMD64和ARM64 QEMU生产镜像，均通过9运行场景和2启动拒绝；真实DSH使用确定性模型夹具。另经批准的真实模型尝试首例返回 `WORKER_FAILED`，后三例已停止，根因与provider使用量仍未知；后续诊断代码修改需重验新镜像。详见 [验证记录](docs/agentarts/verification.md)。
+
 从 [PR Review README](agentarts/README.md) 开始；审批通过后按 [部署与验收手册](docs/agentarts/deployment.md) 执行。另见 [验证证据](docs/agentarts/verification.md)、[Demo 指南](docs/agentarts/demo-guide.md)、[业务验收用例](docs/agentarts/evaluation.md) 和 [上游更新说明](docs/agentarts/maintenance.md)。
 
 AgentArts 入口是 `agentarts/action.yml`，选择 operation 前核对其当前输入和能力表。根目录旧 Action、安装器与 examples 作为完整上游实现及回归/参考材料保留，尚不调用 AgentArts；原整份介绍已归档至 [docs/upstream](docs/upstream/README.zh-CN.md)，不要把旧安装命令当成本版入口。源码保留不等于云端已兼容。
