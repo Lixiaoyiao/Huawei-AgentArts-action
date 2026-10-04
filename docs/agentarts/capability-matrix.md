@@ -92,6 +92,19 @@ Supervisor capture与Controller apply均复用上游 `assertWritablePath`，在�
 
 此原型要求 Controller 独占、暂停使用的 workspace 生命周期，source/worker 互不嵌套；不承诺抵御外部进程并发持有文件句柄。安装失败尝试回滚，回滚失败保留原 backup 并抛错供人工恢复，不能继续发布。平台文件传输、失败恢复和真实写链路都尚未验收。
 
+### 受控写迁移接缝：待接入，不开放写入口
+
+源码审计确认最小路线仍沿用原 Controller：[`runAction` 的 `createEngine`](../../src/orchestrator.ts) → [`runAgentPhase`/`runAgentLoop`](../../src/orchestration/agent-phase.ts) → 云 `AgentEngine.runTurn` → 原写前验证与 `executeWrite`。云 engine 必须在返回前把受检的实际 delta 安装进当前 `WorkspaceSnapshot.workerRoot`；原 `sourceRoot`/`baseline` 不变。这样现有 finalizer 读取的仍是真实文件，不必再写一套 publisher、测试服务或公共SDK。以下是尚未实施的接入要求，不能据此称云fix已支持。
+
+1. **先授权再打包。** 复用原 policy/actor/fork/allow-write 与 `assertWriteTaskConfiguration`；只有已准入同仓库写任务才从当前完整 workerRoot 调用 `packWorkspaceSnapshot`。外层请求/响应须严格绑定 Controller task/operation identity、entity类型与编号、repository/base/head、受信Git ref/PR身份、精确工具和可选路径grant、revision及inputDigest；还要校验resultDigest。现有utility只覆盖其中部分字段，不能由模型选择ref、授权或升级trust。固定测试argv与验证镜像digest留在Controller。
+2. **仅把文件编辑搬到Runtime。** 首个fix只需受控原生read/search/edit，沿用原Profile、launcher、模型代理和独立UID；明确区分可写工作区与root拥有的Profile/监督进程/凭据。不同时开放Bash、plugins、session或GitHub写工具。DSH及其相关进程停止后，supervisor调用 `createWorkspaceDelta` 捕获真实bytes/mode、增加/修改/删除和结果摘要。模型的 `changePlan` 是描述，测试状态也只是声明，二者都不能代替返回内容或Controller验证。
+3. **返回原loop之前完成导入。** 云 engine 先检查严格版本化envelope、任务/实体/ref/grant/revision/digest、实际工具回执及凭据泄漏，再调用 `applyWorkspaceDelta`。保留保护路径、source baseline、完整stage和rollback检查；导入完成后才返回output/metadata。若后续轮次请求Controller工具，它必须读到当前已受检工作区。下一轮重新打包当前workerRoot并推进revision，累计变更仍相对于原baseline；不靠恢复旧云Session保存文件状态。
+4. **取消/截止不得遗留迟到导入。** 传输原型目前没有AbortSignal或deadline参数，正式engine接入要补齐导入前后检查与有界事务生命周期。不能用 `Promise.race` 返回超时后，让未等待的导入继续修改仍会被使用的工作区；stage/swap/rollback必须收敛，Controller才能清理或结束。取消、过期任务、安装/回滚失败均阻断finalizer。文件数/字节上限仍为全量拒绝，不能偷偷删文件或用Review截断文本包代替完整写工作区。
+5. **导入分类不等于独立验证。** `applyWorkspaceDelta` 的strict仅执行分类门槛；它省略baselineReplay，不运行任何测试。正式结果仍经过原 `runAgentPhase` 的 `inspectValidationIntegrity`/`enforceValidationIntegrity`，strict下需要时使用baseline replay，再由 [`finishFix`](../../src/commands/fix.ts) 的 `runValidationCommandsInDocker`/`assertValidationSucceeded` 检查受信argv。测试运行在独立复制的无凭据验证工作区，测试改写的文件不能进入发布。原 [`runAgentLoop`](../../src/agent/loop.ts) 可把 `ValidationFailureError` 的有界不可信反馈交给下一轮修复，并保持统一截止/无进展阻断；模型“通过测试”不放宽这些检查。
+6. **继续使用原GitHub写边界。** `finishFix` 在测试前、写前复查PR身份/head/ref，`createGitHubCommitFromWorkspace` 再查真实变更和保护路径，只有Controller token调用Git数据API。原 [`updateRemoteBranch`/`createRemoteBranch`](../../src/write/github.ts) 对失去响应的写入只读回核对精确目标；未知结果不能自动重发云任务或重复发布。写入已发生后保留partial-success及reconciliation，不把后续评论失败改成可盲重试的提交失败。Issue `implement`/写task随后分别复用原Issue内容指纹/base复查、确定性分支与operation marker，不能直接照搬PR fix的实体绑定。
+
+最小后续验收用小仓库的同仓PR fix：完整包在当前上限内，先覆盖实际edit→delta→导入→受信Docker测试→原finalizer；独立验证错误delta、未授权/保护路径、测试失败、过期head、超时/取消、重复任务和失去写入响应均不会误写。测试通过与修复符合需求分别判定。先跑本地确定性模型与实际DSH，再按批准的真实模型/GitHub/AgentArts环境逐层留证；不同时扩展Issue→PR、native或MCP。当前main/admission/worker的拒写门槛仍有效，修改一个allow-write开关不算完成迁移。
+
 ## 已确认限制与尚未确认项
 
 官方 HTTP/控制台当前写 ARM64、8080、`/ping`/`/invocations`；创建 API 又列 `arm64`/`x86_64`，所以首轮选择 ARM64，不能宣称平台普遍不支持 x86。API_KEY 身份创建后不能改。Latest 跟随最新版本，固定 alias 仍可管理移动。会话存储启用后不能关闭，FUSE 权限不保证 chmod/chown 生效，故第一阶段不挂载。SWR 基础版当前文档不支持 OCI v1.0/v1.1 镜像规格，上传前要核对媒体类型。[HTTP](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_070.html)、[创建 API](https://support.huaweicloud.com/api-agentarts/CreateCoreRuntime.html)、[认证](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_227.html)、[访问方式](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_048.html)、[会话](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_119.html)、[SWR](https://support.huaweicloud.com/usermanual-swr/swr_01_0011.html)。
