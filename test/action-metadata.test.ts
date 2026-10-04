@@ -329,8 +329,8 @@ describe("Marketplace action metadata", () => {
       "container-image: docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059",
     );
     for (const relativePath of [
-      "../README.md",
-      "../README.zh-CN.md",
+      "../docs/upstream/README.md",
+      "../docs/upstream/README.zh-CN.md",
       "../examples/fork-review.yml",
       "../examples/commands.yml",
       "../examples/ci-diagnose.yml",

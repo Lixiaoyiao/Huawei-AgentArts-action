@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "browser": "Microsoft Edge (Chromium)",
+  "browserVersion": "154.0.4258.48",
+  "runner": "playwright@1.63.0",
+  "execution": "real installed browser, fresh isolated profile, headless rendering",
+  "origin": "http://127.0.0.1:4183",
+  "staticExportOrigin": "http://127.0.0.1:55711/project/",
+  "staticRecordLoads": 2,
+  "checkedAt": "2026-10-04T12:29:36.460Z",
+  "recordPath": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-validation\\local-run-record.json",
+  "recordTaskId": "3a0a2682-bb6f-45ed-a54d-13a29baf86dc",
+  "modelEvidence": {
+    "kind": "deterministic-fixture",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "recordEnvironment": {
+    "node": "v24.15.0",
+    "platform": "win32",
+    "linuxIsolationVerified": false
+  },
+  "staticOutput": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\demo-current",
+  "recordBytesPreserved": true,
+  "checks": [
+    {
+      "case": "empty",
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "case": "empty",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "empty",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "case": "local-record-replay",
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "case": "local-record-replay",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "local-record-replay",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "case": "local-record-replay-dark",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "invalid-json",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "simulation-failure",
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "case": "simulation-failure",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "simulation-failure",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "case": "simulation-task",
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "case": "simulation-task",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "simulation-task",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "case": "simulation-diagnose",
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "case": "simulation-diagnose",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "simulation-diagnose",
+      "width": 320,
+      "scrollWidth": 320
+    },
+    {
+      "case": "static-export-subpath",
+      "width": 1280,
+      "scrollWidth": 1280
+    },
+    {
+      "case": "static-export-subpath",
+      "width": 390,
+      "scrollWidth": 390
+    },
+    {
+      "case": "static-export-subpath",
+      "width": 320,
+      "scrollWidth": 320
+    }
+  ],
+  "pageErrors": [],
+  "cspErrors": [],
+  "verifiedInteractions": [
+    "Local file picker read the unchanged saved record.",
+    "Invalid JSON preserved the previous record and printed no input fragment.",
+    "Simulation failure was labelled, markup remained text and non-GitHub link was hidden.",
+    "Explicit simulation task/diagnose records labelled Issue/repository and never PR #0.",
+    "Static export loaded from /project/ with hash CSP, made no automatic poll, and reloaded only when clicked."
+  ],
+  "limitations": [
+    "Local run record is actual saved DSH execution with deterministic model/PR fixture.",
+    "This local Windows record explicitly uses test-only UID bypass; separate Linux container proof cannot be attributed to this record.",
+    "The failure and generic task/diagnose data are explicitly simulation UI fixtures; no provider/cloud/GitHub invocation.",
+    "Screenshots were rendered by the independent installed Edge browser in headless mode, not in-app browser or mock DOM.",
+    "Cloud end-to-end remains outside this browser check."
+  ]
+}

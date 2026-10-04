@@ -44,8 +44,8 @@ const [
   read("packages/create-deepseek-harness-action/package.json"),
   read("packages/create-deepseek-harness-action/package-lock.json"),
   read("packages/create-deepseek-harness-action/README.md"),
-  read("README.md"),
-  read("README.zh-CN.md"),
+  read("docs/upstream/README.md"),
+  read("docs/upstream/README.zh-CN.md"),
   read("docs/setup.md"),
   read("docs/setup.zh-CN.md"),
   read("CHANGELOG.md"),
@@ -260,8 +260,8 @@ assert.ok(
   "installer README must identify its version and immutable Action binding",
 );
 for (const [name, document] of [
-  ["README.md", rootReadme],
-  ["README.zh-CN.md", rootReadmeZh],
+  ["docs/upstream/README.md", rootReadme],
+  ["docs/upstream/README.zh-CN.md", rootReadmeZh],
   ["docs/setup.md", setupGuide],
   ["docs/setup.zh-CN.md", setupGuideZh],
   ["CHANGELOG.md", changelog],
