@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "mode": "container",
+  "status": "passed",
+  "taskId": "a066827b-b3ca-4744-8a26-9dee23250aa4",
+  "stage": "passed",
+  "node": "v24.15.0",
+  "architecture": "x64",
+  "emulated": false,
+  "dshVersion": "0.2.0-rc.2",
+  "workerUidVerified": true,
+  "sourceCommit": "3957bbe4e6b589c7fd790a1a05ff86394d11be9f",
+  "imageId": "sha256:a24ef93ffc9f255564706a4919c81f5cbca590d54e4d5f7f7367761f93da1e95",
+  "tools": [
+    {
+      "id": "workspace.read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 11
+    }
+  ],
+  "result": {
+    "summary": "The image fixture reports the intentionally introduced off-by-one boundary."
+  },
+  "durationMs": 8863,
+  "normalModelRequests": 2,
+  "timeoutModelRequests": 1,
+  "checks": [
+    "The final image's unmodified production Runtime bundle passed its real /ping health check.",
+    "Actual pinned DSH used the real read tool under observed UID/GID10001 with no root supplementary group.",
+    "The read result contained the admitted source; its reconciled receipt, result, immutable binding and unchanged workspace digest matched.",
+    "An identical task was refused before a second DSH execution.",
+    "A real held provider request reached its declared deadline; the separate-UID DSH process was killed and no result was accepted."
+  ],
+  "limitations": [
+    "The model and PR/commit identifiers are deterministic fixtures.",
+    "This proves the tested final Docker image and production HTTP/DSH path, not AgentArts cloud or GitHub publication.",
+    "This architecture was executed without configured QEMU emulation; other architectures and cloud deployment are not inferred."
+  ]
+}

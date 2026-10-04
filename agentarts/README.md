@@ -20,7 +20,7 @@ DSH 固定为 `0.2.0-rc.2`，默认继续使用 DeepSeek。GitHub token 与 Runt
 
 代码上下文采用 Controller 已经从 GitHub API 获取并限长的改动文件文本与可选 `context-files`；传输最多 1 MiB 文本/500 文件，整个任务最多 2 MiB。这里没有完整 clone，也没有 `.git`、符号链接或仓库启动脚本。上下文截断标记保留；缺失证据不能解释成完整审查。Fork 按原权限判断只传有界上下文，不装载文件、不开放工具。
 
-审查不执行代码和测试，不接受补丁、修改计划、模型测试声明或控制端工具请求。Runtime 独立确认工作区未变化；Controller 独立检查结果协议和绑定，publisher 写前复查 PR。任何失败均不发布审查结果。评论本身仍是模型建议，不构成“代码已证明正确”。
+审查不执行代码和测试，不接受补丁、修改计划、模型测试声明或控制端工具请求。Runtime 独立确认工作区未变化；Controller 独立检查结果协议和绑定，publisher 写前复查 PR。授权、Runtime 或独立验证失败均不进入发布。发布 API 中途失败时，记录已发生的评论和失败原因，重跑仍检查原评论指纹。评论本身仍是模型建议，不构成“代码已证明正确”。
 
 ## 本地复现
 
@@ -31,13 +31,15 @@ npm ci --ignore-scripts
 npm run typecheck
 npm run lint
 npm run test:agentarts
-npm test
+npm test -- --maxWorkers=2
 npm run build:agentarts
 npm run prove:local
 node agentarts/demo/serve.mjs --record /absolute/path/to/agentarts/evidence/local-run-record.json
 ```
 
 `prove:local` 真正启动原 DSH Profile/Bundle、原 HTTP 模型代理和只读工具，并通过本地 HTTP Runtime 合约返回结果。它采用确定性模型响应和模拟 PR 数据，验证协议、工具执行与独立检查；没有真实模型效果、云端或 GitHub 发布证据。Windows 下显式使用仅限测试的 UID 隔离豁免。Linux root 可运行 `node dist-agentarts/local-proof/index.js --linux-isolation` 验证不同 UID 的凭证/文件边界；这仍不是容器或云端验证。
+
+生产最终镜像另有 [AMD64 容器 CI 实际通过记录](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37186465878)：真实 DSH、独立 UID、read 回执、重复任务拒绝和超时后子进程清理均已检查，模型与 PR 仍为夹具。双架构及云端状态以 [验证记录](../docs/agentarts/verification.md) 为准。演示步骤见 [Demo 指南](../docs/agentarts/demo-guide.md)。
 
 Demo 在 `http://127.0.0.1:4173`。默认空白，可导入 JSON；文件导入显示“历史回放”。通过 `--record` 读取实际更新的记录，不用动画推测执行进度。工具显示的是已接收到的回执，后台任务内部不会凭空生成实时步骤。
 
