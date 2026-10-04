@@ -54,6 +54,8 @@ node agentarts/demo/serve.mjs --record "$PWD/agentarts/evidence/local-run-record
 
 后续复现可在新仓库 Actions 中手动运行 `AgentArts production image` workflow。现有矩阵包含原生 AMD64 和 ARM64 QEMU；每个架构都需单独查看结果、源 commit、image ID 和 artifact。**QEMU 下 ARM64 容器通过也不等于华为云 ARM64 Runtime 已通过。** 未取得对应记录时写「待验证」，不沿用 AMD64 结论。
 
+同一次矩阵的 [ARM64 QEMU 原始记录](../../agentarts/evidence/container-arm64-qemu.json) 也已通过：`emulated: true`，总耗时 33295 ms，包含 20 秒超时案例。可演示不同架构的真实断言结果，但不把这个总耗时当正常任务延迟或原生 ARM 性能。
+
 容器 evidence 的 `mode: container` 是另一种证据格式，不能直接导入当前 Demo 的运行记录 schema。直接展示原 JSON 和 CI 日志即可；不要改字段或补造阶段来让页面接受它。CI 镜像 ID 也不等于已推送的 SWR 镜像 digest。
 
 ## 4. 将来演示真实 GitHub → AgentArts → GitHub
