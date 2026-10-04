@@ -67,6 +67,10 @@ export async function prepareWorkspace(options: {
     const baseSha = await (async (): Promise<string> => {
       // Pull-request review/fix remains bound to the immutable PR head.
       if (snapshot?.kind === "pull_request") return snapshot.headSha;
+      // CI diagnosis must inspect the commit that produced the logs, even when
+      // the branch has advanced since a workflow_run was queued.
+      if (context.kind === "automation" && context.workflowRun !== undefined)
+        return context.workflowRun.headSha;
       if (baseBranch === undefined) {
         throw new PolicyDeniedError("Cannot bind repository content without a base branch");
       }
