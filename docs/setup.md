@@ -36,8 +36,8 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 The installer creates `.github/workflows/` when necessary and refuses to
 overwrite an existing target workflow. It does not add `DEEPSEEK_API_KEY`,
-commit or push changes, or open a pull request. Installer v0.4.0 targets the
-formal v0.9.2 Action commit `c184872f309ebfc5e57a0c5c1397c59e774709e0` and
+commit or push changes, or open a pull request. Installer v0.4.1 targets the
+formal v0.9.3 Action commit `e7da1b33a043b4e2e26daa7e731c266817677a4a` and
 the exact DSH `0.2.0-rc.2` pin in both composition modes. Packing must follow
 successful Action tag, GitHub Release, and release-canary identity checks and
 receive that commit as `DSH_ACTION_RELEASE_SHA`. Both source templates and
@@ -83,7 +83,7 @@ tests and untouched placeholders before model startup. A bounded, credential-fre
 `docker info` probe reports an unavailable CLI/daemon before runtime installation.
 These checks never grant authority or replace executed Controller validation.
 
-Installer 0.4.0 accepts optional `--test-commands` JSON argv arrays and
+Installer 0.4.1 accepts optional `--test-commands` JSON argv arrays and
 `--container-image name@sha256:<64 lowercase hex>` for `commands` or `both`. Maintainers must explicitly choose reviewed,
 credential-free commands. The installer never discovers or executes scripts,
 and omitting the flags preserves the fail-closed placeholder.
@@ -118,15 +118,15 @@ The default `github-token` is `${{ github.token }}` and is also Controller-only.
 The examples use the current release tag for readability:
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
+uses: Lixiaoyiao/deepseek-harness-action@v0.9.3
 ```
 
 For production, replace the tag with the full immutable commit SHA resolved
-from the formal release. Installer v0.4.0 targets the v0.9.2 commit shown below;
+from the formal release. Installer v0.4.1 targets the v0.9.3 commit shown below;
 its separately reviewed installer source commit is a different identity:
 
 ```yaml
-uses: Lixiaoyiao/deepseek-harness-action@c184872f309ebfc5e57a0c5c1397c59e774709e0 # v0.9.2
+uses: Lixiaoyiao/deepseek-harness-action@e7da1b33a043b4e2e26daa7e731c266817677a4a # v0.9.3
 ```
 
 The installer source tag and `DSH_ACTION_RELEASE_SHA` packing input must each
@@ -174,7 +174,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           persist-credentials: false
           fetch-depth: 1
-      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.2
+      - uses: Lixiaoyiao/deepseek-harness-action@v0.9.3
         with:
           deepseek-api-key: ${{ secrets.DEEPSEEK_API_KEY }}
           dsh-version: 0.2.0-rc.2

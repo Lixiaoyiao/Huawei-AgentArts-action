@@ -54,6 +54,16 @@ versioning for published action releases.
   lack a published structured Headless input. Neither becomes a partial input.
   See [runtime evidence and residual advisories](docs/v0.9.2-runtime-audit.md).
 
+## Installer 0.4.1 - 2026-10-04
+
+- Binds generated workflows to formal Action v0.9.3 commit `e7da1b33a043b4e2e26daa7e731c266817677a4a`
+  through `DSH_ACTION_RELEASE_SHA`, retaining exact DSH `0.2.0-rc.2`.
+- Keeps Session explicitly opt-in and preserves existing controlled/native
+  selection, maintainer-chosen validation argv/image and fail-closed defaults.
+- Changes only installer release binding/version/documentation. Source CI/tag,
+  packed-byte qualification, npm publication and fresh public installation
+  remain distinct gates; historical installer releases and tags stay immutable.
+
 ## Installer 0.4.0 - 2026-10-04
 
 - Binds generated workflows to formal Action v0.9.2 commit `c184872f309ebfc5e57a0c5c1397c59e774709e0`
