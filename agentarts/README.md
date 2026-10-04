@@ -2,9 +2,9 @@
 
 目标是完整迁移原 Action 的已有能力，保留 DSH 和受信 GitHub Controller，由 AgentArts 提供适用的云运行基础设施。PR Review 是第一条接入与验收链路：Controller 获取绑定 base/head 的上下文，Runtime 内运行 DSH，Controller 独立检查返回结果，再由原 publisher 发布审查评论。账号准入审批中，真实云端闭环未验收。本轮不公开发布、不创建云资源。
 
-本轮接入原只读 `task`、`diagnose` 的 v2 engine/worker 与主入口，复用原 Controller loop 的工具请求/反馈路径。固定clean源码 `d9b8dc2` 的AMD64和ARM64 QEMU生产镜像，各通过9运行场景和2启动拒绝，含真实DSH v2 read/typed output；模型/PR/CI为确定性夹具。[能力迁移表](../docs/agentarts/capability-matrix.md) 区分代码/本地/模拟/云端状态，不拿旧Review CI作为v2证据。`fix`、`implement`、`task --write` 仍拒绝。native/extensions/session 等原实现完整保留；迁移是原能力适配，不是另建平台。运行模式和旧参数是否原样保留须逐项判断，不凭源码存在宣称兼容，也不将本阶段只读约束当成永久产品定位。
+本轮接入原只读 `task`、`diagnose` 的 v2 engine/worker 与主入口，复用原 Controller loop 的工具请求/反馈路径。最新AMD64（clean源码 `cd9ce8e`）和ARM64 QEMU（clean源码 `60b7e95`）生产镜像，各通过9运行场景和2启动拒绝，构建输入摘要相同，含真实DSH v2 read/typed output；模型/PR/CI为确定性夹具，较早d9双架构记录保留。[能力迁移表](../docs/agentarts/capability-matrix.md) 区分代码/本地/模拟/云端状态，不拿旧Review CI作为v2证据。`fix`、`implement`、`task --write` 仍拒绝。native/extensions/session 等原实现完整保留；迁移是原能力适配，不是另建平台。运行模式和旧参数是否原样保留须逐项判断，不凭源码存在宣称兼容，也不将本阶段只读约束当成永久产品定位。
 
-另一次经批准的本地真实模型尝试，首例 `bounds-defect` 在19.730s返回HTTP500 `WORKER_FAILED`，后三例未运行；没有业务通过结果，provider请求数/token/成本与根因仍未知。后续诊断代码不在上述d9镜像证明内，须重验。所有实际状态见 [验证记录](../docs/agentarts/verification.md)；本地真实模型也不等于AgentArts或GitHub验收。
+经批准的最终本地真实模型套件 `3a0614e9` 使用同一AMD64镜像：两个defect与两个clean案例均通过自动规则，每例2次provider请求，共8次；人工尚未复核，actualCost仍unknown。此前首例WORKER_FAILED、诊断轮roles-clean失败及单例复测记录均保留，不推定旧失败根因。合成PR无GitHub发布或AgentArts调用，详见 [评测记录](../docs/agentarts/evaluation.md) 与 [验证记录](../docs/agentarts/verification.md)。
 
 当前 Action 参数中 `command` 可选 auto/review/task/diagnose；`allowed-tools` 只允许 workspace.read/search 和受信 Controller 的 github.checks.read，工具仍经原 policy交集判断；`max-turns` 默认3，约束原loop，包括工具反馈轮次。task-output-schema仅适用于通用task；非PR任务的base-branch由Controller固定到commit，无PR workflow_run诊断则固定失败run的head。Review使用v1，不接受Controller工具请求；只读task/diagnose使用v2。native read/search实际在Runtime执行；只有已授catalog中的github.checks.read请求返回Controller，执行和反馈由原loop完成。模型没有GitHub写入或command argv；普通read不授仓库执行能力。
 

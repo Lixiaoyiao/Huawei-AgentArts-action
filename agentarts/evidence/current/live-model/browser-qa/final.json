@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "browser": "Independent installed Microsoft Edge",
+  "browserVersion": "154.0.4258.48",
+  "runner": "playwright@1.63.0",
+  "execution": "real headless rendering; separate fresh profile; localhost only; no user login state",
+  "checkedAt": "2026-10-04T14:14:52.807Z",
+  "evidenceDirectory": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-validation\\live-model-final",
+  "checks": [
+    {
+      "caseId": "bounds-clean",
+      "runId": "3a0614e9-2513-4173-9db8-fe99e95f4266",
+      "taskId": "256fa764-3501-4d6d-8853-80b763da3fb9",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "automaticVerdict": "passed",
+      "failureCode": null,
+      "failureReason": null,
+      "humanReviewRequired": true,
+      "manualVerdict": "not-reviewed",
+      "toolsRecorded": 1,
+      "githubLinkProvided": false,
+      "recordSha256": "ddb2347a93e9b84c317faaf5910468f1ea7223f9d00cc1977a1aaeac98a97ae3",
+      "exportBytesPreserved": true,
+      "widths": [
+        {
+          "scrollWidth": 1280,
+          "width": 1280
+        },
+        {
+          "scrollWidth": 390,
+          "width": 390
+        },
+        {
+          "scrollWidth": 320,
+          "width": 320
+        }
+      ]
+    },
+    {
+      "caseId": "bounds-defect",
+      "runId": "3a0614e9-2513-4173-9db8-fe99e95f4266",
+      "taskId": "e5763cab-b810-4efb-b572-c3e3771fa3c9",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "automaticVerdict": "passed",
+      "failureCode": null,
+      "failureReason": null,
+      "humanReviewRequired": true,
+      "manualVerdict": "not-reviewed",
+      "toolsRecorded": 1,
+      "githubLinkProvided": false,
+      "recordSha256": "3355368e8cd71a72a2b8c888450408986555293a2867ac9b1c941feee0049263",
+      "exportBytesPreserved": true,
+      "widths": [
+        {
+          "scrollWidth": 1280,
+          "width": 1280
+        },
+        {
+          "scrollWidth": 390,
+          "width": 390
+        },
+        {
+          "scrollWidth": 320,
+          "width": 320
+        }
+      ]
+    },
+    {
+      "caseId": "roles-clean",
+      "runId": "3a0614e9-2513-4173-9db8-fe99e95f4266",
+      "taskId": "46b661a2-1b74-49a8-b905-fd05422d891f",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "automaticVerdict": "passed",
+      "failureCode": null,
+      "failureReason": null,
+      "humanReviewRequired": true,
+      "manualVerdict": "not-reviewed",
+      "toolsRecorded": 1,
+      "githubLinkProvided": false,
+      "recordSha256": "9b59a2ca9272cc124ff3f07b70b3d5b3a96bd81efdf147da7cbfb5e306f1c9c1",
+      "exportBytesPreserved": true,
+      "widths": [
+        {
+          "scrollWidth": 1280,
+          "width": 1280
+        },
+        {
+          "scrollWidth": 390,
+          "width": 390
+        },
+        {
+          "scrollWidth": 320,
+          "width": 320
+        }
+      ]
+    },
+    {
+      "caseId": "roles-defect",
+      "runId": "3a0614e9-2513-4173-9db8-fe99e95f4266",
+      "taskId": "58cc36bd-4e7b-4db7-a542-fde2d1d701f5",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "automaticVerdict": "passed",
+      "failureCode": null,
+      "failureReason": null,
+      "humanReviewRequired": true,
+      "manualVerdict": "not-reviewed",
+      "toolsRecorded": 1,
+      "githubLinkProvided": false,
+      "recordSha256": "3e310f7afdcb8eb12064c228fd0e4dfee953fd80aaef5c0f400e04e51e107973",
+      "exportBytesPreserved": true,
+      "widths": [
+        {
+          "scrollWidth": 1280,
+          "width": 1280
+        },
+        {
+          "scrollWidth": 390,
+          "width": 390
+        },
+        {
+          "scrollWidth": 320,
+          "width": 320
+        }
+      ]
+    }
+  ],
+  "pageErrors": [],
+  "cspErrors": [],
+  "limitations": [
+    "The browser displays immutable saved local DSH/DeepSeek execution evidence, rather than executing the model again.",
+    "PR context/commit identifiers are fixed fixtures, not real GitHub task evidence. No GitHub link or cloud success is claimed.",
+    "A passed automatic rubric remains subject to independent human acceptance; this report is visual/interaction QA, not a model success rate.",
+    "Failed output may have provider attempts in diagnostics while accepted modelExecution is absent; the UI preserves its unverified modelEvidence label.",
+    "In-app browser connection was unavailable; this check uses a separately authorized independent Edge instance."
+  ]
+}

@@ -55,7 +55,7 @@ node dist-agentarts/live-review/index.js --mode simulation --dry-run \
 | `local-real-model` | 已核对的loopback生产Runtime + 真实DeepSeek；合成PR/context，不发GitHub请求  | 本地真实provider/DSH/read/控制端检查及此rubric，仍需人工判读；不是AgentArts或真实GitHub验收 |
 | `cloud`            | 当前只dry-run生成固定任务/验收模板；`--execute`严格拒绝                     | 准备材料而已；不能报告调用过云或模型，真实GitHub链路走Action                                |
 
-`--max-cases` 按固定顺序选择前N个，最大4；只跑1个就只证明第一个bounds-defect，不能算clean cases或完整suite通过。真实执行需显式 `--execute`、case/timeout/provider请求/output tokens上限、正值 `--budget-usd`、`--confirm-budget I_ACCEPT_METERED_MODEL_CALLS`、实际 `--image-digest`/`--source-commit` 与输出位置；准备命令、root0600 key mount及清理见 [部署手册](deployment.md#4-本地预检与复现)。在获得模型费用授权前只运行dry-run。
+未指定 `--case-ids` 时，`--max-cases` 按固定顺序选择前N个，最大4；默认只跑1个就只证明bounds-defect。可用 `--case-ids roles-clean --max-cases 1` 只复测失败的固定case；多个ID用逗号分隔，须唯一、存在于固定suite且数量不超过max-cases，未知ID在任何invocation之前拒绝。单例复测不算完整suite通过。真实执行需显式 `--execute`、case/timeout/provider请求/output tokens上限、正值 `--budget-usd`、`--confirm-budget I_ACCEPT_METERED_MODEL_CALLS`、实际 `--image-digest`/`--source-commit` 与输出位置；准备命令、root0600 key mount及清理见 [部署手册](deployment.md#4-本地预检与复现)。在获得模型费用授权前只运行dry-run。
 
 supervisor通过 `AGENTARTS_MAX_MODEL_REQUESTS`/`AGENTARTS_MAX_OUTPUT_TOKENS` 强制每个Runtime任务的请求和输出上限，CLI先读公开modelPolicy，若它大于批准值或mode/origin不匹配，则不发invocation。实际失败出站尝试也消耗次数；美元批准值不是账单硬上限，成本始终unknown直到有可靠账单映射。不得将凭据值放CLI、任务body、Demo或记录。
 
@@ -63,7 +63,20 @@ supervisor通过 `AGENTARTS_MAX_MODEL_REQUESTS`/`AGENTARTS_MAX_OUTPUT_TOKENS` �
 
 CLI不自动完成人工审查，不计算successRate，不发布GitHub。本地imageDigest当前为操作者记录的image ID，不是已上传SWR digest；source commit/record是声明，不是cryptographic attestation。真实模型及当前代码的实际执行状态以 [验证记录](verification.md) 的独立本轮记录为准。
 
-本轮经用户批准最多4case/每case6次provider请求/2048输出tokens/120s与1美元参考预算，已尝试一次local-real-model：首例bounds-defect在19730ms返回HTTP500 WORKER_FAILED，后三例not-run。失败记录modelExecution为null，根因、真实provider请求数、token与成本未知，没有可判读的业务成功结果。没有AgentArts或GitHub调用，后续安全诊断/新runId执行单独留证；这次不能计作完整suite通过或模型成功率。详见 [验证记录](verification.md)。
+### 本轮真实DeepSeek固定套件：自动规则通过，待人工复核
+
+最终runId `3a0614e9-2513-4173-9db8-fe99e95f4266` 的 [suite原始记录](../../agentarts/evidence/current/live-model/final/3a0614e9-2513-4173-9db8-fe99e95f4266.suite.json) 为 `local-real-model`，套件 `pr-review-boundaries-v1`，suiteDigest `56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9`。真实DSH和DeepSeek运行在本地生产容器，合成PR/context没有真实GitHub提交或发布，也未调用AgentArts。评测记录声明source `ec39f6bebbf4856ea73a66bb11a32f31dc0e320e`，实际镜像为 `sha256:a3e1d38dd8dca372da34eb2c4c7bc3413dc0b401b1a00d7fb99f07579ca7f752`；同镜像构建smoke的clean源码绑定另记在 [验证记录](verification.md)，声明不能代替镜像attestation。
+
+| case          | 自动rubric | 保留finding数 | 实测provider请求 | 评测耗时 | 安全Demo记录                                                                                                                       |
+| ------------- | ---------- | ------------- | ---------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| bounds-defect | passed     | 1             | 2                | 9729ms   | [run-record](../../agentarts/evidence/current/live-model/final/3a0614e9-2513-4173-9db8-fe99e95f4266-bounds-defect.run-record.json) |
+| roles-defect  | passed     | 2             | 2                | 12685ms  | [run-record](../../agentarts/evidence/current/live-model/final/3a0614e9-2513-4173-9db8-fe99e95f4266-roles-defect.run-record.json)  |
+| bounds-clean  | passed     | 0             | 2                | 9284ms   | [run-record](../../agentarts/evidence/current/live-model/final/3a0614e9-2513-4173-9db8-fe99e95f4266-bounds-clean.run-record.json)  |
+| roles-clean   | passed     | 0             | 2                | 11905ms  | [run-record](../../agentarts/evidence/current/live-model/final/3a0614e9-2513-4173-9db8-fe99e95f4266-roles-clean.run-record.json)   |
+
+本次总计8次provider请求；每case批准最多6次provider请求和120000ms，每次provider请求的输出上限为2048 tokens，每次套件执行批准1美元参考预算。它不是账单硬封顶；actualCost仍unknown，不从请求数估算费用。`passed` 仅表示自动执行与证据rubric，全部 `manualVerdict: not-reviewed`/`needsHumanReview: true`，successRate未计算，不将四个固定任务推广为模型成功率或人工业务验收。
+
+旧记录按原字节分别保存：[首次失败b0be682c](../../agentarts/evidence/current/live-model/initial-failure/b0be682c-421d-49ac-b637-817438de5bd0.suite.json) 首例bounds-defect返回WORKER_FAILED、后三例not-run；[诊断轮08bb3f89](../../agentarts/evidence/current/live-model/diagnostics/08bb3f89-9474-4d48-ac80-b85f2706edf6.suite.json) 三例passed、roles-clean失败；[单例复测3b5c3e6c](../../agentarts/evidence/current/live-model/clean-retest/3b5c3e6c-fb7e-495e-8c83-6d459478f22a.suite.json) 只运行roles-clean并通过。最终四例另用新runId，不覆盖旧失败，也不以后续通过断言旧失败的确定根因。失败执行的provider证据/计量缺失仍按缺失处理。
 
 ## 真实 GitHub 云端候选：尚未执行
 

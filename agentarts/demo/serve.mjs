@@ -119,7 +119,7 @@ server.listen(port, "127.0.0.1", () => {
   console.log(`Run record viewer: ${origin}`);
   console.log(
     recordPath
-      ? "Reading the configured run record. The page refreshes every 2 seconds."
+      ? "Reading the configured run record. Connected viewers poll the recorded state about every 2 seconds."
       : "No run record configured. Load an exported JSON file in the page.",
   );
 });

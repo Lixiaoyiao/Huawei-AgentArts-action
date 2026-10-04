@@ -1,0 +1,1 @@
+{"schemaVersion":1,"mode":"container","status":"passed","modelEvidence":"deterministic-fixture","realModelCalled":false,"cloudCalled":false,"cases":["missing-capabilities-refused-before-health","readable-key-file-refused-before-health"]}
