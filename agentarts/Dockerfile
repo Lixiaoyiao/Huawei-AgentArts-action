@@ -9,6 +9,7 @@ RUN npm ci --ignore-scripts --no-audit --no-fund
 COPY src ./src
 COPY assets ./assets
 COPY scripts ./scripts
+COPY tsconfig.json ./
 COPY test/fixtures/messages-sse.mjs test/fixtures/messages-sse.d.mts ./test/fixtures/
 RUN npm run build:agentarts
 
