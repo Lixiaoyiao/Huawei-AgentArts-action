@@ -15,7 +15,7 @@ concurrency:
 jobs:
   gate:
     name: Bind canary to the live default branch
-    if: github.repository == 'Lixiaoyiao/deepseek-harness-action'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (github.repository == 'Lixiaoyiao/deepseek-harness-action')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -62,7 +62,7 @@ jobs:
 
   smoke:
     needs: gate
-    if: needs.gate.result == 'success'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (needs.gate.result == 'success')
     runs-on: ubuntu-latest
     environment: core-e2e
     timeout-minutes: 35

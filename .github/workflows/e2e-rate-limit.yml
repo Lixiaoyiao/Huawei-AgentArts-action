@@ -14,7 +14,7 @@ permissions:
 jobs:
   inspect:
     name: Inspect one repository blob response
-    if: github.ref == 'refs/heads/main'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:

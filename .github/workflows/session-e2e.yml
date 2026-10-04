@@ -53,6 +53,7 @@ concurrency:
 
 jobs:
   gate:
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action'
     name: Bind candidate to PR
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -165,7 +166,7 @@ jobs:
   session:
     # Exactly one static producer job/Action step, with no matrix or reusable job.
     needs: gate
-    if: needs.gate.outputs.run_e2e == 'true'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (needs.gate.outputs.run_e2e == 'true')
     runs-on: ubuntu-latest
     environment: core-e2e
     timeout-minutes: 30

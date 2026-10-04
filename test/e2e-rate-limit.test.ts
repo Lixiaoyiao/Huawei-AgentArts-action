@@ -83,7 +83,9 @@ describe("independent Actions content-read quota diagnostic", () => {
     });
     expect(workflow.permissions).toEqual({ contents: "read" });
     expect(Object.keys(workflow.jobs)).toEqual(["inspect"]);
-    expect(workflow.jobs.inspect?.if).toBe("github.ref == 'refs/heads/main'");
+    expect(workflow.jobs.inspect?.if).toBe(
+      "github.repository == 'Lixiaoyiao/deepseek-harness-action' && (github.ref == 'refs/heads/main')",
+    );
     expect(workflow.jobs.inspect?.["timeout-minutes"]).toBe(2);
     expect(workflow.jobs.inspect?.steps).toHaveLength(1);
     expect(workflow.jobs.inspect?.steps[0]?.env).toEqual({
@@ -91,7 +93,9 @@ describe("independent Actions content-read quota diagnostic", () => {
       REPOSITORY: "${{ github.repository }}",
       BLOB_SHA: "${{ inputs.blob_sha }}",
     });
-    expect(source).not.toMatch(/uses:|checkout|secrets\.|environment:|Core E2E|deepseek/iu);
+    expect(source.replace("Lixiaoyiao/deepseek-harness-action", "upstream/reference")).not.toMatch(
+      /uses:|checkout|secrets\.|environment:|Core E2E|deepseek/iu,
+    );
     expect(source.match(/inputs\./gu)).toHaveLength(1);
     expect(source).not.toMatch(/actions:|checks:|pull-requests:|write/u);
     expect(script.match(/\bgh api\b/gu)).toHaveLength(1);

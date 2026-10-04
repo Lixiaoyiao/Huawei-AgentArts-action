@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   command:
-    if: github.event.sender.id != 41898282 && contains(github.event.comment.body, '@dsh')
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (github.event.sender.id != 41898282 && contains(github.event.comment.body, '@dsh'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

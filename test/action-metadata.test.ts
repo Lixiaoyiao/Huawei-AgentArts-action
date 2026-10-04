@@ -463,6 +463,8 @@ describe("Marketplace action metadata", () => {
     expect(workflow).toContain("github.pull.metadata.update");
     expect(workflow).toContain("github.checks.read");
     expect(workflow).toContain("[image removed]");
-    expect(workflow).toContain("if: always() && needs.gate.result == 'success'");
+    expect(workflow).toContain(
+      "if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (always() && needs.gate.result == 'success'",
+    );
   });
 });

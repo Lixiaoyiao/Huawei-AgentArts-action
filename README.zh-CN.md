@@ -1,3 +1,13 @@
+# Huawei-AgentArts-action
+
+独立维护的华为云 AgentArts 衍生项目；保留原 deepseek-harness-action 的 Git 历史与安全控制端。
+
+**请先读 [AgentArts README](agentarts/README.md)**：当前只开放 PR Review，真实云端验收尚未完成。代码、部署/清理、Demo、评测和维护说明均在该入口。根目录旧 Action/installer/examples 为上游参考，不能当成 AgentArts 使用指南或云端运行证据。
+
+以下保留原项目文档，便于理解继承实现与后续同步。
+
+---
+
 # DeepSeek Harness for GitHub
 
 [![CI](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/workflows/ci.yml/badge.svg)](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/workflows/ci.yml)

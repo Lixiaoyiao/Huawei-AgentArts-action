@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   native-compatibility:
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action'
     name: Latest official ${{ matrix.channel }} DSH compatibility warning
     runs-on: ubuntu-latest
     timeout-minutes: 30

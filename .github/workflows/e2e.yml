@@ -28,6 +28,7 @@ concurrency:
 
 jobs:
   gate:
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action'
     name: Bind candidate to PR
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -140,7 +141,7 @@ jobs:
   read_only:
     name: Read-only golden paths
     needs: gate
-    if: needs.gate.outputs.run_e2e == 'true'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (needs.gate.outputs.run_e2e == 'true')
     runs-on: ubuntu-latest
     environment: core-e2e
     timeout-minutes: 75
@@ -460,7 +461,7 @@ jobs:
   write:
     name: Write guards and golden paths
     needs: gate
-    if: needs.gate.outputs.run_e2e == 'true'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (needs.gate.outputs.run_e2e == 'true')
     runs-on: ubuntu-latest
     environment: core-e2e
     timeout-minutes: 120
@@ -953,7 +954,7 @@ jobs:
   cancellation:
     name: Best-effort cancellation finalization
     needs: [gate, read_only, write]
-    if: needs.gate.outputs.run_e2e == 'true'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (needs.gate.outputs.run_e2e == 'true')
     runs-on: ubuntu-latest
     environment: core-e2e
     timeout-minutes: 25
@@ -1327,7 +1328,7 @@ jobs:
   integration:
     name: GitHub integration contracts
     needs: [gate, read_only, write, cancellation]
-    if: >-
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (>-)
       needs.gate.outputs.run_e2e == 'true' &&
       needs.read_only.result == 'success' &&
       needs.write.result == 'success' &&
@@ -2206,7 +2207,7 @@ jobs:
   revalidate_candidate:
     name: Final candidate binding
     needs: [gate, read_only, write, cancellation, integration]
-    if: always() && needs.gate.result == 'success' && needs.gate.outputs.run_e2e == 'true'
+    if: github.repository == 'Lixiaoyiao/deepseek-harness-action' && (always() && needs.gate.result == 'success' && needs.gate.outputs.run_e2e == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
