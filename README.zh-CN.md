@@ -4,7 +4,7 @@
 
 [deepseek-harness-action](https://github.com/Lixiaoyiao/deepseek-harness-action) 的独立 AgentArts Runtime 迁移版。保留 DSH、受信 GitHub 控制端、完整上游源码与共同历史；逐项迁移原有审查、通用任务、CI 诊断、受控修复和 Issue→PR 能力。
 
-**PR Review 是第一条接入与验收链路。账号准入审批中，真实 GitHub → AgentArts → DSH → GitHub 验收尚未完成。** 本轮同时适配原只读 `task`/`diagnose` 的 v2 协议并实现受检工作区传输原型；当前验证与准入状态见 [能力迁移表](docs/agentarts/capability-matrix.md)，写操作仍关闭。原有能力未默默删减。既有容器 CI、各次本地运行和云端验收分开记录。本轮修改仅保留本地，不是新的公开发布。
+**PR Review 是第一条接入与验收链路。账号准入审批中，真实 GitHub → AgentArts → DSH → GitHub 验收尚未完成。** 本次更新同时适配原只读 `task`/`diagnose` 的 v2 协议并实现受检工作区传输原型；当前验证与准入状态见 [能力迁移表](docs/agentarts/capability-matrix.md)，写操作仍关闭。原有能力未默默删减。既有容器 CI、各次本地运行和云端验收分开记录。本仓库公开提供源码与本地证据，云端部署和验收单独记录。
 
 最新本地AMD64和ARM64 QEMU生产镜像各通过9运行场景和2启动拒绝，真实DSH使用确定性模型夹具。同一AMD64镜像接真实DeepSeek的四个固定审查案例均通过自动规则，测得共8次provider请求。这些仍是合成PR，无GitHub发布或AgentArts调用，人工尚未复核、实际成本未知。旧失败与各版镜像证据保留在 [验证记录](docs/agentarts/verification.md)。
 

@@ -1,6 +1,6 @@
 # AgentArts 上的 DeepSeek Harness Action
 
-目标是完整迁移原 Action 的已有能力，保留 DSH 和受信 GitHub Controller，由 AgentArts 提供适用的云运行基础设施。PR Review 是第一条接入与验收链路：Controller 获取绑定 base/head 的上下文，Runtime 内运行 DSH，Controller 独立检查返回结果，再由原 publisher 发布审查评论。账号准入审批中，真实云端闭环未验收。本轮不公开发布、不创建云资源。
+目标是完整迁移原 Action 的已有能力，保留 DSH 和受信 GitHub Controller，由 AgentArts 提供适用的云运行基础设施。PR Review 是第一条接入与验收链路：Controller 获取绑定 base/head 的上下文，Runtime 内运行 DSH，Controller 独立检查返回结果，再由原 publisher 发布审查评论。账号准入审批中，真实云端闭环未验收。本次更新公开源码与本地证据，未创建云资源。
 
 本轮接入原只读 `task`、`diagnose` 的 v2 engine/worker 与主入口，复用原 Controller loop 的工具请求/反馈路径。最新AMD64（clean源码 `cd9ce8e`）和ARM64 QEMU（clean源码 `60b7e95`）生产镜像，各通过9运行场景和2启动拒绝，构建输入摘要相同，含真实DSH v2 read/typed output；模型/PR/CI为确定性夹具，较早d9双架构记录保留。[能力迁移表](../docs/agentarts/capability-matrix.md) 区分代码/本地/模拟/云端状态，不拿旧Review CI作为v2证据。`fix`、`implement`、`task --write` 仍拒绝。native/extensions/session 等原实现完整保留；迁移是原能力适配，不是另建平台。运行模式和旧参数是否原样保留须逐项判断，不凭源码存在宣称兼容，也不将本阶段只读约束当成永久产品定位。
 
