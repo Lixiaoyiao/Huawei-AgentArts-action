@@ -10,8 +10,9 @@ import { setTimeout as delay } from "node:timers/promises";
 import { messageToolResults, sendMessagesSse } from "./messages-sse.mjs";
 
 const startedAt = Date.now();
+const emulated = process.env.SMOKE_EMULATED === "true";
 const deadline = new AbortController();
-const timer = setTimeout(() => deadline.abort(), 60_000);
+const timer = setTimeout(() => deadline.abort(), 120_000);
 timer.unref();
 const digest = (text) => createHash("sha256").update(text).digest("hex");
 const sha = (text) => createHash("sha1").update(text).digest("hex");
@@ -50,7 +51,7 @@ const task = {
   },
   trust: "trusted-read",
   tools: ["workspace.read"],
-  timeoutMs: 30_000,
+  timeoutMs: emulated ? 60_000 : 30_000,
   instructions:
     "Read src/example.ts and review the changed valid-index boundary. Return the strict review result.",
   context: {
@@ -162,7 +163,7 @@ const model = createServer((request, response) => {
 });
 
 async function waitHealthy() {
-  const end = Date.now() + 8_000;
+  const end = Date.now() + (emulated ? 20_000 : 8_000);
   while (Date.now() < end && !deadline.signal.aborted) {
     assert(
       runtime !== undefined && runtime.exitCode === null && runtime.signalCode === null,
@@ -178,7 +179,7 @@ async function waitHealthy() {
     }
     await delay(100, undefined, { signal: deadline.signal });
   }
-  throw new Error("Production Runtime did not become healthy within eight seconds");
+  throw new Error("Production Runtime did not become healthy within its bounded startup budget");
 }
 
 async function invoke(admitted) {
@@ -221,6 +222,7 @@ try {
   assert.equal(process.platform, "linux");
   assert.equal(process.getuid(), 0);
   assert.equal(process.version, "v24.15.0");
+  assert([undefined, "true", "false"].includes(process.env.SMOKE_EMULATED));
   if (process.env.SMOKE_SOURCE_SHA !== undefined)
     assert.match(process.env.SMOKE_SOURCE_SHA, /^[a-f0-9]{40}$/u);
   if (process.env.SMOKE_IMAGE_ID !== undefined)
@@ -312,7 +314,7 @@ try {
   const timeoutTask = {
     ...task,
     taskId: randomUUID(),
-    timeoutMs: 8_000,
+    timeoutMs: emulated ? 20_000 : 8_000,
     context: { ...task.context, fixtureCase: "SMOKE_TIMEOUT_HOLD" },
   };
   const timed = await invoke(timeoutTask);
@@ -350,6 +352,7 @@ try {
     stage,
     node: process.version,
     architecture: process.arch,
+    emulated,
     dshVersion: "0.2.0-rc.2",
     workerUidVerified: observedUid,
     sourceCommit: process.env.SMOKE_SOURCE_SHA ?? "",
@@ -364,7 +367,9 @@ try {
     limitations: [
       "The model and PR/commit identifiers are deterministic fixtures.",
       "This proves the tested final Docker image and production HTTP/DSH path, not AgentArts cloud or GitHub publication.",
-      "The reported architecture is the architecture actually executed; no ARM64 or cloud compatibility is inferred.",
+      emulated
+        ? "This architecture was executed through QEMU emulation on an AMD64 runner; native ARM hardware and cloud deployment remain unverified."
+        : "This architecture was executed without configured QEMU emulation; other architectures and cloud deployment are not inferred.",
     ],
   };
   process.stdout.write(`${JSON.stringify(evidence)}\n`);
