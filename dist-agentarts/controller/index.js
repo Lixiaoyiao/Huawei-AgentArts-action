@@ -73991,22 +73991,197 @@ async function runAgentLoop(task, inputs, hooks, dependencies = {}) {
 
 /***/ }),
 
-/***/ 13836:
+/***/ 63935:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
-/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   $b: () => (/* binding */ invokeReview),
-/* harmony export */   UH: () => (/* binding */ runtimeUrl),
-/* harmony export */   ow: () => (/* binding */ invokeReadOnlyTask)
-/* harmony export */ });
-/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(961);
-/* harmony import */ var _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(87156);
-/* harmony import */ var _protocol_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(81511);
-/* harmony import */ var _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(99552);
+
+// EXPORTS
+__nccwpck_require__.d(__webpack_exports__, {
+  ow: () => (/* binding */ invokeReadOnlyTask),
+  $b: () => (/* binding */ invokeReview),
+  UH: () => (/* binding */ runtimeUrl)
+});
+
+// EXTERNAL MODULE: ./node_modules/zod/v4/classic/errors.js
+var errors = __nccwpck_require__(961);
+// EXTERNAL MODULE: ./src/dsh/errors.ts
+var dsh_errors = __nccwpck_require__(87156);
+// EXTERNAL MODULE: ./src/agentarts/protocol.ts
+var protocol = __nccwpck_require__(81511);
+// EXTERNAL MODULE: ./src/agentarts/readonly-task-protocol.ts
+var readonly_task_protocol = __nccwpck_require__(99552);
+// EXTERNAL MODULE: ./node_modules/zod/v4/classic/schemas.js + 3 modules
+var schemas = __nccwpck_require__(36892);
+;// CONCATENATED MODULE: ./src/agentarts/failure-diagnostics.ts
+
+/** Only supervisor-owned classifications and transport facts cross a failure boundary. */
+const providerAttemptSchema = schemas.strictObject({
+    sequence: schemas.number().int().min(1).max(32),
+    outcome: schemas["enum"](["http-success", "http-error", "network-error", "cancelled"]),
+    status: schemas.number().int().min(100).max(599).nullable(),
+})
+    .superRefine((attempt, context) => {
+    const http = attempt.outcome === "http-success" || attempt.outcome === "http-error";
+    if (http !== (attempt.status !== null))
+        context.addIssue({ code: "custom", message: "Only HTTP attempts have a status" });
+    if (attempt.status !== null &&
+        (attempt.outcome === "http-success") !== (attempt.status >= 200 && attempt.status < 300))
+        context.addIssue({ code: "custom", message: "HTTP status and outcome disagree" });
+});
+const providerFailureDiagnosticsSchema = schemas.strictObject({
+    provider: schemas.literal("deepseek"),
+    model: schemas["enum"](["deepseek-v4-pro", "deepseek-flash"]),
+    upstreamOrigin: schemas.url()
+        .max(2048)
+        .refine((value) => {
+        try {
+            return new URL(value).origin === value;
+        }
+        catch {
+            return false;
+        }
+    }, "Origin only"),
+    requestCount: schemas.number().int().min(0).max(32),
+    requestLimit: schemas.number().int().min(1).max(32),
+    maxOutputTokens: schemas.number().int().min(1).max(8192),
+    /** Settled attempts only; a counted in-flight request has no invented status. */
+    attempts: schemas.array(providerAttemptSchema).max(32),
+})
+    .superRefine((provider, context) => {
+    if (provider.requestCount > provider.requestLimit ||
+        provider.attempts.length > provider.requestCount)
+        context.addIssue({ code: "custom", message: "Provider attempt count exceeds policy" });
+    const seen = new Set();
+    for (const attempt of provider.attempts) {
+        if (seen.has(attempt.sequence) || attempt.sequence > provider.requestCount)
+            context.addIssue({ code: "custom", message: "Provider attempt sequence is invalid" });
+        seen.add(attempt.sequence);
+    }
+});
+const agentArtsFailureDiagnosticsSchema = schemas.strictObject({
+    schemaVersion: schemas.literal(1),
+    failureCode: schemas["enum"]([
+        "DSH_ABORTED",
+        "DSH_CONFIGURATION",
+        "DSH_CREDENTIAL_LEAK",
+        "DSH_ENVIRONMENT",
+        "DSH_ISOLATION_UNAVAILABLE",
+        "DSH_MALFORMED_OUTPUT",
+        "DSH_OUTPUT_LIMIT",
+        "DSH_PROCESS_FAILED",
+        "DSH_PROXY",
+        "DSH_SPAWN",
+        "DSH_TIMEOUT",
+        "POLICY_DENIED",
+        "WORKER_FAILED",
+    ]),
+    phase: schemas["enum"](["setup", "process", "output", "tool-audit", "workspace", "cleanup"]),
+    provider: providerFailureDiagnosticsSchema,
+    process: schemas.strictObject({
+        exitCode: schemas.number().int().min(0).max(255).nullable(),
+        signal: schemas["enum"]([
+            "SIGABRT",
+            "SIGALRM",
+            "SIGBUS",
+            "SIGCHLD",
+            "SIGCONT",
+            "SIGFPE",
+            "SIGHUP",
+            "SIGILL",
+            "SIGINT",
+            "SIGIO",
+            "SIGIOT",
+            "SIGKILL",
+            "SIGPIPE",
+            "SIGPOLL",
+            "SIGPROF",
+            "SIGPWR",
+            "SIGQUIT",
+            "SIGSEGV",
+            "SIGSTKFLT",
+            "SIGSTOP",
+            "SIGSYS",
+            "SIGTERM",
+            "SIGTRAP",
+            "SIGTSTP",
+            "SIGTTIN",
+            "SIGTTOU",
+            "SIGUNUSED",
+            "SIGURG",
+            "SIGUSR1",
+            "SIGUSR2",
+            "SIGVTALRM",
+            "SIGWINCH",
+            "SIGXCPU",
+            "SIGXFSZ",
+            "SIGBREAK",
+            "SIGLOST",
+            "SIGINFO",
+        ])
+            .nullable(),
+    })
+        .optional(),
+});
+
+;// CONCATENATED MODULE: ./src/agentarts/failure-format.ts
+
+/** Ignore messages and unrecognized properties in error bodies; only fixed classifications survive. */
+function runtimeFailureDiagnostics(raw, taskId) {
+    if (typeof raw !== "object" || raw === null || !("error" in raw))
+        return undefined;
+    const error = raw.error;
+    if (typeof error !== "object" ||
+        error === null ||
+        !("taskId" in error) ||
+        error.taskId !== taskId ||
+        !("diagnostics" in error))
+        return undefined;
+    const parsed = agentArtsFailureDiagnosticsSchema.safeParse(error.diagnostics);
+    return parsed.success ? parsed.data : undefined;
+}
+function formatRuntimeFailure(status, diagnostics) {
+    const prefix = `Runtime invocation rejected (HTTP ${String(status)}); no result accepted or retried`;
+    if (diagnostics === undefined)
+        return prefix;
+    const transport = [
+        ...new Set(diagnostics.provider.attempts.map((attempt) => attempt.status === null ? attempt.outcome : `HTTP ${String(attempt.status)}`)),
+    ].join(", ");
+    return `${prefix}; ${diagnostics.failureCode} at ${diagnostics.phase}; provider attempts ${String(diagnostics.provider.requestCount)}/${String(diagnostics.provider.requestLimit)}${transport === "" ? "" : ` (${transport})`}`;
+}
+
+;// CONCATENATED MODULE: ./src/agentarts/client.ts
 
 
 
 
+
+async function readRuntimeJson(response) {
+    if (!response.headers.get("content-type")?.includes("application/json") || response.body === null)
+        throw new dsh_errors/* DshConfigurationError */._y("Runtime must return application/json");
+    const reader = response.body.getReader();
+    const chunks = [];
+    let bytes = 0;
+    try {
+        for (;;) {
+            const chunk = await reader.read();
+            if (chunk.done)
+                break;
+            bytes += chunk.value.byteLength;
+            if (bytes > protocol/* MAX_TASK_BYTES */.n_)
+                throw new dsh_errors/* DshConfigurationError */._y("Runtime response exceeds limit");
+            chunks.push(chunk.value);
+        }
+    }
+    finally {
+        await reader.cancel();
+    }
+    try {
+        return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
+    }
+    catch {
+        throw new dsh_errors/* DshConfigurationError */._y("Runtime response was not valid UTF-8 JSON; body was not logged");
+    }
+}
 function runtimeUrl(config, operation = "invocations") {
     const origin = new URL(config.origin);
     if (origin.protocol !== "https:" ||
@@ -74015,31 +74190,31 @@ function runtimeUrl(config, operation = "invocations") {
         origin.pathname !== "/" ||
         origin.search ||
         origin.hash)
-        throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime origin must be an HTTPS origin from its detail page");
+        throw new dsh_errors/* DshConfigurationError */._y("Runtime origin must be an HTTPS origin from its detail page");
     if (!/^[a-z][a-z0-9-]{0,46}[a-z0-9]$/u.test(config.runtimeName) ||
         !/^[A-Za-z][A-Za-z0-9-]{0,46}[A-Za-z0-9]$/u.test(config.endpoint) ||
         config.endpoint.toLowerCase() === "latest")
-        throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Use an explicit fixed Runtime name and version alias; Latest is forbidden");
+        throw new dsh_errors/* DshConfigurationError */._y("Use an explicit fixed Runtime name and version alias; Latest is forbidden");
     if (!config.apiKey || /[\r\n]/u.test(config.apiKey))
-        throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime API_KEY is required");
+        throw new dsh_errors/* DshConfigurationError */._y("Runtime API_KEY is required");
     const url = new URL(`/runtimes/${config.runtimeName}/${operation}`, origin);
     url.searchParams.set("endpoint", config.endpoint);
     return url;
 }
 /** One invocation, no automatic POST retries. Runtime payload is our versioned protocol. */
 async function invokeReview(config, task, options = {}) {
-    return invokeRuntime(config, task, _protocol_js__WEBPACK_IMPORTED_MODULE_1__.runtimeReplySchema, options);
+    return invokeRuntime(config, task, protocol.runtimeReplySchema, options);
 }
 /** Uses the same bounded authenticated transport and fresh-session cleanup as review. */
 async function invokeReadOnlyTask(config, task, options = {}) {
-    return invokeRuntime(config, task, _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_2__/* .readOnlyTaskReplySchema */ .d2, options);
+    return invokeRuntime(config, task, readonly_task_protocol/* readOnlyTaskReplySchema */.d2, options);
 }
 async function invokeRuntime(config, task, replySchema, options) {
     const fetcher = options.fetchImplementation ?? fetch;
     const url = runtimeUrl(config);
     const body = JSON.stringify(task);
-    if (Buffer.byteLength(body) > _protocol_js__WEBPACK_IMPORTED_MODULE_1__/* .MAX_TASK_BYTES */ .n_)
-        throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Task exceeds transport limit");
+    if (Buffer.byteLength(body) > protocol/* MAX_TASK_BYTES */.n_)
+        throw new dsh_errors/* DshConfigurationError */._y("Task exceeds transport limit");
     const timeout = AbortSignal.timeout(task.timeoutMs);
     const signal = options.signal === undefined ? timeout : AbortSignal.any([timeout, options.signal]);
     try {
@@ -74057,49 +74232,31 @@ async function invokeRuntime(config, task, replySchema, options) {
         const requestId = response.headers.get("x-request-id");
         if (requestId && /^[A-Za-z0-9_-]{1,128}$/u.test(requestId))
             options.onRequestId?.(requestId);
-        if (response.status === 504)
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshError */ .I8("DSH_TIMEOUT", "Runtime invocation timed out (HTTP 504); no result was accepted or retried");
-        if (response.status === 499)
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshError */ .I8("DSH_ABORTED", "Runtime invocation was cancelled (HTTP 499); no result was accepted or retried");
-        if (!response.ok)
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y(`Runtime invocation rejected (HTTP ${String(response.status)}); not retried`);
-        if (!response.headers.get("content-type")?.includes("application/json"))
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime must return application/json");
-        if (response.body === null)
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime returned no response");
-        const reader = response.body.getReader();
-        const chunks = [];
-        let bytes = 0;
-        try {
-            for (;;) {
-                const chunk = await reader.read();
-                if (chunk.done)
-                    break;
-                bytes += chunk.value.byteLength;
-                if (bytes > _protocol_js__WEBPACK_IMPORTED_MODULE_1__/* .MAX_TASK_BYTES */ .n_)
-                    throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime response exceeds limit");
-                chunks.push(chunk.value);
+        if (!response.ok) {
+            let failure;
+            try {
+                failure = await readRuntimeJson(response);
             }
+            catch {
+                await response.body?.cancel();
+            }
+            const details = runtimeFailureDiagnostics(failure, task.taskId);
+            const message = formatRuntimeFailure(response.status, details);
+            if (response.status === 504)
+                throw new dsh_errors/* DshError */.I8("DSH_TIMEOUT", message);
+            if (response.status === 499)
+                throw new dsh_errors/* DshError */.I8("DSH_ABORTED", message);
+            throw new dsh_errors/* DshConfigurationError */._y(message);
         }
-        finally {
-            await reader.cancel();
-        }
-        let parsed;
-        try {
-            parsed = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
-        }
-        catch {
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime response was not valid UTF-8 JSON; body was not logged");
-        }
-        return replySchema.parse(parsed);
+        return replySchema.parse(await readRuntimeJson(response));
     }
     catch (error) {
         if (options.signal?.aborted)
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshAbortedError */ .Jb();
+            throw new dsh_errors/* DshAbortedError */.Jb();
         if (timeout.aborted)
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshTimeoutError */ .Zj(task.timeoutMs);
-        if (error instanceof zod__WEBPACK_IMPORTED_MODULE_3__/* .ZodError */ .G)
-            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime response failed strict schema validation");
+            throw new dsh_errors/* DshTimeoutError */.Zj(task.timeoutMs);
+        if (error instanceof errors/* ZodError */.G)
+            throw new dsh_errors/* DshConfigurationError */._y("Runtime response failed strict schema validation");
         throw error;
     }
     finally {
@@ -74139,7 +74296,7 @@ async function invokeRuntime(config, task, replySchema, options) {
 /* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(83916);
 /* harmony import */ var _lifecycle_cancellation_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(83257);
 /* harmony import */ var _security_env_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(13497);
-/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(13836);
+/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(63935);
 /* harmony import */ var _protocol_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(81511);
 /* harmony import */ var _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(99552);
 
@@ -74351,7 +74508,7 @@ class AgentArtsReadOnlyTaskEngine {
 /* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(83916);
 /* harmony import */ var _security_env_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(13497);
 /* harmony import */ var _lifecycle_cancellation_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(83257);
-/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(13836);
+/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(63935);
 /* harmony import */ var _protocol_js__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(81511);
 /* harmony import */ var _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(99552);
 
@@ -74524,7 +74681,7 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var _engine_js__WEBPACK_IMPORTED_MODULE_10__ = __nccwpck_require__(7221);
 /* harmony import */ var _engine_task_js__WEBPACK_IMPORTED_MODULE_11__ = __nccwpck_require__(71939);
 /* harmony import */ var _write_github_js__WEBPACK_IMPORTED_MODULE_12__ = __nccwpck_require__(80252);
-/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_13__ = __nccwpck_require__(13836);
+/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_13__ = __nccwpck_require__(63935);
 
 
 

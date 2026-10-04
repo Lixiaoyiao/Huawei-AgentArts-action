@@ -1,4 +1,5 @@
 import { DshConfigurationError } from "../dsh/errors.js";
+import type { ProviderAttempt } from "./failure-diagnostics.js";
 
 export interface ModelPolicy {
   readonly kind: "live-provider" | "deterministic-fixture" | "unverified";
@@ -70,8 +71,10 @@ export function budgetedModelFetch(
 ): {
   readonly fetchImplementation: typeof fetch;
   readonly requestCount: () => number;
+  readonly attempts: () => readonly ProviderAttempt[];
 } {
   let requests = 0;
+  const attempts: ProviderAttempt[] = [];
   const implementation: typeof fetch = async (input, init) => {
     if (signal.aborted)
       throw new DshConfigurationError("Model call cancelled before provider transport");
@@ -101,13 +104,42 @@ export function budgetedModelFetch(
         : policy.maxOutputTokens;
     // Count every attempt before transport. Even an ambiguous network error
     // consumes its allowance; redirects cannot forward the real credential.
-    requests += 1;
-    return await fetcher(input, {
-      ...init,
-      body: JSON.stringify(payload),
-      redirect: "error",
-      signal: init.signal ? AbortSignal.any([signal, init.signal]) : signal,
-    });
+    const sequence = ++requests;
+    const combined = init.signal ? AbortSignal.any([signal, init.signal]) : signal;
+    try {
+      const response = await fetcher(input, {
+        ...init,
+        body: JSON.stringify(payload),
+        redirect: "error",
+        signal: combined,
+      });
+      // Do not inspect provider bodies, headers or exception messages. HTTP 2xx
+      // is a transport fact only; stream/output validation remains independent.
+      attempts.push(
+        response.status >= 100 && response.status <= 599
+          ? {
+              sequence,
+              outcome: response.ok ? "http-success" : "http-error",
+              status: response.status,
+            }
+          : { sequence, outcome: "network-error", status: null },
+      );
+      return response;
+    } catch (error: unknown) {
+      attempts.push({
+        sequence,
+        outcome: combined.aborted ? "cancelled" : "network-error",
+        status: null,
+      });
+      throw error;
+    }
   };
-  return { fetchImplementation: implementation, requestCount: () => requests };
+  return {
+    fetchImplementation: implementation,
+    requestCount: () => requests,
+    attempts: () =>
+      attempts
+        .map((attempt) => ({ ...attempt }))
+        .sort((left, right) => left.sequence - right.sequence),
+  };
 }

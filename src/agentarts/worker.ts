@@ -20,6 +20,7 @@ import { buildDshPrompt } from "../dsh/prompt.js";
 import {
   DshAbortedError,
   DshConfigurationError,
+  DshError,
   DshProcessError,
   DshTimeoutError,
 } from "../dsh/errors.js";
@@ -53,6 +54,12 @@ import {
 } from "../security/env.js";
 import { removeMarkdownImages } from "../security/redaction.js";
 import { budgetedModelFetch, modelPolicy } from "./model-policy.js";
+import {
+  agentArtsFailureDiagnosticsSchema,
+  type AgentArtsFailureDiagnostics,
+  type AgentArtsFailurePhase,
+} from "./failure-diagnostics.js";
+import { PolicyDeniedError } from "../errors.js";
 import type { NativeToolId } from "../tools/schema.js";
 import {
   digest,
@@ -75,6 +82,42 @@ import {
 export const AGENTARTS_WORKER_UID = 10001;
 export const AGENTARTS_WORKER_GID = 10001;
 const MAX_OUTPUT_BYTES = 2 * 1024 * 1024;
+const failureDiagnostics = new WeakMap<object, AgentArtsFailureDiagnostics>();
+
+/** Never trust an arbitrary error.diagnostics property or publish the error itself. */
+export function getAgentArtsFailureDiagnostics(
+  error: unknown,
+): AgentArtsFailureDiagnostics | undefined {
+  if (typeof error !== "object" || error === null) return undefined;
+  const value = failureDiagnostics.get(error);
+  return value === undefined
+    ? undefined
+    : agentArtsFailureDiagnosticsSchema.parse(structuredClone(value));
+}
+
+function diagnosedFailure(
+  error: unknown,
+  phase: AgentArtsFailurePhase,
+  provider: AgentArtsFailureDiagnostics["provider"],
+  processStatus: AgentArtsFailureDiagnostics["process"],
+): Error {
+  const failure = error instanceof Error ? error : new Error("Runtime worker failed");
+  const diagnostics = agentArtsFailureDiagnosticsSchema.safeParse({
+    schemaVersion: 1,
+    failureCode:
+      error instanceof DshError
+        ? error.code
+        : error instanceof PolicyDeniedError
+          ? "POLICY_DENIED"
+          : "WORKER_FAILED",
+    phase,
+    provider,
+    ...(processStatus === undefined ? {} : { process: processStatus }),
+  });
+  // Diagnostics are best effort and can never weaken or replace a rejection.
+  if (diagnostics.success) failureDiagnostics.set(failure, diagnostics.data);
+  return failure;
+}
 
 export interface AgentArtsWorkerOptions {
   /** Trusted supervisor configuration. Credentials never come from a task. */
@@ -296,6 +339,29 @@ async function executeReadOnlyDsh(
   };
   let root: string | undefined;
   let proxy: DeepSeekProxyHandle | undefined;
+  const modelTransport = budgetedModelFetch(policy, signal);
+  let phase: AgentArtsFailurePhase = "setup";
+  let processStatus: AgentArtsFailureDiagnostics["process"];
+  let primaryFailure: Error | undefined;
+  let completedResult:
+    | {
+        dshVersion: typeof DSH_VERSION;
+        output: ReturnType<typeof parseDshOutput>;
+        durationMs: number;
+        workspaceDigest: string;
+        toolReceipts: Awaited<ReturnType<typeof readToolReceipts>>;
+        modelExecution: ReturnType<typeof modelPolicy> & { requestCount: number };
+      }
+    | undefined;
+  const providerDiagnostics = (): AgentArtsFailureDiagnostics["provider"] => ({
+    provider: policy.provider,
+    model: policy.model === "deepseek-flash" ? "deepseek-flash" : "deepseek-v4-pro",
+    upstreamOrigin: policy.upstreamOrigin,
+    requestCount: modelTransport.requestCount(),
+    requestLimit: policy.requestLimit,
+    maxOutputTokens: policy.maxOutputTokens,
+    attempts: [...modelTransport.attempts()],
+  });
   try {
     check();
     root = await mkdtemp(join(options.temporaryDirectory ?? tmpdir(), "agentarts-review-"));
@@ -374,7 +440,6 @@ async function executeReadOnlyDsh(
       await permissions(file, 0o440, false, testOnly);
     }
     check();
-    const modelTransport = budgetedModelFetch(policy, signal);
     proxy = await startDeepSeekProxy({
       apiKey,
       baseUrl: environment.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
@@ -413,6 +478,7 @@ async function executeReadOnlyDsh(
     assertNoSecretOutput("argv", JSON.stringify(spec.args), allSecrets);
     assertNoSecretOutput("environment", JSON.stringify(workerEnvironment), knownSecrets);
     check();
+    phase = "process";
     const processResult = await (options.executeProcess ?? executeBoundedDshProcess)(spec, {
       timeoutMs: Math.max(1, deadlineMs - Date.now()),
       maxStdoutBytes: MAX_OUTPUT_BYTES,
@@ -420,6 +486,7 @@ async function executeReadOnlyDsh(
       maxCombinedBytes: MAX_OUTPUT_BYTES,
       signal,
     });
+    processStatus = { exitCode: processResult.exitCode, signal: processResult.signal };
     check();
     assertNoSecretOutput("stdout", processResult.stdout, allSecrets);
     assertNoSecretOutput("stderr", processResult.stderr, allSecrets);
@@ -430,6 +497,7 @@ async function executeReadOnlyDsh(
         "Runtime DSH worker exited unsuccessfully",
       );
     }
+    phase = "output";
     const resultText = headlessResultText(processResult.stdout, allSecrets);
     const parsedOutput = parseDshOutput(
       resultText,
@@ -448,6 +516,7 @@ async function executeReadOnlyDsh(
         "Cloud review must not request Controller tools or claim workspace modifications/tests",
       );
     }
+    phase = "tool-audit";
     const receipts = await readToolReceipts(profile.auditPath, 0);
     assertNoSecretOutput("tool receipt", JSON.stringify(receipts), allSecrets);
     reconcileToolAudit(
@@ -456,9 +525,10 @@ async function executeReadOnlyDsh(
       receipts,
       true,
     );
+    phase = "workspace";
     await verifyContext(workspace, task.files);
     check();
-    return {
+    completedResult = {
       dshVersion: DSH_VERSION,
       output,
       durationMs: Date.now() - startedAt,
@@ -467,27 +537,52 @@ async function executeReadOnlyDsh(
       modelExecution: { ...policy, requestCount: modelTransport.requestCount() },
     };
   } catch (error: unknown) {
-    check();
-    throw error;
+    let rejection = error;
+    try {
+      check();
+    } catch (deadlineError: unknown) {
+      rejection = deadlineError;
+    }
+    primaryFailure = diagnosedFailure(rejection, phase, providerDiagnostics(), processStatus);
   } finally {
     clearTimeout(timer);
     try {
-      if (proxy !== undefined) await proxy.close();
-    } finally {
-      if (root !== undefined) {
-        // Workspace directories were deliberately sealed while the worker ran.
-        // Root supervisor may remove them; insecure non-root fixtures need write permission.
-        if (testOnly) {
-          const restore = async (directory: string): Promise<void> => {
-            await chmod(directory, 0o750);
-            for (const item of await readdir(directory, { withFileTypes: true })) {
-              if (item.isDirectory()) await restore(join(directory, item.name));
-            }
-          };
-          await restore(join(root, "workspace")).catch(() => undefined);
+      try {
+        if (proxy !== undefined) await proxy.close();
+      } finally {
+        if (root !== undefined) {
+          // Workspace directories were deliberately sealed while the worker ran.
+          // Root supervisor may remove them; insecure non-root fixtures need write permission.
+          if (testOnly) {
+            const restore = async (directory: string): Promise<void> => {
+              await chmod(directory, 0o750);
+              for (const item of await readdir(directory, { withFileTypes: true })) {
+                if (item.isDirectory()) await restore(join(directory, item.name));
+              }
+            };
+            await restore(join(root, "workspace")).catch(() => undefined);
+          }
+          await rm(root, { recursive: true, force: true, maxRetries: 3 });
         }
-        await rm(root, { recursive: true, force: true, maxRetries: 3 });
+      }
+    } catch (cleanupError: unknown) {
+      primaryFailure = diagnosedFailure(
+        cleanupError,
+        "cleanup",
+        providerDiagnostics(),
+        processStatus,
+      );
+    } finally {
+      // Proxy shutdown may settle cancelled transport attempts after the catch.
+      if (primaryFailure !== undefined) {
+        const previous = getAgentArtsFailureDiagnostics(primaryFailure);
+        if (previous !== undefined)
+          failureDiagnostics.set(primaryFailure, { ...previous, provider: providerDiagnostics() });
       }
     }
   }
+  if (primaryFailure !== undefined) throw primaryFailure;
+  if (completedResult === undefined)
+    throw new DshConfigurationError("Runtime result was not accepted");
+  return completedResult;
 }

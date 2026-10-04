@@ -20,6 +20,7 @@ import { redactKnownSecrets } from "../security/env.js";
 import { redactSecrets } from "../security/redaction.js";
 import { runtimeUrl, type RuntimeClientConfig } from "./client.js";
 import { AgentArtsReviewEngine } from "./engine.js";
+import { runtimeFailureDiagnostics, formatRuntimeFailure } from "./failure-format.js";
 import {
   digest,
   MAX_RUNTIME_MS,
@@ -643,7 +644,11 @@ export async function runLiveReviewSuite(
               };
             }
             if (response.status === 504) throw new DshTimeoutError(admitted.timeoutMs);
-            throw new DshConfigurationError("Runtime invocation rejected; not retried");
+            const diagnostics =
+              typeof rawResult === "object" && rawResult !== null && "errorResponse" in rawResult
+                ? runtimeFailureDiagnostics(rawResult.errorResponse, admitted.taskId)
+                : undefined;
+            throw new DshConfigurationError(formatRuntimeFailure(response.status, diagnostics));
           }
           rawResult = await boundedJson(response);
           reply = runtimeReplySchema.parse(rawResult);

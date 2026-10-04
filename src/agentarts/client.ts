@@ -17,6 +17,35 @@ import {
   type ReadOnlyTask,
   type ReadOnlyTaskReply,
 } from "./readonly-task-protocol.js";
+import { formatRuntimeFailure, runtimeFailureDiagnostics } from "./failure-format.js";
+
+async function readRuntimeJson(response: Response): Promise<unknown> {
+  if (!response.headers.get("content-type")?.includes("application/json") || response.body === null)
+    throw new DshConfigurationError("Runtime must return application/json");
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let bytes = 0;
+  try {
+    for (;;) {
+      const chunk: ReadableStreamReadResult<Uint8Array> = await reader.read();
+      if (chunk.done) break;
+      bytes += chunk.value.byteLength;
+      if (bytes > MAX_TASK_BYTES) throw new DshConfigurationError("Runtime response exceeds limit");
+      chunks.push(chunk.value);
+    }
+  } finally {
+    await reader.cancel();
+  }
+  try {
+    return JSON.parse(
+      new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)),
+    ) as unknown;
+  } catch {
+    throw new DshConfigurationError(
+      "Runtime response was not valid UTF-8 JSON; body was not logged",
+    );
+  }
+}
 
 export interface RuntimeClientConfig {
   readonly origin: string;
@@ -109,49 +138,20 @@ async function invokeRuntime<T>(
     });
     const requestId = response.headers.get("x-request-id");
     if (requestId && /^[A-Za-z0-9_-]{1,128}$/u.test(requestId)) options.onRequestId?.(requestId);
-    if (response.status === 504)
-      throw new DshError(
-        "DSH_TIMEOUT",
-        "Runtime invocation timed out (HTTP 504); no result was accepted or retried",
-      );
-    if (response.status === 499)
-      throw new DshError(
-        "DSH_ABORTED",
-        "Runtime invocation was cancelled (HTTP 499); no result was accepted or retried",
-      );
-    if (!response.ok)
-      throw new DshConfigurationError(
-        `Runtime invocation rejected (HTTP ${String(response.status)}); not retried`,
-      );
-    if (!response.headers.get("content-type")?.includes("application/json"))
-      throw new DshConfigurationError("Runtime must return application/json");
-    if (response.body === null) throw new DshConfigurationError("Runtime returned no response");
-    const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let bytes = 0;
-    try {
-      for (;;) {
-        const chunk: ReadableStreamReadResult<Uint8Array> = await reader.read();
-        if (chunk.done) break;
-        bytes += chunk.value.byteLength;
-        if (bytes > MAX_TASK_BYTES)
-          throw new DshConfigurationError("Runtime response exceeds limit");
-        chunks.push(chunk.value);
+    if (!response.ok) {
+      let failure: unknown;
+      try {
+        failure = await readRuntimeJson(response);
+      } catch {
+        await response.body?.cancel();
       }
-    } finally {
-      await reader.cancel();
+      const details = runtimeFailureDiagnostics(failure, task.taskId);
+      const message = formatRuntimeFailure(response.status, details);
+      if (response.status === 504) throw new DshError("DSH_TIMEOUT", message);
+      if (response.status === 499) throw new DshError("DSH_ABORTED", message);
+      throw new DshConfigurationError(message);
     }
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(
-        new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)),
-      ) as unknown;
-    } catch {
-      throw new DshConfigurationError(
-        "Runtime response was not valid UTF-8 JSON; body was not logged",
-      );
-    }
-    return replySchema.parse(parsed);
+    return replySchema.parse(await readRuntimeJson(response));
   } catch (error) {
     if (options.signal?.aborted) throw new DshAbortedError();
     if (timeout.aborted) throw new DshTimeoutError(task.timeoutMs);

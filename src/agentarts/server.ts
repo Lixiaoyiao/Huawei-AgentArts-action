@@ -9,7 +9,12 @@ import {
   type ReviewTask,
   type RuntimeReply,
 } from "./protocol.js";
-import { runAgentArtsReview, runAgentArtsReadOnlyTask } from "./worker.js";
+import {
+  runAgentArtsReview,
+  runAgentArtsReadOnlyTask,
+  getAgentArtsFailureDiagnostics,
+} from "./worker.js";
+import type { AgentArtsFailureDiagnostics } from "./failure-diagnostics.js";
 import {
   readOnlyTaskSchema,
   type ReadOnlyTask,
@@ -50,6 +55,7 @@ export interface RuntimeLogEvent {
     readonly durationMs: number;
   }[];
   readonly code?: "TASK_TIMEOUT" | "TASK_CANCELLED" | "WORKER_FAILED";
+  readonly diagnostics?: AgentArtsFailureDiagnostics;
 }
 
 export type AgentArtsServer = Server & { cancelActive(): void };
@@ -138,7 +144,7 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
     task: ReviewTask | ReadOnlyTask,
     event: RuntimeLogEvent["event"],
     durationMs: number,
-    extra: Pick<RuntimeLogEvent, "tools" | "code"> = {},
+    extra: Pick<RuntimeLogEvent, "tools" | "code" | "diagnostics"> = {},
   ): void => {
     try {
       logEvent({
@@ -265,8 +271,10 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
       // public exception messages or control instructions.
       const timedOut = deadline.reached || error instanceof DshTimeoutError;
       const aborted = cancellation.signal.aborted || error instanceof DshAbortedError;
+      const diagnostics = getAgentArtsFailureDiagnostics(error);
       emit(task, "task.failed", Date.now() - acceptedAt, {
         code: timedOut ? "TASK_TIMEOUT" : aborted ? "TASK_CANCELLED" : "WORKER_FAILED",
+        ...(diagnostics === undefined ? {} : { diagnostics }),
       });
       reply(response, timedOut ? 504 : aborted ? 499 : 500, {
         error: {
@@ -277,6 +285,7 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
               ? "Task was cancelled before a result was accepted"
               : "DSH task failed; no result may be published",
           taskId: task.taskId,
+          ...(diagnostics === undefined ? {} : { diagnostics }),
         },
       });
     } finally {

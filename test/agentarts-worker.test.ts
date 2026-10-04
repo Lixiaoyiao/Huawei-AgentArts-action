@@ -12,8 +12,8 @@ import {
   type ReviewTask,
   type RuntimeReply,
 } from "../src/agentarts/protocol.js";
-import { runAgentArtsReview } from "../src/agentarts/worker.js";
-import { DshAbortedError } from "../src/dsh/errors.js";
+import { getAgentArtsFailureDiagnostics, runAgentArtsReview } from "../src/agentarts/worker.js";
+import { DshAbortedError, DshProcessError } from "../src/dsh/errors.js";
 import { executeBoundedDshProcess, type DshProcessSpec } from "../src/dsh/process.js";
 import { messageToolResults, sendMessagesSse } from "./fixtures/messages-sse.mjs";
 
@@ -101,6 +101,145 @@ afterEach(async () => {
 });
 
 describe("AgentArts Runtime DSH worker boundaries", () => {
+  it("ignores forged diagnostics attached to arbitrary errors", () => {
+    expect(
+      getAgentArtsFailureDiagnostics(
+        Object.assign(new Error("untrusted"), {
+          diagnostics: { failureCode: "DSH_PROCESS_FAILED", provider: { requestCount: 9 } },
+        }),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("reports rejected provider status and attempted requests on process failure without raw body or stderr", async () => {
+    const raw = "DO_NOT_EXPOSE_PROVIDER_BODY_OR_STDERR";
+    const baseUrl = await listen(
+      createServer((_request, response) => {
+        response
+          .writeHead(400, { "content-type": "application/json" })
+          .end(JSON.stringify({ error: { message: raw } }));
+      }),
+    );
+    const directory = await temporaryDirectory();
+    let failure: unknown;
+    try {
+      await runAgentArtsReview(task(), {
+        environment: {
+          ...environment,
+          DEEPSEEK_BASE_URL: baseUrl,
+          AGENTARTS_MAX_MODEL_REQUESTS: "6",
+          AGENTARTS_MAX_OUTPUT_TOKENS: "2048",
+        },
+        temporaryDirectory: directory,
+        allowInsecureTestOnly: true,
+        executeProcess: async (spec) => {
+          const response = await fetch(`${spec.env.DEEPSEEK_BASE_URL ?? ""}/v1/messages`, {
+            method: "POST",
+            headers: {
+              authorization: `Bearer ${spec.env.DEEPSEEK_API_KEY ?? ""}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "deepseek-v4-pro",
+              max_tokens: 256000,
+              thinking: { type: "enabled" },
+              output_config: { effort: "high" },
+              messages: [],
+            }),
+          });
+          expect(response.status).toBe(400);
+          await response.body?.cancel();
+          return { stdout: "", stderr: raw, exitCode: 1, signal: null };
+        },
+      });
+    } catch (error: unknown) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(DshProcessError);
+    const diagnostics = getAgentArtsFailureDiagnostics(failure);
+    expect(diagnostics).toEqual({
+      schemaVersion: 1,
+      failureCode: "DSH_PROCESS_FAILED",
+      phase: "process",
+      provider: {
+        provider: "deepseek",
+        model: "deepseek-v4-pro",
+        upstreamOrigin: baseUrl,
+        requestCount: 1,
+        requestLimit: 6,
+        maxOutputTokens: 2048,
+        attempts: [{ sequence: 1, outcome: "http-error", status: 400 }],
+      },
+      process: { exitCode: 1, signal: null },
+    });
+    for (const forbidden of [raw, realKey, runtimeKey, environment.GITHUB_TOKEN])
+      expect(JSON.stringify(diagnostics)).not.toContain(forbidden);
+    if (diagnostics === undefined) throw new Error("Expected trusted failure diagnostics");
+    diagnostics.provider.requestCount = 6;
+    expect(getAgentArtsFailureDiagnostics(failure)?.provider.requestCount).toBe(1);
+    expect(await readdir(directory)).toEqual([]);
+  });
+
+  it("keeps HTTP success separate from independently rejected DSH output", async () => {
+    const baseUrl = await listen(
+      createServer((_request, response) => response.writeHead(200).end("fixture stream")),
+    );
+    let failure: unknown;
+    try {
+      await runAgentArtsReview(task(), {
+        environment: { ...environment, DEEPSEEK_BASE_URL: baseUrl },
+        allowInsecureTestOnly: true,
+        executeProcess: async (spec) => {
+          const response = await fetch(`${spec.env.DEEPSEEK_BASE_URL ?? ""}/v1/messages`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${spec.env.DEEPSEEK_API_KEY ?? ""}` },
+            body: "{}",
+          });
+          await response.body?.cancel();
+          return { stdout: "invalid model result", stderr: "", exitCode: 0, signal: null };
+        },
+      });
+    } catch (error: unknown) {
+      failure = error;
+    }
+    expect(getAgentArtsFailureDiagnostics(failure)).toMatchObject({
+      failureCode: "DSH_MALFORMED_OUTPUT",
+      phase: "output",
+      provider: { requestCount: 1, attempts: [{ outcome: "http-success", status: 200 }] },
+    });
+  });
+
+  it("classifies zero-call credential and cancellation failures without exposing captured output", async () => {
+    for (const cancelled of [false, true]) {
+      const cancellation = new AbortController();
+      let failure: unknown;
+      try {
+        await runAgentArtsReview(task(), {
+          environment,
+          signal: cancellation.signal,
+          allowInsecureTestOnly: true,
+          executeProcess: () => {
+            if (cancelled) cancellation.abort();
+            return Promise.resolve({
+              stdout: JSON.stringify({ ...output, summary: realKey }),
+              stderr: "",
+              exitCode: 0,
+              signal: null,
+            });
+          },
+        });
+      } catch (error: unknown) {
+        failure = error;
+      }
+      const diagnostics = getAgentArtsFailureDiagnostics(failure);
+      expect(diagnostics).toMatchObject({
+        failureCode: cancelled ? "DSH_ABORTED" : "DSH_CREDENTIAL_LEAK",
+        provider: { requestCount: 0, attempts: [] },
+      });
+      expect(JSON.stringify(diagnostics)).not.toContain(realKey);
+    }
+  });
+
   it("fails closed on platforms without the production supervisor identity", async () => {
     if (process.platform === "linux" && process.getuid?.() === 0) return;
     const executeProcess = vi.fn();
@@ -286,7 +425,11 @@ describe("AgentArts Runtime DSH worker boundaries", () => {
     );
     const directory = await temporaryDirectory();
     const result = await runAgentArtsReview(task({ timeoutMs: 60_000 }), {
-      environment: { ...environment, DEEPSEEK_BASE_URL: baseUrl },
+      environment: {
+        ...environment,
+        DEEPSEEK_BASE_URL: baseUrl,
+        AGENTARTS_MAX_OUTPUT_TOKENS: "2048",
+      },
       temporaryDirectory: directory,
       allowInsecureTestOnly: true,
       executeProcess: async (spec, limits) => {
@@ -295,6 +438,11 @@ describe("AgentArts Runtime DSH worker boundaries", () => {
       },
     });
     expect(requests).toHaveLength(2);
+    for (const request of requests) {
+      expect(request.max_tokens).toBe(2048);
+      expect(request.thinking).toEqual({ type: "enabled" });
+      expect(request.output_config).toEqual({ effort: "high" });
+    }
     expect(headers).toEqual([`Bearer ${realKey}`, `Bearer ${realKey}`]);
     expect(JSON.stringify(requests)).not.toContain(realKey);
     expect(JSON.stringify(processSpec)).not.toContain(realKey);
