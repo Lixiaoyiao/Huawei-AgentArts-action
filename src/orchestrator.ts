@@ -3,6 +3,8 @@
  * Copyright (c) 2025 Anthropic, PBC. MIT licensed; see THIRD_PARTY_NOTICES.md.
  */
 import * as core from "@actions/core";
+import type { AgentLoopDependencies } from "./agent/loop.js";
+import type { AuthorizedRun } from "./orchestration/prepare.js";
 
 import { assertStartupConfiguration } from "./configuration-check.js";
 import { DshAbortedError } from "./dsh/errors.js";
@@ -44,6 +46,12 @@ export {
 
 export interface RunActionOptions {
   readonly signal?: AbortSignal;
+  /** Trusted entrypoint injection; never selected by repository/model data. */
+  readonly inputs?: ActionInputs;
+  readonly assertAuthorizedRun?: (run: AuthorizedRun) => void;
+  readonly createEngine?: (
+    run: AuthorizedRun,
+  ) => NonNullable<AgentLoopDependencies["createEngine"]>;
 }
 
 /** Prepare -> authorize/context -> capabilities -> Agent -> validate/finalize -> result. */
@@ -53,9 +61,11 @@ async function runActionInternal(
   inputs: ActionInputs,
   signal: AbortSignal,
   deadlineMs: number,
+  options: RunActionOptions,
 ): Promise<RunOutcome> {
   const preparation = await prepareAuthorizedRun({ state, startedAt, inputs, signal });
   if (preparation.kind === "complete") return preparation.outcome;
+  options.assertAuthorizedRun?.(preparation.run);
 
   state.phase = "context";
   let workspace: PreparedWorkspace | undefined;
@@ -95,6 +105,11 @@ async function runActionInternal(
       inputs,
       signal,
       deadlineMs,
+      ...(options.createEngine === undefined
+        ? {}
+        : {
+            createEngine: options.createEngine(preparation.run),
+          }),
     });
   } catch (error: unknown) {
     if (error instanceof ValidationIntegrityError) state.validationIntegrity = error.audit;
@@ -125,7 +140,7 @@ export async function runAction(options: RunActionOptions = {}): Promise<RunOutc
   if (options.signal?.aborted === true) beginCancellationFinalization();
   try {
     throwIfCancelled(options.signal);
-    const inputs = loadInputs();
+    const inputs = options.inputs ?? loadInputs();
     assertStartupConfiguration(inputs);
     const compositionSelection = selectDshComposition(inputs.dshMode);
     const composition = compositionSelection.create();
@@ -134,7 +149,14 @@ export async function runAction(options: RunActionOptions = {}): Promise<RunOutc
     core.info(`DSH mode ${compositionSelection.mode}; composition ${composition.id}`);
     state.authority = buildAuthorityAudit();
     deadline = createRunDeadline(startedAt, inputs.timeoutMinutes, options.signal);
-    return await runActionInternal(state, startedAt, inputs, deadline.signal, deadline.deadlineMs);
+    return await runActionInternal(
+      state,
+      startedAt,
+      inputs,
+      deadline.signal,
+      deadline.deadlineMs,
+      options,
+    );
   } catch (error: unknown) {
     // Preserve an independent validation/security/write failure if cancellation races it.
     if (state.session !== undefined && state.session.status !== "saved") {

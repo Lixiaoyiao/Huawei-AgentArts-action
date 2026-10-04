@@ -18,6 +18,9 @@ export interface DshProcessSpec {
   readonly args: readonly string[];
   readonly cwd: string;
   readonly env: NodeJS.ProcessEnv;
+  /** Linux supervisor may drop the worker into a distinct unprivileged identity. */
+  readonly uid?: number;
+  readonly gid?: number;
   /** Optional backend cleanup command, e.g. docker kill <random-name>. */
   readonly termination?: Omit<DshProcessSpec, "termination">;
 }
@@ -96,6 +99,8 @@ function terminateTree(
       shell: false,
       stdio: "ignore",
       windowsHide: true,
+      ...(termination.uid === undefined ? {} : { uid: termination.uid }),
+      ...(termination.gid === undefined ? {} : { gid: termination.gid }),
     });
     cleanup.once("error", () => undefined);
     cleanup.unref();
@@ -131,6 +136,8 @@ export async function executeBoundedDshProcess(
         shell: false,
         stdio: ["pipe", "pipe", "pipe"],
         windowsHide: true,
+        ...(spec.uid === undefined ? {} : { uid: spec.uid }),
+        ...(spec.gid === undefined ? {} : { gid: spec.gid }),
       });
       child.stdin.end();
     } catch (error: unknown) {

@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 
 import { AgentDeadlineError, runAgentLoop } from "../agent/loop.js";
+import type { AgentLoopDependencies } from "../agent/loop.js";
 import { finishDiagnosis } from "../commands/diagnose.js";
 import { finishReview } from "../commands/review.js";
 import { publishTaskAnswer } from "../commands/task.js";
@@ -52,6 +53,7 @@ export async function runAgentPhase(options: {
   readonly inputs: ActionInputs;
   readonly signal: AbortSignal;
   readonly deadlineMs: number;
+  readonly createEngine?: NonNullable<AgentLoopDependencies["createEngine"]>;
 }): Promise<RunOutcome> {
   const { state, startedAt, authorized, workspace, execution, inputs, signal, deadlineMs } =
     options;
@@ -409,8 +411,9 @@ export async function runAgentPhase(options: {
       },
     },
     {
-      createEngine: (runtime) =>
-        new DshAgentEngine(inputs, policy, runtime, extensions, selectedComposition),
+      createEngine:
+        options.createEngine ??
+        ((runtime) => new DshAgentEngine(inputs, policy, runtime, extensions, selectedComposition)),
     },
   );
 

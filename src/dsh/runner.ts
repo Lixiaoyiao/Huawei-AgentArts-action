@@ -136,7 +136,7 @@ export interface DshRunRequest {
 }
 
 export interface DshIsolationReport {
-  readonly backend: DshIsolation;
+  readonly backend: DshIsolation | "agentarts";
   readonly credentialMediated: true;
   readonly repoToolsEnabled: boolean;
   readonly processIsolated: boolean;
