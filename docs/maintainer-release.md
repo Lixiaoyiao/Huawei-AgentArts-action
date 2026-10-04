@@ -24,8 +24,9 @@ proof and diagnostics artifacts. Retention, quota or an unconfirmed upload
 failure must be reported; never resend a task or artifact upload to find a
 green result. The artifact SDK uses the Controller job's runtime credential;
 its requests are distinct from Core E2E fixtures and the release monitor.
-After the formal v0.9.3 canary succeeds, prepare installer `0.4.1` as a
-separate binding update using the full SHA resolved from the formal tag.
+Installer `0.4.1` binds the formal v0.9.3 Action commit `e7da1b33a043b4e2e26daa7e731c266817677a4a`
+after its [controlled/native canary](https://github.com/Lixiaoyiao/deepseek-harness-action/actions/runs/37172280127) succeeds.
+Installer source qualification and public npm installation remain separate gates.
 
 For v0.9.2, keep DSH `0.2.0-rc.2` fixed. Qualify the independent text-file,
 configuration-check and GitHub quota/cache regressions along with every existing
@@ -113,11 +114,11 @@ For an Action version bump, update every release surface together:
 6. Any release-specific verification fixture or documentation.
 
 The standalone `create-deepseek-harness-action` package has its own semantic
-version. Its v0.9.2 companion minor release is `0.4.0`; prepare source only
+version. Its v0.9.3 companion patch release is `0.4.1`; prepare source only
 after the formal Action canary succeeds. Keep its standalone manifest/lock,
 CLI tests, documentation, controlled/native templates and release-SHA
 contract aligned. `DSH_ACTION_RELEASE_SHA` must be the full commit resolved
-from the formal v0.9.2 tag: `c184872f309ebfc5e57a0c5c1397c59e774709e0`.
+from the formal v0.9.3 tag: `e7da1b33a043b4e2e26daa7e731c266817677a4a`.
 Source preparation never invents that SHA. Installer source-template and
 packed-workflow checks must retain the exact audited `0.2.0-rc.2` pin.
 
@@ -392,9 +393,9 @@ then create a detached staging checkout. Each tag-resolution loop accepts an
 annotated or lightweight tag and must end at its expected commit:
 
 ```bash
-release_tag="v0.9.2"
+release_tag="v0.9.3"
 release_sha="${DSH_ACTION_RELEASE_SHA:?Set the verified formal Action release commit SHA}"
-installer_tag="create-deepseek-harness-action-v0.4.0"
+installer_tag="create-deepseek-harness-action-v0.4.1"
 installer_source_sha="${INSTALLER_SOURCE_SHA:?Set the reviewed installer source commit SHA}"
 repository="Lixiaoyiao/deepseek-harness-action"
 sha_pattern='^[0-9a-f]{40}$'
@@ -450,12 +451,12 @@ tar -xzf "$tarball" -C "$installer_stage/unpacked"
 ```
 
 Inspect the packed artifact, not only the source tree. It must contain version
-`0.4.0`, expose the `create-deepseek-harness-action` executable, contain no
+`0.4.1`, expose the `create-deepseek-harness-action` executable, contain no
 unresolved release token or floating Action reference, and generate controlled
 and native workflows bound only to `release_sha`. Verify that every source
 template, packed template, and generated workflow has exactly one
 `dsh-version: 0.2.0-rc.2` input; the old `0.1.7-rc.2` pin is rejected by
-v0.9.2:
+v0.9.3:
 
 ```bash
 node --input-type=module - "$installer_stage/unpacked/package/package.json" <<'NODE'
@@ -464,7 +465,7 @@ import { readFile } from "node:fs/promises";
 
 const manifest = JSON.parse(await readFile(process.argv[2], "utf8"));
 assert.equal(manifest.name, "create-deepseek-harness-action");
-assert.equal(manifest.version, "0.4.0");
+assert.equal(manifest.version, "0.4.1");
 assert.ok(manifest.bin?.["create-deepseek-harness-action"]);
 NODE
 
@@ -537,7 +538,7 @@ that would rerun packing with an unreviewed environment:
 ```bash
 npm whoami --registry=https://registry.npmjs.org/
 npm publish "$tarball" --access public --registry=https://registry.npmjs.org/
-npm view create-deepseek-harness-action@0.4.0 \
+npm view create-deepseek-harness-action@0.4.1 \
   name version dist-tags --json --registry=https://registry.npmjs.org/
 ```
 
@@ -552,17 +553,17 @@ mkdir "$installer_stage/public-review" \
 (
   cd "$installer_stage/public-review"
   npm_config_registry=https://registry.npmjs.org/ \
-    npm create deepseek-harness-action@0.4.0 -- --mode review
+    npm create deepseek-harness-action@0.4.1 -- --mode review
 )
 (
   cd "$installer_stage/public-commands-native"
   npm_config_registry=https://registry.npmjs.org/ \
-    npm create deepseek-harness-action@0.4.0 -- --mode commands --dsh-mode native
+    npm create deepseek-harness-action@0.4.1 -- --mode commands --dsh-mode native
 )
 (
   cd "$installer_stage/public-both"
   npm_config_registry=https://registry.npmjs.org/ \
-    npm create deepseek-harness-action@0.4.0 -- --mode both
+    npm create deepseek-harness-action@0.4.1 -- --mode both
 )
 ```
 
@@ -572,4 +573,4 @@ exactly one `release_sha` Action reference; and checkout, permission, Docker,
 validation, credential, and overwrite boundaries remain intact. Then remove the
 disposable worktree and staging directory. npm versions and both release tags
 are immutable; a bad published installer must be fixed with a new installer
-patch version rather than replacing `0.4.0`.
+patch version rather than replacing `0.4.1`.

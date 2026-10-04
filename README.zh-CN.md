@@ -42,8 +42,8 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 ```
 
 安装器会按需创建 `.github/workflows/`，如果目标 workflow 已存在则拒绝覆盖。
-它不会添加 Secret、commit 或 push 改动，也不会创建 PR。安装器 v0.4.0
-对应正式 v0.9.2 Action commit `c184872f309ebfc5e57a0c5c1397c59e774709e0`，
+它不会添加 Secret、commit 或 push 改动，也不会创建 PR。安装器 v0.4.1
+对应正式 v0.9.3 Action commit `e7da1b33a043b4e2e26daa7e731c266817677a4a`，
 controlled 与 native workflow 都保持 DSH `0.2.0-rc.2`。打包须在 Tag、GitHub
 Release 与 release canary 身份一致后，通过 `DSH_ACTION_RELEASE_SHA` 注入该
 核验过的完整、不可变 Action commit；源码模板与实际打包 workflow 都须保持精确 DSH pin。

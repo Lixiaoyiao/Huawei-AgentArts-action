@@ -44,8 +44,8 @@ npm create deepseek-harness-action@latest -- --mode both --dsh-mode native
 
 The installer creates `.github/workflows/` when needed and refuses to overwrite
 an existing target workflow. It does not add secrets, commit or push changes,
-or open a pull request. Installer v0.4.0 targets the formal v0.9.2 Action
-release at `c184872f309ebfc5e57a0c5c1397c59e774709e0`, with DSH `0.2.0-rc.2`
+or open a pull request. Installer v0.4.1 targets the formal v0.9.3 Action
+release at `e7da1b33a043b4e2e26daa7e731c266817677a4a`, with DSH `0.2.0-rc.2`
 in both controlled and native workflows. Packing receives this verified
 immutable Action commit through `DSH_ACTION_RELEASE_SHA` after the tag,
 GitHub Release, and release canary agree. Source templates and packed
