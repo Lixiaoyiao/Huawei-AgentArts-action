@@ -807,6 +807,9 @@
       "use strict";
       const $ = (id) => document.getElementById(id);
       const MAX_BYTES = 2 * 1024 * 1024;
+      const staticSnapshot = Boolean(
+        document.querySelector('meta[name="agentarts-record-source"][content="static-export"]'),
+      );
       const statuses = {
         running: ["执行中", ""],
         passed: ["通过", "success"],
@@ -912,11 +915,21 @@
           simulation: ["模拟运行", "warning"],
         };
         badge($("mode"), ...modes[record.mode]);
-        badge($("sourceBadge"), source === "file" ? "历史回放" : "文件记录 · 自动刷新", "neutral");
+        badge(
+          $("sourceBadge"),
+          source === "export"
+            ? "历史回放 · 静态页面"
+            : source === "file"
+              ? "历史回放"
+              : "文件记录 · 自动刷新",
+          "neutral",
+        );
         $("source").textContent =
-          source === "file"
-            ? "已载入文件快照；不会重演任务。"
-            : "每 2 秒读取本地 run-record.json；页面不负责触发任务。";
+          source === "export"
+            ? "已载入导出的静态历史记录；不会执行或跟踪任务。"
+            : source === "file"
+              ? "已载入文件快照；不会重演任务。"
+              : "每 2 秒读取本地 run-record.json；页面不负责触发任务。";
         lastLoadedAt = new Date();
         $("updated").textContent =
           `读取于 ${lastLoadedAt.toLocaleTimeString("zh-CN", { hour12: false })}`;
@@ -1041,7 +1054,7 @@
       function stop() {
         live = false;
         clearTimeout(timer);
-        $("connect").textContent = "连接本地记录";
+        $("connect").textContent = staticSnapshot ? "重新读取静态记录" : "连接本地记录";
         if (!$("content").classList.contains("hidden")) {
           badge($("sourceBadge"), "历史快照 · 刷新已停止", "neutral");
           $("source").textContent = "当前显示最后一次成功读取的记录。";
@@ -1050,13 +1063,17 @@
       async function poll() {
         if (!live) return;
         try {
-          const response = await fetch("/run-record.json", {
+          const response = await fetch("./run-record.json", {
             cache: "no-store",
             signal: AbortSignal.timeout(5000),
           });
           if (response.status === 404) {
             stop();
-            message("服务没有配置运行记录。可以载入文件，或使用 --record 指定记录路径后重新连接。");
+            message(
+              staticSnapshot
+                ? "静态页面缺少同目录的 run-record.json。请检查部署目录，或载入导出的记录文件。"
+                : "服务没有配置运行记录。可以载入文件，或使用 --record 指定记录路径后重新连接。",
+            );
             return;
           }
           if (!response.ok) throw new Error(`记录服务返回 HTTP ${response.status}。`);
@@ -1066,7 +1083,7 @@
           const record = validate(JSON.parse(text));
           if (!live) return;
           if (text !== lastPayload) {
-            render(record, "server");
+            render(record, staticSnapshot ? "export" : "server");
             lastPayload = text;
           }
           message("");
@@ -1077,7 +1094,10 @@
             true,
           );
         }
-        if (live) timer = setTimeout(poll, 2000);
+        if (staticSnapshot) {
+          live = false;
+          $("connect").textContent = "重新读取静态记录";
+        } else if (live) timer = setTimeout(poll, 2000);
       }
       $("connect").addEventListener("click", () => {
         if (live) {
