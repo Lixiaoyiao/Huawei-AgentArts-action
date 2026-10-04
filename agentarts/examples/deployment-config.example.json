@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "REPLACE_WITH_REVIEWED_FULL_SOURCE_COMMIT",
+  "architecture": "arm64",
+  "region": "cn-southwest-2",
+  "swr": {
+    "registry": "swr.cn-southwest-2.myhuaweicloud.com",
+    "namespace": "your-owned-namespace",
+    "repository": "huawei-agentarts-action",
+    "tag": "review-SOURCE-arm64",
+    "digest": "REPLACE_WITH_ACTUAL_SWR_MANIFEST_DIGEST"
+  },
+  "runtime": {
+    "origin": "https://replace-with-console-origin.invalid",
+    "name": "huawei-agentarts-review",
+    "endpoint": "review-v1",
+    "version": "v1",
+    "aliasTrafficPercent": 100,
+    "authentication": "API_KEY",
+    "protocol": "HTTP",
+    "routeMode": "ACCURATE_MATCH",
+    "port": 8080,
+    "storage": "none",
+    "requestTimeoutSeconds": 600,
+    "idleTimeoutSeconds": 900,
+    "maxLifetimeSeconds": 900
+  },
+  "github": {
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "contentsPermission": "read",
+    "pullRequestsPermission": "write"
+  },
+  "readiness": {
+    "serviceApproved": false,
+    "serviceAuthorized": false,
+    "regionConfirmed": false,
+    "swrMediaTypeVerified": false,
+    "swrUploaded": false,
+    "aliasMappingRecorded": false,
+    "runtimeKeyInController": false,
+    "modelKeyInSupervisor": false,
+    "githubCredentialInController": false,
+    "uidAndCapabilitiesVerified": false,
+    "metadataBoundaryVerified": false,
+    "modelEgressVerified": false,
+    "timeoutAndStopVerified": false,
+    "loggingVerified": false
+  }
+}

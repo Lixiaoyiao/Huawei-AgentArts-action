@@ -80,6 +80,7 @@ jobs:
         run: |
           set -euo pipefail
           docker build --platform "$TARGET_PLATFORM" --file agentarts/Dockerfile \
+            --provenance=false --sbom=false --output type=image,oci-mediatypes=false \
             --tag huawei-agentarts-action:smoke .
           docker image inspect huawei-agentarts-action:smoke \
             --format 'Image={{.Id}} Architecture={{.Architecture}}'

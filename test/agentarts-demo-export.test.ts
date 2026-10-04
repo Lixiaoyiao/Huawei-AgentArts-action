@@ -95,6 +95,27 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
     ["bad validation", { ...record, validation: { status: "passed", checks: [17] } }],
     ["unknown stage state", { ...record, stages: [{ ...record.stages[0], status: "pretend" }] }],
     ["credential root field", { ...record, apiKey: "synthetic-private-key" }],
+    ["base commit must be text", { ...record, task: { ...record.task, baseSha: 17 } }],
+    ["unknown model kind", { ...record, modelEvidence: { kind: "real", provider: "deepseek" } }],
+    [
+      "unknown model provider",
+      { ...record, modelEvidence: { kind: "live-provider", provider: "other" } },
+    ],
+    [
+      "model must be text",
+      { ...record, modelEvidence: { kind: "live-provider", provider: "deepseek", model: 17 } },
+    ],
+    [
+      "nested model credential",
+      {
+        ...record,
+        modelEvidence: {
+          kind: "live-provider",
+          provider: "deepseek",
+          apiKey: "synthetic-private-key",
+        },
+      },
+    ],
     [
       "nested raw headers",
       { ...record, runtime: { sessionId: "fixture", headers: { Authorization: "fixture-key" } } },
@@ -104,6 +125,19 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
     await expect(run("--record", recordPath, "--out", outputPath)).rejects.toThrow();
     expect(await readdir(root)).toEqual(["source.json"]);
   });
+
+  it.each(["live-provider", "deterministic-fixture", "unverified"])(
+    "preserves explicitly recorded model evidence kind %s",
+    async (kind) => {
+      const payload = JSON.stringify({
+        ...record,
+        modelEvidence: { kind, provider: "deepseek", model: "synthetic-schema-model" },
+      });
+      await writeFile(recordPath, payload);
+      await run("--record", recordPath, "--out", outputPath);
+      expect(await readFile(join(outputPath, "run-record.json"), "utf8")).toBe(payload);
+    },
+  );
 
   it.each([
     [
@@ -145,6 +179,25 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
       expect(await readFile(recordPath, "utf8")).toBe(payload);
     },
   );
+
+  it("preserves an optional base commit without filling it into historical records", async () => {
+    const payload = JSON.stringify({
+      ...record,
+      task: { ...record.task, baseSha: "b".repeat(40) },
+    });
+    await writeFile(recordPath, payload);
+    await run("--record", recordPath, "--out", outputPath);
+    expect(await readFile(join(outputPath, "run-record.json"), "utf8")).toBe(payload);
+  });
+  it.each(["issue", "repository"])("accepts explicit read-only %s task metadata", async (kind) => {
+    const payload = JSON.stringify({
+      ...record,
+      task: { ...record.task, pullNumber: 0, kind, operation: "task" },
+    });
+    await writeFile(recordPath, payload);
+    await run("--record", recordPath, "--out", outputPath);
+    expect(await readFile(join(outputPath, "run-record.json"), "utf8")).toBe(payload);
+  });
 
   it("bounds scanning depth and nodes before JSON.parse or directory creation", async () => {
     await writeFile(recordPath, `${"[".repeat(41)}0${"]".repeat(41)}`);

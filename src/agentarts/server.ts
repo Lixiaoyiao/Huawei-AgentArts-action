@@ -9,7 +9,13 @@ import {
   type ReviewTask,
   type RuntimeReply,
 } from "./protocol.js";
-import { runAgentArtsReview } from "./worker.js";
+import { runAgentArtsReview, runAgentArtsReadOnlyTask } from "./worker.js";
+import {
+  readOnlyTaskSchema,
+  type ReadOnlyTask,
+  type ReadOnlyTaskReply,
+} from "./readonly-task-protocol.js";
+import { modelPolicy } from "./model-policy.js";
 
 export interface AgentArtsServerOptions {
   /** Supervisor environment, inaccessible to the DSH process. */
@@ -18,6 +24,10 @@ export interface AgentArtsServerOptions {
     task: ReviewTask,
     options: { readonly environment: NodeJS.ProcessEnv; readonly signal: AbortSignal },
   ) => Promise<RuntimeReply>;
+  readonly runReadOnlyTask?: (
+    task: ReadOnlyTask,
+    options: { readonly environment: NodeJS.ProcessEnv; readonly signal: AbortSignal },
+  ) => Promise<ReadOnlyTaskReply>;
   /** Tests can capture this bounded event stream without intercepting stdout. */
   readonly logEvent?: (event: RuntimeLogEvent) => void;
 }
@@ -28,7 +38,10 @@ export interface RuntimeLogEvent {
   readonly timestamp: string;
   readonly taskId: string;
   readonly repository: string;
-  readonly pullNumber: number;
+  readonly pullNumber?: number;
+  readonly operation?: "review" | "task" | "diagnose";
+  readonly baseSha?: string;
+  readonly entity?: ReadOnlyTask["binding"]["entity"];
   readonly headSha: string;
   readonly durationMs: number;
   readonly tools?: readonly {
@@ -92,7 +105,7 @@ async function readJson(request: IncomingMessage): Promise<unknown> {
     request.on("data", data).once("end", end).once("error", fail).once("aborted", aborted);
   });
   try {
-    return JSON.parse(body.toString("utf8")) as unknown;
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(body)) as unknown;
   } catch {
     throw new RequestBodyError(400, "Task body is not valid JSON");
   }
@@ -112,7 +125,9 @@ function reply(response: ServerResponse, status: number, body: unknown): void {
 /** Runtime protocol only. Publish and GitHub credentials remain in the Controller. */
 export function createAgentArtsServer(options: AgentArtsServerOptions = {}): AgentArtsServer {
   const environment = options.environment ?? process.env;
+  const policy = modelPolicy(environment);
   const execute = options.runReview ?? runAgentArtsReview;
+  const executeReadOnly = options.runReadOnlyTask ?? runAgentArtsReadOnlyTask;
   const logSecrets = [...collectControllerSecrets(environment), environment.API_KEY ?? ""];
   const logEvent =
     options.logEvent ??
@@ -120,7 +135,7 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
       process.stdout.write(`${redactKnownSecrets(JSON.stringify(event), logSecrets)}\n`);
     });
   const emit = (
-    task: ReviewTask,
+    task: ReviewTask | ReadOnlyTask,
     event: RuntimeLogEvent["event"],
     durationMs: number,
     extra: Pick<RuntimeLogEvent, "tools" | "code"> = {},
@@ -132,7 +147,10 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
         timestamp: new Date().toISOString(),
         taskId: task.taskId,
         repository: task.binding.repository,
-        pullNumber: task.binding.pullNumber,
+        ...(task.schemaVersion === 1
+          ? { pullNumber: task.binding.pullNumber, operation: "review" as const }
+          : { entity: task.binding.entity, operation: task.operation }),
+        baseSha: task.binding.baseSha,
         headSha: task.binding.headSha,
         durationMs,
         ...extra,
@@ -146,7 +164,10 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
   const handle = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     const path = new URL(request.url ?? "/", "http://runtime.invalid").pathname;
     if (path === "/ping" && request.method === "GET") {
-      reply(response, 200, { status: active === undefined ? "Healthy" : "HealthyBusy" });
+      reply(response, 200, {
+        status: active === undefined ? "Healthy" : "HealthyBusy",
+        modelPolicy: policy,
+      });
       return;
     }
     if (path !== "/invocations" || request.method !== "POST") {
@@ -156,11 +177,17 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
       request.resume();
       return;
     }
-    let task: ReviewTask;
+    let task: ReviewTask | ReadOnlyTask;
     try {
-      const parsed = reviewTaskSchema.safeParse(await readJson(request));
+      const raw = await readJson(request);
+      const version =
+        typeof raw === "object" && raw !== null && "schemaVersion" in raw
+          ? raw.schemaVersion
+          : undefined;
+      const parsed =
+        version === 2 ? readOnlyTaskSchema.safeParse(raw) : reviewTaskSchema.safeParse(raw);
       if (!parsed.success)
-        throw new RequestBodyError(400, "Task failed the bounded review protocol");
+        throw new RequestBodyError(400, "Task failed the bounded read-only protocol");
       task = parsed.data;
     } catch (error: unknown) {
       const bodyError =
@@ -176,7 +203,7 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
       reply(response, 409, {
         error: {
           code: "RUNTIME_BUSY",
-          message: "Runtime admits one active review; this task did not start",
+          message: "Runtime admits one active task; this task did not start",
         },
       });
       return;
@@ -219,7 +246,10 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
     }, task.timeoutMs);
     timer.unref();
     try {
-      const result = await execute(task, { environment, signal: cancellation.signal });
+      const result =
+        task.schemaVersion === 1
+          ? await execute(task, { environment, signal: cancellation.signal })
+          : await executeReadOnly(task, { environment, signal: cancellation.signal });
       if (cancellation.signal.aborted) throw new DshAbortedError();
       const serializedBytes = Buffer.byteLength(JSON.stringify(result));
       if (serializedBytes > MAX_TASK_BYTES)
@@ -242,10 +272,10 @@ export function createAgentArtsServer(options: AgentArtsServerOptions = {}): Age
         error: {
           code: timedOut ? "TASK_TIMEOUT" : aborted ? "TASK_CANCELLED" : "WORKER_FAILED",
           message: timedOut
-            ? "Review exceeded its execution deadline"
+            ? "Task exceeded its execution deadline"
             : aborted
-              ? "Review was cancelled before a result was accepted"
-              : "DSH review failed; no result may be published",
+              ? "Task was cancelled before a result was accepted"
+              : "DSH task failed; no result may be published",
           taskId: task.taskId,
         },
       });

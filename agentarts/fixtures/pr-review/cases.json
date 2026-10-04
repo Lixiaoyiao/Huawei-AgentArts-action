@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "suiteVersion": "pr-review-boundaries-v1",
+  "origin": "Synthetic, repository-owned review fixtures; these are not real GitHub PRs.",
+  "cases": [
+    {
+      "id": "bounds-defect",
+      "version": 1,
+      "kind": "defect",
+      "oracle": "exclusive-upper-bound",
+      "path": "src/bounds.ts",
+      "base": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n",
+      "head": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index <= length;\n}\n",
+      "patch": "@@ -1,3 +1,3 @@\n export function inBounds(index: number, length: number): boolean {\n-  return index >= 0 && index < length;\n+  return index >= 0 && index <= length;\n }\n",
+      "requirements": "For nonnegative integer length, valid integer indices are 0 through length-1. Empty collections have no valid index. This change is intended to preserve the public function contract.",
+      "expectedLines": [2],
+      "successCriteria": "Report an actionable correctness finding on the changed upper-bound comparison, supported by the concrete index===length counterexample; no unrelated actionable finding.",
+      "counterexamples": [
+        { "input": { "index": 3, "length": 3 }, "expected": false, "observed": true },
+        { "input": { "index": 0, "length": 0 }, "expected": false, "observed": true }
+      ]
+    },
+    {
+      "id": "roles-defect",
+      "version": 1,
+      "kind": "defect",
+      "oracle": "all-required-roles",
+      "path": "src/access.ts",
+      "base": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.every(role => userRoles.includes(role));\n}\n",
+      "head": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.some(role => userRoles.includes(role));\n}\n",
+      "patch": "@@ -1,3 +1,3 @@\n export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n-  return requiredRoles.every(role => userRoles.includes(role));\n+  return requiredRoles.some(role => userRoles.includes(role));\n }\n",
+      "requirements": "Access requires every role in requiredRoles, not just one. If requiredRoles is empty, access is permitted. This change must preserve authorization behavior, including empty requirements.",
+      "expectedLines": [2],
+      "successCriteria": "Report the authorization regression at the changed quantifier, with evidence that a partially qualified user is admitted or empty requirements are wrongly denied; no unrelated actionable finding.",
+      "counterexamples": [
+        {
+          "input": { "userRoles": ["reader"], "requiredRoles": ["reader", "owner"] },
+          "expected": false,
+          "observed": true
+        },
+        { "input": { "userRoles": [], "requiredRoles": [] }, "expected": true, "observed": false }
+      ]
+    },
+    {
+      "id": "bounds-clean",
+      "version": 1,
+      "kind": "clean",
+      "oracle": "exclusive-upper-bound",
+      "path": "src/bounds.ts",
+      "base": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n",
+      "head": "export function inBounds(index: number, length: number): boolean {\n  const belowUpperBound = index < length;\n  return index >= 0 && belowUpperBound;\n}\n",
+      "patch": "@@ -1,3 +1,4 @@\n export function inBounds(index: number, length: number): boolean {\n-  return index >= 0 && index < length;\n+  const belowUpperBound = index < length;\n+  return index >= 0 && belowUpperBound;\n }\n",
+      "requirements": "For nonnegative integer length, valid integer indices are 0 through length-1. Empty collections have no valid index. This readability refactor should preserve the public function contract.",
+      "expectedLines": [2, 3],
+      "successCriteria": "Return no high-precision actionable finding: the refactor retains the exclusive upper bound and the lower bound. Style suggestions are not defects.",
+      "counterexamples": [
+        { "input": { "index": 3, "length": 3 }, "expected": false, "observed": false },
+        { "input": { "index": -1, "length": 3 }, "expected": false, "observed": false },
+        { "input": { "index": 2, "length": 3 }, "expected": true, "observed": true }
+      ]
+    },
+    {
+      "id": "roles-clean",
+      "version": 1,
+      "kind": "clean",
+      "oracle": "all-required-roles",
+      "path": "src/access.ts",
+      "base": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.every(role => userRoles.includes(role));\n}\n",
+      "head": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  const available = new Set(userRoles);\n  return requiredRoles.every(role => available.has(role));\n}\n",
+      "patch": "@@ -1,3 +1,4 @@\n export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n-  return requiredRoles.every(role => userRoles.includes(role));\n+  const available = new Set(userRoles);\n+  return requiredRoles.every(role => available.has(role));\n }\n",
+      "requirements": "Access requires every role in requiredRoles. Empty requirements permit access. Role comparison is case-sensitive exact string equality. Replacing includes with a Set should preserve authorization behavior.",
+      "expectedLines": [2, 3],
+      "successCriteria": "Return no high-precision actionable finding: all required roles and empty requirements preserve their original semantics.",
+      "counterexamples": [
+        {
+          "input": { "userRoles": ["reader"], "requiredRoles": ["reader", "owner"] },
+          "expected": false,
+          "observed": false
+        },
+        { "input": { "userRoles": [], "requiredRoles": [] }, "expected": true, "observed": true },
+        {
+          "input": { "userRoles": ["reader", "owner"], "requiredRoles": ["reader", "owner"] },
+          "expected": true,
+          "observed": true
+        }
+      ]
+    }
+  ]
+}

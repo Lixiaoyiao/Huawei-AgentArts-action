@@ -11,7 +11,8 @@ COPY assets ./assets
 COPY scripts ./scripts
 COPY tsconfig.json ./
 COPY test/fixtures/messages-sse.mjs test/fixtures/messages-sse.d.mts ./test/fixtures/
-RUN npm run build:agentarts
+# Only the Runtime is deployed; host Controller/evaluation bundles are built separately.
+RUN node scripts/build-agentarts.mjs --runtime-only
 
 FROM node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d
 WORKDIR /opt/app

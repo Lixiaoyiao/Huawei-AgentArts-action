@@ -103,7 +103,7 @@ describe("AgentArts HTTPS client (simulated transport)", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
-  it.each([401, 429, 500, 504])(
+  it.each([401, 429, 500, 504, 499])(
     "does not retry HTTP %s and still stops the session",
     async (status) => {
       const fetcher = simulatedFetch(
@@ -112,8 +112,32 @@ describe("AgentArts HTTPS client (simulated transport)", () => {
       await expect(invokeReview(config, task(), { fetchImplementation: fetcher })).rejects.toThrow(
         `HTTP ${String(status)}`,
       );
+      await expect(
+        invokeReview(config, task(), {
+          fetchImplementation: simulatedFetch(() => new Response(null, { status })),
+        }),
+      ).rejects.toMatchObject({
+        code: status === 504 ? "DSH_TIMEOUT" : status === 499 ? "DSH_ABORTED" : "DSH_CONFIGURATION",
+      });
       expect(fetcher).toHaveBeenCalledTimes(2);
       expect(inputUrl(fetcher.mock.calls[1]?.[0])).toContain("/sessions-stop?");
+    },
+  );
+
+  it.each([Buffer.from('{"synthetic-private-key":'), Buffer.from([0xff, 0xfe])])(
+    "rejects invalid response encoding/JSON without logging its contents",
+    async (body) => {
+      const fetcher = simulatedFetch(
+        () => new Response(body, { headers: { "content-type": "application/json" } }),
+      );
+      await expect(invokeReview(config, task(), { fetchImplementation: fetcher })).rejects.toThrow(
+        "valid UTF-8 JSON",
+      );
+      try {
+        await invokeReview(config, task(), { fetchImplementation: fetcher });
+      } catch (error) {
+        expect(String(error)).not.toContain("synthetic-private-key");
+      }
     },
   );
 

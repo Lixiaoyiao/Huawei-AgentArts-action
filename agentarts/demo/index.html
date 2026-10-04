@@ -117,6 +117,7 @@
         line-height: 1.25;
         letter-spacing: -0.04em;
         margin: 0 0 12px;
+        text-wrap: balance;
       }
       h2 {
         font-size: 16px;
@@ -660,7 +661,7 @@
       <section class="intro" aria-labelledby="title">
         <div>
           <p class="eyebrow">RUN OBSERVATORY</p>
-          <h1 id="title">让每一步执行都有依据。</h1>
+          <h1 id="title">GitHub 任务运行记录</h1>
           <p>
             查看 GitHub 任务、DSH
             工具调用与控制端验证。页面只展示运行记录中的数据，云端、本地和模拟运行会明确标识。
@@ -679,6 +680,7 @@
       <div id="message" class="message" role="status" hidden></div>
       <div class="meta-strip">
         <span class="badge neutral" id="mode">未载入</span
+        ><span class="badge neutral" id="modelEvidence">模型来源未记录</span
         ><span class="badge neutral" id="sourceBadge">等待记录</span
         ><span class="source" id="source">选择导出的 run-record.json，或连接本地记录服务。</span
         ><time id="updated"></time>
@@ -708,8 +710,12 @@
                   ><span id="taskId" class="field-value mono"></span>
                 </div>
                 <div class="field">
-                  <span class="field-label">绑定提交</span
+                  <span class="field-label">任务提交（head）</span
                   ><span id="headSha" class="field-value mono"></span>
+                </div>
+                <div class="field hidden" id="baseField">
+                  <span class="field-label">基准提交（base）</span
+                  ><span id="baseSha" class="field-value mono"></span>
                 </div>
               </div>
             </div>
@@ -773,7 +779,7 @@
         <section class="panel" aria-labelledby="runtimeHeading">
           <div class="panel-head">
             <h2 id="runtimeHeading">运行追踪</h2>
-            <span class="minor">按记录核对云端运行</span>
+            <span class="minor">按记录核对运行来源</span>
           </div>
           <div class="panel-body">
             <div class="runtime-grid">
@@ -878,6 +884,18 @@
           throw new Error("记录缺少明确的 cloud / local / simulation 运行模式。");
         if (!record.task || typeof record.task !== "object" || Array.isArray(record.task))
           throw new Error("记录缺少 task 对象。");
+        if (record.task.baseSha !== undefined && typeof record.task.baseSha !== "string")
+          throw new Error("基准提交记录格式不受支持。");
+        if (
+          record.task.kind !== undefined &&
+          !["pull_request", "issue", "repository"].includes(record.task.kind)
+        )
+          throw new Error("任务类型不受支持。");
+        if (
+          record.task.operation !== undefined &&
+          !["review", "task", "diagnose"].includes(record.task.operation)
+        )
+          throw new Error("任务操作不受支持。");
         if (!Array.isArray(record.stages) || !Array.isArray(record.tools))
           throw new Error("记录中的 stages 和 tools 必须是数组。");
         if (record.stages.length > 1000 || record.tools.length > 10000)
@@ -904,7 +922,33 @@
           throw new Error("warnings 必须是字符串数组。");
         if (record.validation.checks.length > 1000 || (record.warnings || []).length > 1000)
           throw new Error("验证检查或警告条目过多，已停止载入。");
+        if (
+          record.modelEvidence !== undefined &&
+          (!record.modelEvidence ||
+            typeof record.modelEvidence !== "object" ||
+            Array.isArray(record.modelEvidence) ||
+            Object.keys(record.modelEvidence).some(
+              (key) => !["kind", "provider", "model"].includes(key),
+            ) ||
+            !["live-provider", "deterministic-fixture", "unverified"].includes(
+              record.modelEvidence.kind,
+            ) ||
+            record.modelEvidence.provider !== "deepseek" ||
+            (record.modelEvidence.model !== undefined &&
+              (typeof record.modelEvidence.model !== "string" ||
+                record.modelEvidence.model.length > 256)))
+        )
+          throw new Error("模型来源证据格式不受支持，已停止载入。");
         return record;
+      }
+      function parseRecord(text) {
+        let record;
+        try {
+          record = JSON.parse(text);
+        } catch {
+          throw new Error("运行记录不是有效的 JSON，已停止载入。");
+        }
+        return validate(record);
       }
       function render(record, source) {
         $("empty").classList.add("hidden");
@@ -915,6 +959,19 @@
           simulation: ["模拟运行", "warning"],
         };
         badge($("mode"), ...modes[record.mode]);
+        const modelEvidence = record.modelEvidence;
+        const modelLabels = {
+          "live-provider": ["真实模型服务 · DeepSeek", "neutral"],
+          "deterministic-fixture": ["固定模型响应夹具", "neutral"],
+          unverified: ["模型来源未验证", "warning"],
+        };
+        badge(
+          $("modelEvidence"),
+          ...(modelEvidence ? modelLabels[modelEvidence.kind] : ["模型来源未记录", "neutral"]),
+        );
+        $("modelEvidence").title = modelEvidence?.model
+          ? `记录中的模型：${modelEvidence.model}`
+          : "来源标记来自运行记录；请结合原始执行证据核对。";
         badge(
           $("sourceBadge"),
           source === "export"
@@ -935,15 +992,30 @@
           `读取于 ${lastLoadedAt.toLocaleTimeString("zh-CN", { hour12: false })}`;
         $("updated").dateTime = lastLoadedAt.toISOString();
         $("taskName").textContent = str(record.task.repository, "未提供仓库");
+        $("title").textContent =
+          record.task.operation === "diagnose"
+            ? "CI 诊断运行记录"
+            : record.task.operation === "task"
+              ? "GitHub 任务处理记录"
+              : record.task.kind === "pull_request" ||
+                  (!record.task.kind && record.task.pullNumber > 0)
+                ? "PR 审查运行记录"
+                : "GitHub 任务运行记录";
         const taskUrl = githubUrl(record.task.url);
         $("taskDesc").replaceChildren(
           node(
             "span",
-            Number.isInteger(record.task.pullNumber) && record.task.pullNumber > 0
-              ? `Pull Request #${record.task.pullNumber}`
-              : "未提供 PR 编号",
+            record.task.kind === "issue"
+              ? "Issue 任务"
+              : record.task.kind === "repository"
+                ? "仓库任务"
+                : Number.isInteger(record.task.pullNumber) && record.task.pullNumber > 0
+                  ? `Pull Request #${record.task.pullNumber}`
+                  : "未提供 PR 编号",
           ),
         );
+        if (record.task.operation)
+          $("taskDesc").append(node("span", ` · ${record.task.operation}`));
         if (taskUrl) {
           $("taskDesc").append(node("span", " · "));
           const a = node("a", "查看任务 ↗");
@@ -954,6 +1026,8 @@
         }
         $("taskId").textContent = str(record.task.id);
         $("headSha").textContent = str(record.task.headSha);
+        $("baseSha").textContent = str(record.task.baseSha, "");
+        $("baseField").classList.toggle("hidden", !$("baseSha").textContent);
         $("duration").textContent = duration(record.durationMs);
         const outcome = record.stages.some((s) => s.status === "failed")
           ? ["含失败阶段", "error"]
@@ -1080,7 +1154,7 @@
           const text = await response.text();
           if (new TextEncoder().encode(text).length > MAX_BYTES)
             throw new Error("运行记录超过 2 MiB。");
-          const record = validate(JSON.parse(text));
+          const record = parseRecord(text);
           if (!live) return;
           if (text !== lastPayload) {
             render(record, staticSnapshot ? "export" : "server");
@@ -1121,7 +1195,7 @@
         stop();
         try {
           if (file.size > MAX_BYTES) throw new Error("运行记录超过 2 MiB。");
-          const record = validate(JSON.parse(await file.text()));
+          const record = parseRecord(await file.text());
           render(record, "file");
           message("");
         } catch (error) {

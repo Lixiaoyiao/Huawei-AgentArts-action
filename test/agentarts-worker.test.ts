@@ -324,7 +324,18 @@ describe("AgentArts Runtime HTTP lifecycle", () => {
     const baseUrl = await listen(
       createAgentArtsServer({ environment, runReview, logEvent: (event) => events.push(event) }),
     );
-    expect(await (await fetch(`${baseUrl}/ping`)).json()).toEqual({ status: "Healthy" });
+    const health = (await (await fetch(`${baseUrl}/ping`)).json()) as {
+      status: string;
+      modelPolicy: unknown;
+    };
+    expect(health.status).toBe("Healthy");
+    expect(health.modelPolicy).toMatchObject({
+      kind: "unverified",
+      provider: "deepseek",
+      requestLimit: 12,
+      maxOutputTokens: 4096,
+    });
+    expect(JSON.stringify(health)).not.toContain(realKey);
     expect((await fetch(`${baseUrl}/exec`, { method: "POST" })).status).toBe(404);
     expect(
       (

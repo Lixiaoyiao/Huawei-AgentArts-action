@@ -51,6 +51,7 @@ export interface RunActionOptions {
   readonly assertAuthorizedRun?: (run: AuthorizedRun) => void;
   readonly createEngine?: (
     run: AuthorizedRun,
+    workspace: PreparedWorkspace,
   ) => NonNullable<AgentLoopDependencies["createEngine"]>;
 }
 
@@ -108,7 +109,7 @@ async function runActionInternal(
       ...(options.createEngine === undefined
         ? {}
         : {
-            createEngine: options.createEngine(preparation.run),
+            createEngine: options.createEngine(preparation.run, workspace),
           }),
     });
   } catch (error: unknown) {

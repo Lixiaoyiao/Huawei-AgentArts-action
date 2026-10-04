@@ -20,28 +20,18 @@ import {
   type WorkspaceFile,
   type RuntimeReply,
 } from "./protocol.js";
-
-const receiptSchema = z.strictObject({
-  schemaVersion: z.literal(1),
-  callId: z.string().min(1).max(256),
-  id: z.enum(["workspace.read", "workspace.search"]),
-  runtimeName: z.enum(["read", "read_image", "glob", "grep"]),
-  provider: z.literal("builtin"),
-  counted: z.boolean(),
-  ok: z.boolean(),
-  completed: z.boolean(),
-  durationMs: z.number().int().nonnegative(),
-  code: z.string().max(128).optional(),
-});
+import { readOnlyReceiptSchema as receiptSchema } from "./readonly-task-protocol.js";
 
 export function assertAgentArtsAuthorizedRun(run: AuthorizedRun): void {
   if (
-    run.command.operation !== "review" ||
+    !["review", "task", "diagnose"].includes(run.command.operation) ||
     run.command.requestedAccess !== "read" ||
-    run.snapshot?.kind !== "pull_request" ||
+    (run.command.operation === "review" && run.snapshot?.kind !== "pull_request") ||
     run.policy.trust === "trusted-write"
   )
-    throw new PolicyDeniedError("Huawei-AgentArts-action v1 accepts PR Review only");
+    throw new PolicyDeniedError(
+      "AgentArts currently accepts PR Review, read-only task and diagnose; write migration is not validated",
+    );
 }
 
 /** Versioned remote AgentEngine; GitHub authority and finalization stay upstream. */

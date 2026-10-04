@@ -41,6 +41,9 @@ import { effectiveExtensionPlan } from "../dsh/runner-policy.js";
 import { ControlledComposition } from "../dsh/controlled-composition.js";
 import type { DshRunRequest } from "../dsh/runner.js";
 import { parseDshOutput } from "../dsh/schema.js";
+import type { DshOperation } from "../dsh/schema.js";
+import type { TaskOutputSchema } from "../dsh/task-output.js";
+import type { AgentToolManifest } from "../agent/contracts.js";
 import { prepareControlledProfile } from "../extensions/profile.js";
 import { DSH_VERSION } from "../release.js";
 import {
@@ -49,6 +52,7 @@ import {
   collectControllerSecrets,
 } from "../security/env.js";
 import { removeMarkdownImages } from "../security/redaction.js";
+import { budgetedModelFetch, modelPolicy } from "./model-policy.js";
 import type { NativeToolId } from "../tools/schema.js";
 import {
   digest,
@@ -56,8 +60,17 @@ import {
   runtimeReplySchema,
   workspaceDigest,
   type RuntimeReply,
+  type ReviewTask,
   type WorkspaceFile,
 } from "./protocol.js";
+import {
+  readOnlyTaskSchema,
+  readOnlyTaskReplySchema,
+  readOnlyTaskDigest,
+  validateReadOnlyTaskOutput,
+  type ReadOnlyTask,
+  type ReadOnlyTaskReply,
+} from "./readonly-task-protocol.js";
 
 export const AGENTARTS_WORKER_UID = 10001;
 export const AGENTARTS_WORKER_GID = 10001;
@@ -121,6 +134,11 @@ async function assertSupervisorIsolation(actionRoot: string, testOnly: boolean):
       );
     }
   }
+}
+
+/** Production startup preflight; no task, environment flag or test bypass can weaken it. */
+export async function assertAgentArtsRuntimeIsolation(): Promise<void> {
+  await assertSupervisorIsolation(packagedRoot(), false);
 }
 
 async function permissions(
@@ -202,7 +220,51 @@ export async function runAgentArtsReview(
   options: AgentArtsWorkerOptions = {},
 ): Promise<RuntimeReply> {
   const task = reviewTaskSchema.parse(rawTask);
+  const result = await executeReadOnlyDsh(task, { operation: "review", toolCatalog: [] }, options);
+  return runtimeReplySchema.parse({
+    schemaVersion: 1,
+    taskId: task.taskId,
+    binding: task.binding,
+    ...result,
+  });
+}
+
+/** V2 adds generic task/diagnosis data and outer Controller requests, never worker write/exec authority. */
+export async function runAgentArtsReadOnlyTask(
+  rawTask: unknown,
+  options: AgentArtsWorkerOptions = {},
+): Promise<ReadOnlyTaskReply> {
+  const task = readOnlyTaskSchema.parse(rawTask);
+  const result = await executeReadOnlyDsh(
+    task,
+    {
+      operation: task.operation,
+      toolCatalog: task.toolCatalog,
+      ...(task.taskOutputSchema === undefined ? {} : { taskOutputSchema: task.taskOutputSchema }),
+    },
+    options,
+  );
+  return readOnlyTaskReplySchema.parse({
+    schemaVersion: 2,
+    taskId: task.taskId,
+    operation: task.operation,
+    binding: task.binding,
+    taskDigest: readOnlyTaskDigest(task),
+    ...result,
+  });
+}
+
+async function executeReadOnlyDsh(
+  task: ReviewTask | ReadOnlyTask,
+  configuration: {
+    readonly operation: Extract<DshOperation, "review" | "task" | "diagnose">;
+    readonly toolCatalog: readonly AgentToolManifest[];
+    readonly taskOutputSchema?: TaskOutputSchema;
+  },
+  options: AgentArtsWorkerOptions,
+) {
   const environment = options.environment ?? process.env;
+  const policy = modelPolicy(environment);
   const apiKey = environment.DEEPSEEK_API_KEY;
   if (apiKey === undefined || apiKey.trim() === "")
     throw new DshConfigurationError("Runtime supervisor DEEPSEEK_API_KEY is required");
@@ -256,14 +318,17 @@ export async function runAgentArtsReview(
     check();
     const nativeTools: readonly NativeToolId[] = task.tools;
     const prompt = buildDshPrompt({
-      operation: "review",
+      operation: configuration.operation,
       prompt: JSON.stringify(task.context, (_key, value: unknown) =>
         typeof value === "string" ? removeMarkdownImages(value) : value,
       ),
       trustedInstructions: removeMarkdownImages(task.instructions),
       trust: task.trust,
-      toolCatalog: [],
+      toolCatalog: configuration.toolCatalog,
       toolPolicy: { policyOwner: "controller", nativeTools },
+      ...(configuration.taskOutputSchema === undefined
+        ? {}
+        : { taskOutputSchema: configuration.taskOutputSchema }),
     });
     // This upstream helper only reads the optional extensions field when
     // selecting the already-audited empty controlled plan.
@@ -279,7 +344,7 @@ export async function runAgentArtsReview(
       plan,
       nativeTools,
       workspaceWrite: false,
-      expectedOperation: "review",
+      expectedOperation: configuration.operation,
       task: prompt,
       workerWorkspacePath: workspace,
       policyPluginPath: join(assets, "action-policy.mjs"),
@@ -309,6 +374,7 @@ export async function runAgentArtsReview(
       await permissions(file, 0o440, false, testOnly);
     }
     check();
+    const modelTransport = budgetedModelFetch(policy, signal);
     proxy = await startDeepSeekProxy({
       apiKey,
       baseUrl: environment.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com",
@@ -318,6 +384,7 @@ export async function runAgentArtsReview(
       requestTimeoutMs: Math.max(1, deadlineMs - Date.now()),
       maxRequestBytes: 2 * 1024 * 1024,
       maxResponseBytes: MAX_OUTPUT_BYTES,
+      fetchImplementation: modelTransport.fetchImplementation,
     });
     const allSecrets = [...knownSecrets, proxy.workerToken];
     const workerEnvironment = buildDshWorkerEnvironment({
@@ -363,11 +430,19 @@ export async function runAgentArtsReview(
         "Runtime DSH worker exited unsuccessfully",
       );
     }
-    const output = parseDshOutput(headlessResultText(processResult.stdout, allSecrets), "review");
+    const resultText = headlessResultText(processResult.stdout, allSecrets);
+    const parsedOutput = parseDshOutput(
+      resultText,
+      configuration.operation,
+      configuration.taskOutputSchema,
+    );
+    const output =
+      task.schemaVersion === 2 ? validateReadOnlyTaskOutput(parsedOutput, task) : parsedOutput;
     if (
-      output.toolRequest !== undefined ||
-      (output.changePlan?.length ?? 0) > 0 ||
-      (output.verification?.length ?? 0) > 0
+      task.schemaVersion === 1 &&
+      (output.toolRequest !== undefined ||
+        (output.changePlan?.length ?? 0) > 0 ||
+        (output.verification?.length ?? 0) > 0)
     ) {
       throw new DshConfigurationError(
         "Cloud review must not request Controller tools or claim workspace modifications/tests",
@@ -383,16 +458,14 @@ export async function runAgentArtsReview(
     );
     await verifyContext(workspace, task.files);
     check();
-    return runtimeReplySchema.parse({
-      schemaVersion: 1,
-      taskId: task.taskId,
-      binding: task.binding,
+    return {
       dshVersion: DSH_VERSION,
       output,
       durationMs: Date.now() - startedAt,
       workspaceDigest: workspaceDigest(task.files),
       toolReceipts: receipts,
-    });
+      modelExecution: { ...policy, requestCount: modelTransport.requestCount() },
+    };
   } catch (error: unknown) {
     check();
     throw error;

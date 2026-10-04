@@ -73995,12 +73995,15 @@ async function runAgentLoop(task, inputs, hooks, dependencies = {}) {
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
-/* harmony export */   $: () => (/* binding */ invokeReview),
-/* harmony export */   U: () => (/* binding */ runtimeUrl)
+/* harmony export */   $b: () => (/* binding */ invokeReview),
+/* harmony export */   UH: () => (/* binding */ runtimeUrl),
+/* harmony export */   ow: () => (/* binding */ invokeReadOnlyTask)
 /* harmony export */ });
-/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(961);
+/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(961);
 /* harmony import */ var _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(87156);
 /* harmony import */ var _protocol_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(81511);
+/* harmony import */ var _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(99552);
+
 
 
 
@@ -74025,6 +74028,13 @@ function runtimeUrl(config, operation = "invocations") {
 }
 /** One invocation, no automatic POST retries. Runtime payload is our versioned protocol. */
 async function invokeReview(config, task, options = {}) {
+    return invokeRuntime(config, task, _protocol_js__WEBPACK_IMPORTED_MODULE_1__.runtimeReplySchema, options);
+}
+/** Uses the same bounded authenticated transport and fresh-session cleanup as review. */
+async function invokeReadOnlyTask(config, task, options = {}) {
+    return invokeRuntime(config, task, _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_2__/* .readOnlyTaskReplySchema */ .d2, options);
+}
+async function invokeRuntime(config, task, replySchema, options) {
     const fetcher = options.fetchImplementation ?? fetch;
     const url = runtimeUrl(config);
     const body = JSON.stringify(task);
@@ -74047,6 +74057,10 @@ async function invokeReview(config, task, options = {}) {
         const requestId = response.headers.get("x-request-id");
         if (requestId && /^[A-Za-z0-9_-]{1,128}$/u.test(requestId))
             options.onRequestId?.(requestId);
+        if (response.status === 504)
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshError */ .I8("DSH_TIMEOUT", "Runtime invocation timed out (HTTP 504); no result was accepted or retried");
+        if (response.status === 499)
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshError */ .I8("DSH_ABORTED", "Runtime invocation was cancelled (HTTP 499); no result was accepted or retried");
         if (!response.ok)
             throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y(`Runtime invocation rejected (HTTP ${String(response.status)}); not retried`);
         if (!response.headers.get("content-type")?.includes("application/json"))
@@ -74070,19 +74084,26 @@ async function invokeReview(config, task, options = {}) {
         finally {
             await reader.cancel();
         }
-        return _protocol_js__WEBPACK_IMPORTED_MODULE_1__.runtimeReplySchema.parse(JSON.parse(Buffer.concat(chunks).toString("utf8")));
+        let parsed;
+        try {
+            parsed = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)));
+        }
+        catch {
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime response was not valid UTF-8 JSON; body was not logged");
+        }
+        return replySchema.parse(parsed);
     }
     catch (error) {
         if (options.signal?.aborted)
             throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshAbortedError */ .Jb();
         if (timeout.aborted)
             throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshTimeoutError */ .Zj(task.timeoutMs);
-        if (error instanceof zod__WEBPACK_IMPORTED_MODULE_2__/* .ZodError */ .G)
+        if (error instanceof zod__WEBPACK_IMPORTED_MODULE_3__/* .ZodError */ .G)
             throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime response failed strict schema validation");
         throw error;
     }
     finally {
-        // Stop only our fresh review session. Cleanup never changes the invocation outcome.
+        // Stop only this fresh invocation session. Cleanup never changes its outcome.
         // Abort need not propagate through the cloud frontend; the worker also has a hard deadline.
         try {
             const response = await fetcher(runtimeUrl(config, "sessions-stop"), {
@@ -74105,6 +74126,216 @@ async function invokeReview(config, task, options = {}) {
 
 /***/ }),
 
+/***/ 71939:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   L: () => (/* binding */ AgentArtsReadOnlyTaskEngine)
+/* harmony export */ });
+/* harmony import */ var node_crypto__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(77598);
+/* harmony import */ var node_crypto__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_crypto__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(36892);
+/* harmony import */ var _dsh_errors_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(87156);
+/* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(83916);
+/* harmony import */ var _lifecycle_cancellation_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(83257);
+/* harmony import */ var _security_env_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(13497);
+/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(13836);
+/* harmony import */ var _protocol_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(81511);
+/* harmony import */ var _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(99552);
+
+
+
+
+
+
+
+
+
+const contextPacketSchema = zod__WEBPACK_IMPORTED_MODULE_8__.object({
+    repository: zod__WEBPACK_IMPORTED_MODULE_8__.string(),
+    entity: zod__WEBPACK_IMPORTED_MODULE_8__.object({
+        kind: zod__WEBPACK_IMPORTED_MODULE_8__["enum"](["pull_request", "issue"]),
+        number: zod__WEBPACK_IMPORTED_MODULE_8__.number().int().positive(),
+        headSha: zod__WEBPACK_IMPORTED_MODULE_8__.string().optional(),
+        baseSha: zod__WEBPACK_IMPORTED_MODULE_8__.string().optional(),
+        changedFiles: zod__WEBPACK_IMPORTED_MODULE_8__.array(zod__WEBPACK_IMPORTED_MODULE_8__.object({ path: zod__WEBPACK_IMPORTED_MODULE_8__.string(), source: zod__WEBPACK_IMPORTED_MODULE_8__.string().optional() }))
+            .optional(),
+    })
+        .optional(),
+    textFiles: zod__WEBPACK_IMPORTED_MODULE_8__.array(zod__WEBPACK_IMPORTED_MODULE_8__.object({
+        path: zod__WEBPACK_IMPORTED_MODULE_8__.string(),
+        text: zod__WEBPACK_IMPORTED_MODULE_8__.string(),
+        repository: zod__WEBPACK_IMPORTED_MODULE_8__.string().optional(),
+        sourceSha: zod__WEBPACK_IMPORTED_MODULE_8__.string().optional(),
+    }))
+        .optional(),
+});
+/** Uses the original outer AgentLoop; Controller tool calls never execute inside the Runtime. */
+class AgentArtsReadOnlyTaskEngine {
+    config;
+    trust;
+    secrets;
+    options;
+    id = "dsh-agentarts";
+    version = "0.2.0-rc.2";
+    binding;
+    constructor(config, trust, binding, secrets, options = {}) {
+        this.config = config;
+        this.trust = trust;
+        this.secrets = secrets;
+        this.options = options;
+        this.binding = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyBindingSchema */ .H0.parse(binding);
+    }
+    async runTurn(request) {
+        (0,_lifecycle_cancellation_js__WEBPACK_IMPORTED_MODULE_3__/* .throwIfCancelled */ .d)(request.signal);
+        if (!_readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyOperationSchema */ .dN.safeParse(request.operation).success ||
+            request.requestedAccess !== "read" ||
+            this.trust === "trusted-write")
+            throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("AgentArts v2 currently admits read-only task and diagnose operations");
+        if (request.session !== undefined)
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_1__/* .DshConfigurationError */ ._y("Portable cloud DSH session resume is not implemented");
+        const operation = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyOperationSchema */ .dN.parse(request.operation);
+        const tools = [];
+        const toolCatalog = [];
+        for (const tool of request.tools) {
+            if (tool.provider === "builtin") {
+                if (!["workspace.read", "workspace.search"].includes(tool.id) ||
+                    tool.permissions.some((permission) => permission !== "read"))
+                    throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Read-only Runtime admits only native workspace read and search tools");
+                tools.push(zod__WEBPACK_IMPORTED_MODULE_8__["enum"](["workspace.read", "workspace.search"]).parse(tool.id));
+            }
+            else {
+                const manifest = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyControllerManifestSchema */ .VQ.safeParse(tool);
+                if (!manifest.success)
+                    throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Read-only Runtime cannot grant this Controller manifest");
+                toolCatalog.push(manifest.data);
+            }
+        }
+        const wrapped = zod__WEBPACK_IMPORTED_MODULE_8__.object({ taskContext: contextPacketSchema }).parse(request.context);
+        const packet = wrapped.taskContext;
+        if (packet.repository !== this.binding.repository)
+            throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Task context does not match the Controller repository binding");
+        const entity = this.binding.entity;
+        if (entity.kind === "repository") {
+            if (packet.entity !== undefined)
+                throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Repository task acquired an unbound issue or pull request");
+        }
+        else {
+            if (packet.entity?.kind !== entity.kind || packet.entity.number !== entity.number)
+                throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Task context does not match the Controller entity binding");
+            if (entity.kind === "pull_request" &&
+                (packet.entity.headSha !== this.binding.headSha ||
+                    packet.entity.baseSha !== this.binding.baseSha))
+                throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Pull request context does not match the bound base/head commits");
+        }
+        const files = [];
+        if (this.trust === "trusted-read") {
+            const seen = new Map();
+            for (const text of packet.textFiles ?? []) {
+                if ((text.repository !== undefined && text.repository !== this.binding.repository) ||
+                    (text.sourceSha !== undefined && text.sourceSha !== this.binding.headSha))
+                    throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Context source file does not match the bound repository revision");
+            }
+            for (const source of [
+                ...(packet.entity?.changedFiles ?? []).map((file) => ({
+                    path: file.path,
+                    content: file.source,
+                })),
+                ...(packet.textFiles ?? []).map((file) => ({ path: file.path, content: file.text })),
+            ]) {
+                if (source.content === undefined)
+                    continue;
+                const file = {
+                    path: source.path,
+                    content: source.content,
+                    sha256: (0,_protocol_js__WEBPACK_IMPORTED_MODULE_6__/* .digest */ .br)(source.content),
+                };
+                const previous = seen.get(source.path.toLowerCase());
+                if (previous !== undefined) {
+                    if (previous.path !== file.path || previous.sha256 !== file.sha256)
+                        throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Ambiguous or conflicting context source files");
+                    continue;
+                }
+                seen.set(source.path.toLowerCase(), file);
+                files.push(file);
+            }
+        }
+        const task = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyTaskSchema */ .vX.parse({
+            schemaVersion: 2,
+            taskId: (0,node_crypto__WEBPACK_IMPORTED_MODULE_0__.randomUUID)(),
+            operation,
+            binding: this.binding,
+            trust: this.trust,
+            tools,
+            toolCatalog,
+            timeoutMs: Math.min(request.timeoutMs, request.deadlineMs - Date.now() - 15_000, _protocol_js__WEBPACK_IMPORTED_MODULE_6__/* .MAX_RUNTIME_MS */ .Nj),
+            instructions: request.instructions,
+            context: JSON.parse(JSON.stringify(request.context)),
+            files,
+            ...(operation !== "task" || this.options.taskOutputSchema === undefined
+                ? {}
+                : { taskOutputSchema: this.options.taskOutputSchema }),
+        });
+        (0,_security_env_js__WEBPACK_IMPORTED_MODULE_4__/* .assertNoSecretOutput */ .bt)("prompt", JSON.stringify(task), [...this.secrets, this.config.apiKey]);
+        await this.options.onTask?.(task);
+        const reply = await (this.options.invoke === undefined
+            ? (0,_client_js__WEBPACK_IMPORTED_MODULE_5__/* .invokeReadOnlyTask */ .ow)(this.config, task, {
+                ...(request.signal === undefined ? {} : { signal: request.signal }),
+                ...(this.options.onRequestId === undefined
+                    ? {}
+                    : { onRequestId: this.options.onRequestId }),
+            })
+            : this.options.invoke(task, request.signal));
+        (0,_lifecycle_cancellation_js__WEBPACK_IMPORTED_MODULE_3__/* .throwIfCancelled */ .d)(request.signal);
+        const validated = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyTaskReplySchema */ .d2.parse(JSON.parse(JSON.stringify(reply)));
+        (0,_security_env_js__WEBPACK_IMPORTED_MODULE_4__/* .assertNoSecretOutput */ .bt)("stdout", JSON.stringify(validated), [
+            ...this.secrets,
+            this.config.apiKey,
+        ]);
+        if (validated.taskId !== task.taskId ||
+            validated.operation !== task.operation ||
+            JSON.stringify(validated.binding) !== JSON.stringify(task.binding) ||
+            validated.taskDigest !== (0,_readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyTaskDigest */ .aF)(task) ||
+            validated.workspaceDigest !== (0,_protocol_js__WEBPACK_IMPORTED_MODULE_6__/* .workspaceDigest */ .yp)(task.files))
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_1__/* .DshConfigurationError */ ._y("Runtime task, operation, source, grants or workspace binding mismatch");
+        const output = (0,_readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .validateReadOnlyTaskOutput */ .vd)(validated.output, task);
+        const toolReceipts = validated.toolReceipts.map((receipt) => {
+            const { code, ...rest } = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_7__/* .readOnlyReceiptSchema */ .oW.parse(receipt);
+            return { ...rest, ...(code === undefined ? {} : { code }) };
+        });
+        if (toolReceipts.some((receipt) => receipt.counted && !receipt.completed))
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_1__/* .DshConfigurationError */ ._y("Runtime returned unfinished native tool receipts");
+        if ((this.trust === "untrusted" && toolReceipts.length > 0) ||
+            toolReceipts.some((receipt) => !task.tools.includes(receipt.id)))
+            throw new _errors_js__WEBPACK_IMPORTED_MODULE_2__/* .PolicyDeniedError */ .uB("Runtime reported an ungranted native tool receipt");
+        await this.options.onValidated?.(validated);
+        return {
+            output,
+            durationMs: validated.durationMs,
+            metadata: {
+                toolReceipts,
+                isolationReport: {
+                    backend: "agentarts",
+                    credentialMediated: true,
+                    repoToolsEnabled: task.tools.length > 0,
+                    processIsolated: true,
+                    networkIsolated: false,
+                    workspaceAccess: "read-only",
+                    extensionProfile: "github-action",
+                    limitations: [
+                        "Runtime supervisor and DSH use separate Unix identities; cloud deployment verification is required.",
+                        "Only bounded admitted text is transferred. Native shell, writes, extensions and arbitrary network tools remain disabled.",
+                        "Controller requests return to the existing outer loop and remain subject to its capability, immutable entity and input checks.",
+                    ],
+                },
+            },
+        };
+    }
+}
+
+
+/***/ }),
+
 /***/ 7221:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
@@ -74114,7 +74345,7 @@ async function invokeReview(config, task, options = {}) {
 /* harmony export */ });
 /* harmony import */ var node_crypto__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(77598);
 /* harmony import */ var node_crypto__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_crypto__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(36892);
+/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(36892);
 /* harmony import */ var _dsh_schema_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(21190);
 /* harmony import */ var _dsh_errors_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(87156);
 /* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(83916);
@@ -74122,6 +74353,7 @@ async function invokeReview(config, task, options = {}) {
 /* harmony import */ var _lifecycle_cancellation_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(83257);
 /* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(13836);
 /* harmony import */ var _protocol_js__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(81511);
+/* harmony import */ var _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(99552);
 
 
 
@@ -74131,24 +74363,13 @@ async function invokeReview(config, task, options = {}) {
 
 
 
-const receiptSchema = zod__WEBPACK_IMPORTED_MODULE_8__.strictObject({
-    schemaVersion: zod__WEBPACK_IMPORTED_MODULE_8__.literal(1),
-    callId: zod__WEBPACK_IMPORTED_MODULE_8__.string().min(1).max(256),
-    id: zod__WEBPACK_IMPORTED_MODULE_8__["enum"](["workspace.read", "workspace.search"]),
-    runtimeName: zod__WEBPACK_IMPORTED_MODULE_8__["enum"](["read", "read_image", "glob", "grep"]),
-    provider: zod__WEBPACK_IMPORTED_MODULE_8__.literal("builtin"),
-    counted: zod__WEBPACK_IMPORTED_MODULE_8__.boolean(),
-    ok: zod__WEBPACK_IMPORTED_MODULE_8__.boolean(),
-    completed: zod__WEBPACK_IMPORTED_MODULE_8__.boolean(),
-    durationMs: zod__WEBPACK_IMPORTED_MODULE_8__.number().int().nonnegative(),
-    code: zod__WEBPACK_IMPORTED_MODULE_8__.string().max(128).optional(),
-});
+
 function assertAgentArtsAuthorizedRun(run) {
-    if (run.command.operation !== "review" ||
+    if (!["review", "task", "diagnose"].includes(run.command.operation) ||
         run.command.requestedAccess !== "read" ||
-        run.snapshot?.kind !== "pull_request" ||
+        (run.command.operation === "review" && run.snapshot?.kind !== "pull_request") ||
         run.policy.trust === "trusted-write")
-        throw new _errors_js__WEBPACK_IMPORTED_MODULE_3__/* .PolicyDeniedError */ .uB("Huawei-AgentArts-action v1 accepts PR Review only");
+        throw new _errors_js__WEBPACK_IMPORTED_MODULE_3__/* .PolicyDeniedError */ .uB("AgentArts currently accepts PR Review, read-only task and diagnose; write migration is not validated");
 }
 /** Versioned remote AgentEngine; GitHub authority and finalization stay upstream. */
 class AgentArtsReviewEngine {
@@ -74175,18 +74396,18 @@ class AgentArtsReviewEngine {
                 tool.provider !== "builtin" ||
                 tool.permissions.some((permission) => permission !== "read")))
             throw new _errors_js__WEBPACK_IMPORTED_MODULE_3__/* .PolicyDeniedError */ .uB("AgentArts v1 supports only PR Review with read/search tools");
-        const wrapped = zod__WEBPACK_IMPORTED_MODULE_8__.object({ taskContext: zod__WEBPACK_IMPORTED_MODULE_8__.unknown() }).parse(request.context);
-        const packet = zod__WEBPACK_IMPORTED_MODULE_8__.object({
-            repository: zod__WEBPACK_IMPORTED_MODULE_8__.string(),
-            entity: zod__WEBPACK_IMPORTED_MODULE_8__.object({
-                kind: zod__WEBPACK_IMPORTED_MODULE_8__.literal("pull_request"),
-                number: zod__WEBPACK_IMPORTED_MODULE_8__.number(),
-                headSha: zod__WEBPACK_IMPORTED_MODULE_8__.string(),
-                baseSha: zod__WEBPACK_IMPORTED_MODULE_8__.string(),
-                changedFiles: zod__WEBPACK_IMPORTED_MODULE_8__.array(zod__WEBPACK_IMPORTED_MODULE_8__.object({ path: zod__WEBPACK_IMPORTED_MODULE_8__.string(), source: zod__WEBPACK_IMPORTED_MODULE_8__.string().optional() }))
+        const wrapped = zod__WEBPACK_IMPORTED_MODULE_9__.object({ taskContext: zod__WEBPACK_IMPORTED_MODULE_9__.unknown() }).parse(request.context);
+        const packet = zod__WEBPACK_IMPORTED_MODULE_9__.object({
+            repository: zod__WEBPACK_IMPORTED_MODULE_9__.string(),
+            entity: zod__WEBPACK_IMPORTED_MODULE_9__.object({
+                kind: zod__WEBPACK_IMPORTED_MODULE_9__.literal("pull_request"),
+                number: zod__WEBPACK_IMPORTED_MODULE_9__.number(),
+                headSha: zod__WEBPACK_IMPORTED_MODULE_9__.string(),
+                baseSha: zod__WEBPACK_IMPORTED_MODULE_9__.string(),
+                changedFiles: zod__WEBPACK_IMPORTED_MODULE_9__.array(zod__WEBPACK_IMPORTED_MODULE_9__.object({ path: zod__WEBPACK_IMPORTED_MODULE_9__.string(), source: zod__WEBPACK_IMPORTED_MODULE_9__.string().optional() }))
                     .default([]),
             }),
-            textFiles: zod__WEBPACK_IMPORTED_MODULE_8__.array(zod__WEBPACK_IMPORTED_MODULE_8__.object({ path: zod__WEBPACK_IMPORTED_MODULE_8__.string(), text: zod__WEBPACK_IMPORTED_MODULE_8__.string() })).optional(),
+            textFiles: zod__WEBPACK_IMPORTED_MODULE_9__.array(zod__WEBPACK_IMPORTED_MODULE_9__.object({ path: zod__WEBPACK_IMPORTED_MODULE_9__.string(), text: zod__WEBPACK_IMPORTED_MODULE_9__.string() })).optional(),
         })
             .parse(wrapped.taskContext);
         if (packet.repository !== this.binding.repository ||
@@ -74221,7 +74442,7 @@ class AgentArtsReviewEngine {
         (0,_security_env_js__WEBPACK_IMPORTED_MODULE_4__/* .assertNoSecretOutput */ .bt)("prompt", JSON.stringify(task), [...this.secrets, this.config.apiKey]);
         await this.options.onTask?.(task);
         const reply = await (this.options.invoke === undefined
-            ? (0,_client_js__WEBPACK_IMPORTED_MODULE_6__/* .invokeReview */ .$)(this.config, task, {
+            ? (0,_client_js__WEBPACK_IMPORTED_MODULE_6__/* .invokeReview */ .$b)(this.config, task, {
                 ...(request.signal === undefined ? {} : { signal: request.signal }),
                 ...(this.options.onRequestId === undefined
                     ? {}
@@ -74246,7 +74467,7 @@ class AgentArtsReviewEngine {
             (output.verification?.length ?? 0) > 0)
             throw new _errors_js__WEBPACK_IMPORTED_MODULE_3__/* .PolicyDeniedError */ .uB("Review Runtime cannot request tools, modifications or claim executed tests");
         const toolReceipts = validated.toolReceipts.map((receipt) => {
-            const { code, ...rest } = receiptSchema.parse(receipt);
+            const { code, ...rest } = _readonly_task_protocol_js__WEBPACK_IMPORTED_MODULE_8__/* .readOnlyReceiptSchema */ .oW.parse(receipt);
             return { ...rest, ...(code === undefined ? {} : { code }) };
         });
         if (toolReceipts.some((receipt) => receipt.counted && !receipt.completed))
@@ -74301,7 +74522,11 @@ __nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __we
 /* harmony import */ var _result_js__WEBPACK_IMPORTED_MODULE_8__ = __nccwpck_require__(51666);
 /* harmony import */ var _security_env_js__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(13497);
 /* harmony import */ var _engine_js__WEBPACK_IMPORTED_MODULE_10__ = __nccwpck_require__(7221);
-/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_11__ = __nccwpck_require__(13836);
+/* harmony import */ var _engine_task_js__WEBPACK_IMPORTED_MODULE_11__ = __nccwpck_require__(71939);
+/* harmony import */ var _write_github_js__WEBPACK_IMPORTED_MODULE_12__ = __nccwpck_require__(80252);
+/* harmony import */ var _client_js__WEBPACK_IMPORTED_MODULE_13__ = __nccwpck_require__(13836);
+
+
 
 
 
@@ -74331,8 +74556,13 @@ const record = {
     durationMs: 0,
     warnings: [
         "工具清单来自执行回执；本记录不是 AgentArts 全链路 Trace。",
-        "PR Review 不执行仓库测试，也不发布文件修改。",
+        "当前云适配仅接入只读操作，不执行仓库测试，也不发布文件修改。",
     ],
+    modelEvidence: {
+        kind: "unverified",
+        provider: "deepseek",
+        model: "",
+    },
 };
 let secrets = [];
 async function save() {
@@ -74361,7 +74591,7 @@ try {
         endpoint: _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .getInput */ .V4("runtime-endpoint", { required: true }),
         apiKey: _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .getInput */ .V4("runtime-api-key", { required: true }),
     };
-    (0,_client_js__WEBPACK_IMPORTED_MODULE_11__/* .runtimeUrl */ .U)(config);
+    (0,_client_js__WEBPACK_IMPORTED_MODULE_13__/* .runtimeUrl */ .UH)(config);
     const githubToken = _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .getInput */ .V4("github-token", { required: true });
     secrets = [config.apiKey, githubToken];
     secrets.forEach((secret) => _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .setSecret */ .Pq(secret));
@@ -74374,11 +74604,11 @@ try {
         isolation: "docker",
         "allow-write": "false",
         "permission-profile": "custom",
-        "allowed-tools": '["workspace.read","workspace.search"]',
-        "max-turns": "1",
+        "allowed-tools": _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .getInput */ .V4("allowed-tools") || '["workspace.read","workspace.search"]',
+        "max-turns": _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .getInput */ .V4("max-turns") || "3",
         "progress-comment": "false",
         "session-mode": "off",
-        command: "auto",
+        command: _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .getInput */ .V4("command") || "auto",
     };
     const allowedInputs = new Set([
         "prompt",
@@ -74386,10 +74616,14 @@ try {
         "max-findings",
         "timeout-minutes",
         "bot-user-id",
+        "task-output-schema",
+        "base-branch",
     ]);
     const inputs = (0,_inputs_js__WEBPACK_IMPORTED_MODULE_4__/* .loadInputs */ .I)((name) => fixed[name] ?? (allowedInputs.has(name) ? _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .getInput */ .V4(name) : ""));
     if (inputs.timeoutMinutes > 10)
-        throw new _errors_js__WEBPACK_IMPORTED_MODULE_6__/* .PolicyDeniedError */ .uB("AgentArts v1 controller timeout must be at most 10 minutes");
+        throw new _errors_js__WEBPACK_IMPORTED_MODULE_6__/* .PolicyDeniedError */ .uB("AgentArts controller timeout must be at most 10 minutes");
+    if (inputs.allowedTools.some((id) => !["workspace.read", "workspace.search", "github.checks.read"].includes(id)))
+        throw new _errors_js__WEBPACK_IMPORTED_MODULE_6__/* .PolicyDeniedError */ .uB("This cloud adapter currently grants only workspace.read, workspace.search and Controller github.checks.read");
     record.runtime.endpoint = `${config.runtimeName}/${config.endpoint}`;
     await save();
     const outcome = await (0,_orchestrator_js__WEBPACK_IMPORTED_MODULE_5__/* .runAction */ .Cs)({
@@ -74397,58 +74631,103 @@ try {
         signal: cancellation.signal,
         assertAuthorizedRun: (run) => {
             (0,_engine_js__WEBPACK_IMPORTED_MODULE_10__/* .assertAgentArtsAuthorizedRun */ .i)(run);
-            if (run.snapshot?.kind !== "pull_request")
-                throw new _errors_js__WEBPACK_IMPORTED_MODULE_6__/* .PolicyDeniedError */ .uB("Missing PR snapshot");
             record.task = {
                 id: record.task.id,
                 repository: run.context.repository.fullName,
-                pullNumber: run.snapshot.number,
-                headSha: run.snapshot.headSha,
-                url: `https://github.com/${run.context.repository.fullName}/pull/${String(run.snapshot.number)}`,
+                pullNumber: run.snapshot?.kind === "pull_request" ? run.snapshot.number : 0,
+                headSha: run.snapshot?.kind === "pull_request" ? run.snapshot.headSha : "",
+                kind: run.snapshot?.kind ?? "repository",
+                operation: run.command.operation,
+                url: run.snapshot === undefined
+                    ? run.currentRunUrl
+                    : `https://github.com/${run.context.repository.fullName}/${run.snapshot.kind === "pull_request" ? "pull" : "issues"}/${String(run.snapshot.number)}`,
             };
         },
-        createEngine: (run) => () => {
-            if (run.snapshot?.kind !== "pull_request")
-                throw new _errors_js__WEBPACK_IMPORTED_MODULE_6__/* .PolicyDeniedError */ .uB("Missing PR snapshot");
-            return new _engine_js__WEBPACK_IMPORTED_MODULE_10__/* .AgentArtsReviewEngine */ .W(config, run.policy.trust, {
-                repository: run.context.repository.fullName,
-                pullNumber: run.snapshot.number,
-                baseSha: run.snapshot.baseSha,
-                headSha: run.snapshot.headSha,
-            }, secrets, {
+        createEngine: (run, workspace) => async () => {
+            const hooks = {
                 onRequestId: (id) => {
                     record.runtime.requestId = id;
                 },
                 onTask: async (task) => {
+                    record.validation = { status: "not-run", checks: [] };
                     record.task.id = task.taskId;
+                    record.task.baseSha = task.binding.baseSha;
+                    record.task.headSha = task.binding.headSha;
                     record.runtime.sessionId = task.taskId;
                     stage("AgentArts Runtime / DSH");
                     await save();
                     _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .info */ .pq(`AgentArts task=${task.taskId} repository=${task.binding.repository} head=${task.binding.headSha}`);
                 },
                 onValidated: async (reply) => {
-                    record.tools = reply.toolReceipts.map((value) => {
+                    record.modelEvidence = {
+                        kind: reply.modelExecution?.kind ?? "unverified",
+                        provider: "deepseek",
+                        model: reply.modelExecution?.model ?? "",
+                    };
+                    record.tools.push(...reply.toolReceipts.map((value) => {
                         const receipt = value;
                         return { id: receipt.id, ok: receipt.ok, durationMs: receipt.durationMs };
-                    });
+                    }));
                     stage("控制端独立结果校验");
+                    const finalResult = typeof reply.output === "object" &&
+                        reply.output !== null &&
+                        !Array.isArray(reply.output) &&
+                        reply.output.state === "final";
                     record.validation = {
-                        status: "passed",
+                        status: finalResult ? "passed" : "not-run",
                         checks: [
                             "严格结果协议",
-                            "仓库/PR/base/head绑定",
+                            "仓库/实体/base/head绑定",
                             "只读工作区摘要",
-                            "审查能力边界",
+                            "只读能力和工具授权边界",
                             "回执完整性",
                         ],
                     };
-                    stage("GitHub 提交复核与评论发布");
+                    stage("控制端工具回调或 GitHub 结果发布");
                     await save();
                 },
+            };
+            if (run.command.operation === "review") {
+                if (run.snapshot?.kind !== "pull_request")
+                    throw new _errors_js__WEBPACK_IMPORTED_MODULE_6__/* .PolicyDeniedError */ .uB("Missing PR snapshot");
+                return new _engine_js__WEBPACK_IMPORTED_MODULE_10__/* .AgentArtsReviewEngine */ .W(config, run.policy.trust, {
+                    repository: run.context.repository.fullName,
+                    pullNumber: run.snapshot.number,
+                    baseSha: run.snapshot.baseSha,
+                    headSha: run.snapshot.headSha,
+                }, secrets, hooks);
+            }
+            const sourceSha = run.snapshot?.kind === "pull_request"
+                ? run.snapshot.headSha
+                : (workspace.boundWriteSha ??
+                    (run.context.kind === "automation" ? run.context.workflowRun?.headSha : undefined) ??
+                    (run.baseBranch === undefined
+                        ? undefined
+                        : await (0,_write_github_js__WEBPACK_IMPORTED_MODULE_12__.getBranchHead)(run.client, run.context.repository.owner, run.context.repository.repo, run.baseBranch)));
+            if (sourceSha === undefined)
+                throw new _errors_js__WEBPACK_IMPORTED_MODULE_6__/* .PolicyDeniedError */ .uB("Read-only cloud task requires a Controller-bound immutable source revision");
+            const binding = {
+                repository: run.context.repository.fullName,
+                baseSha: run.snapshot?.kind === "pull_request" ? run.snapshot.baseSha : sourceSha,
+                headSha: sourceSha,
+                entity: run.snapshot === undefined
+                    ? { kind: "repository" }
+                    : { kind: run.snapshot.kind, number: run.snapshot.number },
+            };
+            return new _engine_task_js__WEBPACK_IMPORTED_MODULE_11__/* .AgentArtsReadOnlyTaskEngine */ .L(config, run.policy.trust, binding, secrets, {
+                ...hooks,
+                ...(inputs.taskOutputSchema === undefined
+                    ? {}
+                    : { taskOutputSchema: inputs.taskOutputSchema }),
             });
         },
     });
     const last = stages.at(-1);
+    record.tools.push(...(outcome.agent?.toolReceipts ?? []).map(({ id, ok, durationMs }) => ({
+        id,
+        ok,
+        durationMs,
+    })));
     if (last?.status === "running") {
         last.status = outcome.conclusion === "failure" ? "failed" : "passed";
         last.completedAt = new Date().toISOString();
@@ -74461,14 +74740,15 @@ try {
             ? {}
             : { error: `${outcome.error.code}: ${outcome.error.message}` }),
     };
-    if (outcome.conclusion === "failure" && record.validation.status !== "passed")
+    if (outcome.conclusion === "failure" &&
+        (record.validation.status !== "passed" || outcome.error?.phase === "agent"))
         record.validation.status = "failed";
     await save();
     for (const [name, value] of Object.entries((0,_result_js__WEBPACK_IMPORTED_MODULE_8__/* .buildActionOutputs */ .rJ)(outcome)))
         _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .setOutput */ .uH(name, value);
     _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .setOutput */ .uH("run-record", outputPath);
     await _actions_core__WEBPACK_IMPORTED_MODULE_0__/* .summary */ .z
-        .addHeading("Huawei-AgentArts-action · PR Review")
+        .addHeading(`Huawei-AgentArts-action · ${record.task.operation ?? "task"}`)
         .addRaw((0,_result_js__WEBPACK_IMPORTED_MODULE_8__/* .formatStepSummary */ .oN)(outcome))
         .write();
     if (outcome.conclusion === "failure")
@@ -74501,14 +74781,17 @@ __webpack_async_result__();
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   Ho: () => (/* binding */ MAX_WORKSPACE_BYTES),
+/* harmony export */   LQ: () => (/* binding */ workspaceFileSchema),
 /* harmony export */   Nj: () => (/* binding */ MAX_RUNTIME_MS),
 /* harmony export */   br: () => (/* binding */ digest),
+/* harmony export */   l6: () => (/* binding */ bindingSchema),
 /* harmony export */   n_: () => (/* binding */ MAX_TASK_BYTES),
 /* harmony export */   runtimeReplySchema: () => (/* binding */ runtimeReplySchema),
 /* harmony export */   vc: () => (/* binding */ reviewTaskSchema),
 /* harmony export */   yp: () => (/* binding */ workspaceDigest)
 /* harmony export */ });
-/* unused harmony exports AGENTARTS_PROTOCOL_VERSION, MAX_WORKSPACE_BYTES, bindingSchema, safeWorkspacePath, workspaceFileSchema */
+/* unused harmony exports AGENTARTS_PROTOCOL_VERSION, safeWorkspacePath */
 /* harmony import */ var node_crypto__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(77598);
 /* harmony import */ var node_crypto__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(node_crypto__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(36892);
@@ -74579,9 +74862,181 @@ const runtimeReplySchema = zod__WEBPACK_IMPORTED_MODULE_1__.strictObject({
     durationMs: zod__WEBPACK_IMPORTED_MODULE_1__.number().int().nonnegative(),
     workspaceDigest: zod__WEBPACK_IMPORTED_MODULE_1__.string().regex(/^[a-f0-9]{64}$/u),
     toolReceipts: zod__WEBPACK_IMPORTED_MODULE_1__.array(zod__WEBPACK_IMPORTED_MODULE_1__.json()).max(1000),
+    modelExecution: zod__WEBPACK_IMPORTED_MODULE_1__.strictObject({
+        kind: zod__WEBPACK_IMPORTED_MODULE_1__["enum"](["live-provider", "deterministic-fixture", "unverified"]),
+        provider: zod__WEBPACK_IMPORTED_MODULE_1__.literal("deepseek"),
+        model: zod__WEBPACK_IMPORTED_MODULE_1__["enum"](["deepseek-v4-pro", "deepseek-flash"]),
+        upstreamOrigin: zod__WEBPACK_IMPORTED_MODULE_1__.url().max(2048),
+        requestCount: zod__WEBPACK_IMPORTED_MODULE_1__.number().int().min(0).max(32),
+        requestLimit: zod__WEBPACK_IMPORTED_MODULE_1__.number().int().min(1).max(32),
+        maxOutputTokens: zod__WEBPACK_IMPORTED_MODULE_1__.number().int().min(1).max(8192),
+    })
+        .refine((value) => value.requestCount <= value.requestLimit, "Provider count exceeds policy")
+        .refine((value) => value.kind !== "live-provider" ||
+        (value.requestCount > 0 && value.upstreamOrigin === "https://api.deepseek.com"), "Live evidence requires an actual official provider request")
+        .optional(),
 });
 function workspaceDigest(files) {
     return digest(JSON.stringify([...files].sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))));
+}
+
+
+/***/ }),
+
+/***/ 99552:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   H0: () => (/* binding */ readOnlyBindingSchema),
+/* harmony export */   VQ: () => (/* binding */ readOnlyControllerManifestSchema),
+/* harmony export */   aF: () => (/* binding */ readOnlyTaskDigest),
+/* harmony export */   d2: () => (/* binding */ readOnlyTaskReplySchema),
+/* harmony export */   dN: () => (/* binding */ readOnlyOperationSchema),
+/* harmony export */   oW: () => (/* binding */ readOnlyReceiptSchema),
+/* harmony export */   vX: () => (/* binding */ readOnlyTaskSchema),
+/* harmony export */   vd: () => (/* binding */ validateReadOnlyTaskOutput)
+/* harmony export */ });
+/* harmony import */ var zod__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(36892);
+/* harmony import */ var _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(87156);
+/* harmony import */ var _dsh_schema_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(21190);
+/* harmony import */ var _dsh_task_output_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(34637);
+/* harmony import */ var _protocol_js__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(81511);
+
+
+
+
+
+const readOnlyOperationSchema = zod__WEBPACK_IMPORTED_MODULE_4__["enum"](["task", "diagnose"]);
+const readOnlyBindingSchema = zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({
+    repository: _protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .bindingSchema */ .l6.shape.repository,
+    baseSha: _protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .bindingSchema */ .l6.shape.baseSha,
+    headSha: _protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .bindingSchema */ .l6.shape.headSha,
+    entity: zod__WEBPACK_IMPORTED_MODULE_4__.discriminatedUnion("kind", [
+        zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({ kind: zod__WEBPACK_IMPORTED_MODULE_4__.literal("pull_request"), number: zod__WEBPACK_IMPORTED_MODULE_4__.number().int().positive() }),
+        zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({ kind: zod__WEBPACK_IMPORTED_MODULE_4__.literal("issue"), number: zod__WEBPACK_IMPORTED_MODULE_4__.number().int().positive() }),
+        zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({ kind: zod__WEBPACK_IMPORTED_MODULE_4__.literal("repository") }),
+    ]),
+});
+const emptyInputSchema = zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({
+    type: zod__WEBPACK_IMPORTED_MODULE_4__.literal("object"),
+    additionalProperties: zod__WEBPACK_IMPORTED_MODULE_4__.literal(false),
+    properties: zod__WEBPACK_IMPORTED_MODULE_4__.record(zod__WEBPACK_IMPORTED_MODULE_4__.string(), zod__WEBPACK_IMPORTED_MODULE_4__.never()).optional(),
+});
+const commandManifestSchema = zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({
+    id: zod__WEBPACK_IMPORTED_MODULE_4__.string().regex(/^command\.[a-z][a-z0-9-]{0,31}$/u),
+    provider: zod__WEBPACK_IMPORTED_MODULE_4__.literal("command"),
+    description: zod__WEBPACK_IMPORTED_MODULE_4__.string().min(1).max(500),
+    permissions: zod__WEBPACK_IMPORTED_MODULE_4__.array(zod__WEBPACK_IMPORTED_MODULE_4__["enum"](["execute", "network"]))
+        .min(1)
+        .max(2),
+    inputSchema: emptyInputSchema,
+})
+    .refine((tool) => tool.permissions.includes("execute"), "Controller command requires execute permission");
+const checksManifestSchema = zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({
+    id: zod__WEBPACK_IMPORTED_MODULE_4__.literal("github.checks.read"),
+    provider: zod__WEBPACK_IMPORTED_MODULE_4__.literal("github"),
+    description: zod__WEBPACK_IMPORTED_MODULE_4__.string().min(1).max(500),
+    permissions: zod__WEBPACK_IMPORTED_MODULE_4__.tuple([zod__WEBPACK_IMPORTED_MODULE_4__.literal("github-read")]),
+    inputSchema: emptyInputSchema,
+});
+/** Catalog descriptions are not implementation code; all callbacks remain in the original Controller. */
+const readOnlyControllerManifestSchema = zod__WEBPACK_IMPORTED_MODULE_4__.union([
+    commandManifestSchema,
+    checksManifestSchema,
+]);
+const safeTaskOutputSchema = zod__WEBPACK_IMPORTED_MODULE_4__.record(zod__WEBPACK_IMPORTED_MODULE_4__.string(), zod__WEBPACK_IMPORTED_MODULE_4__.json()).superRefine((schema, context) => {
+    try {
+        (0,_dsh_task_output_js__WEBPACK_IMPORTED_MODULE_2__/* .parseTaskOutputSchema */ .NN)(JSON.stringify(schema));
+    }
+    catch {
+        context.addIssue({ code: "custom", message: "Invalid trusted task output schema" });
+    }
+});
+const readOnlyTaskSchema = zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({
+    schemaVersion: zod__WEBPACK_IMPORTED_MODULE_4__.literal(2),
+    taskId: zod__WEBPACK_IMPORTED_MODULE_4__.uuid(),
+    operation: readOnlyOperationSchema,
+    binding: readOnlyBindingSchema,
+    trust: zod__WEBPACK_IMPORTED_MODULE_4__["enum"](["untrusted", "trusted-read"]),
+    tools: zod__WEBPACK_IMPORTED_MODULE_4__.array(zod__WEBPACK_IMPORTED_MODULE_4__["enum"](["workspace.read", "workspace.search"])).max(2),
+    toolCatalog: zod__WEBPACK_IMPORTED_MODULE_4__.array(readOnlyControllerManifestSchema).max(32),
+    timeoutMs: zod__WEBPACK_IMPORTED_MODULE_4__.number().int().min(1).max(_protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .MAX_RUNTIME_MS */ .Nj),
+    instructions: zod__WEBPACK_IMPORTED_MODULE_4__.string().max(16 * 1024),
+    context: zod__WEBPACK_IMPORTED_MODULE_4__.json(),
+    files: zod__WEBPACK_IMPORTED_MODULE_4__.array(_protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .workspaceFileSchema */ .LQ).max(500),
+    taskOutputSchema: safeTaskOutputSchema.optional(),
+})
+    .superRefine((task, context) => {
+    const paths = new Set();
+    let bytes = 0;
+    for (const file of task.files) {
+        const path = file.path.toLowerCase();
+        if (paths.has(path))
+            context.addIssue({ code: "custom", message: "Duplicate workspace path" });
+        paths.add(path);
+        bytes += Buffer.byteLength(file.content);
+        if ((0,_protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .digest */ .br)(file.content) !== file.sha256)
+            context.addIssue({ code: "custom", message: "Workspace file digest mismatch" });
+    }
+    if (bytes > _protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .MAX_WORKSPACE_BYTES */ .Ho)
+        context.addIssue({ code: "custom", message: "Workspace exceeds byte limit" });
+    if (task.trust === "untrusted" &&
+        (task.files.length > 0 || task.tools.length > 0 || task.toolCatalog.length > 0))
+        context.addIssue({ code: "custom", message: "Untrusted task receives context only" });
+    if (new Set(task.tools).size !== task.tools.length ||
+        new Set(task.toolCatalog.map((tool) => tool.id)).size !== task.toolCatalog.length)
+        context.addIssue({ code: "custom", message: "Duplicate tool grant" });
+    if (task.operation !== "task" && task.taskOutputSchema !== undefined)
+        context.addIssue({ code: "custom", message: "Only generic task may use taskOutputSchema" });
+    if (Buffer.byteLength(JSON.stringify(task)) > _protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .MAX_TASK_BYTES */ .n_)
+        context.addIssue({ code: "custom", message: "Task exceeds transport limit" });
+});
+const readOnlyTaskReplySchema = zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({
+    schemaVersion: zod__WEBPACK_IMPORTED_MODULE_4__.literal(2),
+    taskId: zod__WEBPACK_IMPORTED_MODULE_4__.uuid(),
+    operation: readOnlyOperationSchema,
+    binding: readOnlyBindingSchema,
+    taskDigest: zod__WEBPACK_IMPORTED_MODULE_4__.string().regex(/^[a-f0-9]{64}$/u),
+    workspaceDigest: _protocol_js__WEBPACK_IMPORTED_MODULE_3__.runtimeReplySchema.shape.workspaceDigest,
+    dshVersion: _protocol_js__WEBPACK_IMPORTED_MODULE_3__.runtimeReplySchema.shape.dshVersion,
+    output: _protocol_js__WEBPACK_IMPORTED_MODULE_3__.runtimeReplySchema.shape.output,
+    durationMs: _protocol_js__WEBPACK_IMPORTED_MODULE_3__.runtimeReplySchema.shape.durationMs,
+    toolReceipts: _protocol_js__WEBPACK_IMPORTED_MODULE_3__.runtimeReplySchema.shape.toolReceipts,
+    modelExecution: _protocol_js__WEBPACK_IMPORTED_MODULE_3__.runtimeReplySchema.shape.modelExecution,
+});
+const readOnlyReceiptSchema = zod__WEBPACK_IMPORTED_MODULE_4__.strictObject({
+    schemaVersion: zod__WEBPACK_IMPORTED_MODULE_4__.literal(1),
+    callId: zod__WEBPACK_IMPORTED_MODULE_4__.string().min(1).max(256),
+    id: zod__WEBPACK_IMPORTED_MODULE_4__["enum"](["workspace.read", "workspace.search"]),
+    runtimeName: zod__WEBPACK_IMPORTED_MODULE_4__["enum"](["read", "read_image", "glob", "grep"]),
+    provider: zod__WEBPACK_IMPORTED_MODULE_4__.literal("builtin"),
+    counted: zod__WEBPACK_IMPORTED_MODULE_4__.boolean(),
+    ok: zod__WEBPACK_IMPORTED_MODULE_4__.boolean(),
+    completed: zod__WEBPACK_IMPORTED_MODULE_4__.boolean(),
+    durationMs: zod__WEBPACK_IMPORTED_MODULE_4__.number().int().nonnegative(),
+    code: zod__WEBPACK_IMPORTED_MODULE_4__.string().max(128).optional(),
+});
+/** Hash the normalized strict request, including instructions, grants and the trusted output schema. */
+function readOnlyTaskDigest(task) {
+    return (0,_protocol_js__WEBPACK_IMPORTED_MODULE_3__/* .digest */ .br)(JSON.stringify(readOnlyTaskSchema.parse(task)));
+}
+/** Independent terminal/request check on both sides of the Runtime boundary. */
+function validateReadOnlyTaskOutput(raw, task) {
+    const output = (0,_dsh_schema_js__WEBPACK_IMPORTED_MODULE_1__/* .parseDshOutput */ .mH)(JSON.stringify(raw), task.operation, task.taskOutputSchema);
+    if ((output.changePlan?.length ?? 0) > 0 || (output.verification?.length ?? 0) > 0)
+        throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Read-only Runtime cannot claim workspace modifications or executed tests");
+    if (output.toolRequest !== undefined) {
+        const request = output.toolRequest;
+        const manifest = task.toolCatalog.find((tool) => tool.id === request.id);
+        if (manifest === undefined || task.trust === "untrusted")
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Runtime requested an ungranted Controller tool");
+        const schema = (0,_dsh_task_output_js__WEBPACK_IMPORTED_MODULE_2__/* .parseTaskOutputSchema */ .NN)(JSON.stringify(manifest.inputSchema));
+        if (schema === undefined)
+            throw new _dsh_errors_js__WEBPACK_IMPORTED_MODULE_0__/* .DshConfigurationError */ ._y("Missing Controller tool input schema");
+        // Original command/checks requests never accept model-defined argv, target, ref or credentials.
+        (0,_dsh_task_output_js__WEBPACK_IMPORTED_MODULE_2__/* .validateTaskOutput */ .tv)(request.input ?? {}, schema);
+    }
+    return output;
 }
 
 
@@ -156767,6 +157222,10 @@ async function prepareWorkspace(options) {
             // Pull-request review/fix remains bound to the immutable PR head.
             if (snapshot?.kind === "pull_request")
                 return snapshot.headSha;
+            // CI diagnosis must inspect the commit that produced the logs, even when
+            // the branch has advanced since a workflow_run was queued.
+            if (context.kind === "automation" && context.workflowRun !== undefined)
+                return context.workflowRun.headSha;
             if (baseBranch === undefined) {
                 throw new errors/* PolicyDeniedError */.uB("Cannot bind repository content without a base branch");
             }
@@ -156859,7 +157318,7 @@ async function runActionInternal(state, startedAt, inputs, signal, deadlineMs, o
             ...(options.createEngine === undefined
                 ? {}
                 : {
-                    createEngine: options.createEngine(preparation.run),
+                    createEngine: options.createEngine(preparation.run, workspace),
                 }),
         });
     }

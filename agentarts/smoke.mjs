@@ -2,7 +2,8 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";
 import { setTimeout as delay } from "node:timers/promises";
@@ -63,15 +64,32 @@ const task = {
   files,
 };
 let runtime;
+let secretRoot;
 let childOutput = "";
 let childOutputBytes = 0;
 let normalRequests = 0;
 let timeoutRequests = 0;
+let cancelRequests = 0;
+let invalidRequests = 0;
+let deniedRequests = 0;
+const readOnlyRequests = { task: 0, diagnose: 0 };
 let observedUid = false;
 let measuredTools = [];
 let measuredSummary = "";
 let stage = "initialization";
 const checks = [];
+const cases = [];
+let caseStartedAt = Date.now();
+function casePassed(id, successCriteria) {
+  cases.push({
+    id,
+    version: 1,
+    status: "passed",
+    successCriteria,
+    durationMs: Date.now() - caseStartedAt,
+  });
+  caseStartedAt = Date.now();
+}
 
 async function runtimeChildren() {
   if (runtime?.pid === undefined || runtime.exitCode !== null || runtime.signalCode !== null)
@@ -120,10 +138,112 @@ const model = createServer((request, response) => {
       assert(!text.includes(modelKey) && !text.includes(runtimeKey));
       const body = JSON.parse(text);
       await verifyWorkerUid();
+      const readOnlyOperation = text.includes("SMOKE_TYPED_TASK")
+        ? "task"
+        : text.includes("SMOKE_CI_DIAGNOSE")
+          ? "diagnose"
+          : undefined;
+      if (readOnlyOperation !== undefined) {
+        const count = ++readOnlyRequests[readOnlyOperation];
+        if (count === 1) {
+          sendMessagesSse(
+            response,
+            {
+              tool_calls: [
+                {
+                  index: 0,
+                  id: `${readOnlyOperation}-read`,
+                  type: "function",
+                  function: {
+                    name: "read",
+                    arguments: JSON.stringify({ file_path: "src/example.ts" }),
+                  },
+                },
+              ],
+            },
+            "tool_calls",
+          );
+        } else {
+          assert.equal(count, 2);
+          const results = messageToolResults(body);
+          assert.equal(results[0].is_error, false);
+          assert(JSON.stringify(results).includes("index <= length"));
+          sendMessagesSse(
+            response,
+            {
+              content: JSON.stringify({
+                protocolVersion: 1,
+                operation: readOnlyOperation,
+                state: "final",
+                summary: "Deterministic read-only migration fixture.",
+                findings: [],
+                ...(readOnlyOperation === "task"
+                  ? { taskOutput: { answer: "The boundary comparison accepts length." } }
+                  : {
+                      diagnosis:
+                        "The supplied failing assertion concerns the inclusive upper bound.",
+                    }),
+              }),
+            },
+            "stop",
+          );
+        }
+        return;
+      }
       if (text.includes("SMOKE_TIMEOUT_HOLD")) {
         timeoutRequests += 1;
         // Keep the real provider request open until the supervisor-owned
         // deadline aborts the proxy and kills the DSH process.
+        return;
+      }
+      if (text.includes("SMOKE_CANCEL_HOLD")) {
+        cancelRequests += 1;
+        return;
+      }
+      if (text.includes("SMOKE_INVALID_OUTPUT")) {
+        invalidRequests += 1;
+        sendMessagesSse(response, { content: "INVALID_RESULT_FIXTURE_DO_NOT_PUBLISH" }, "stop");
+        return;
+      }
+      if (text.includes("SMOKE_PERMISSION_PROBE")) {
+        deniedRequests += 1;
+        if (deniedRequests === 1) {
+          sendMessagesSse(
+            response,
+            {
+              tool_calls: [
+                {
+                  index: 0,
+                  id: "root-secret-probe",
+                  type: "function",
+                  function: {
+                    name: "read",
+                    arguments: JSON.stringify({ file_path: `/proc/${runtime.pid}/environ` }),
+                  },
+                },
+              ],
+            },
+            "tool_calls",
+          );
+        } else {
+          assert.equal(deniedRequests, 2);
+          const results = messageToolResults(body);
+          assert.equal(results.length, 1);
+          assert.equal(results[0].is_error, true);
+          assert(!JSON.stringify(results).includes(modelKey));
+          assert(!JSON.stringify(results).includes(runtimeKey));
+          sendMessagesSse(
+            response,
+            {
+              content: JSON.stringify({
+                ...expectedOutput,
+                findings: [],
+                summary: "Supervisor environment read was denied.",
+              }),
+            },
+            "stop",
+          );
+        }
         return;
       }
       normalRequests += 1;
@@ -227,6 +347,10 @@ try {
     assert.match(process.env.SMOKE_SOURCE_SHA, /^[a-f0-9]{40}$/u);
   if (process.env.SMOKE_IMAGE_ID !== undefined)
     assert.match(process.env.SMOKE_IMAGE_ID, /^sha256:[a-f0-9]{64}$/u);
+  if (process.env.SMOKE_SOURCE_DIRTY !== undefined)
+    assert(["true", "false"].includes(process.env.SMOKE_SOURCE_DIRTY));
+  if (process.env.SMOKE_SOURCE_TREE_DIGEST !== undefined)
+    assert.match(process.env.SMOKE_SOURCE_TREE_DIGEST, /^[a-f0-9]{64}$/u);
   if (process.env.SMOKE_EXPECTED_ARCH !== undefined)
     assert.equal(process.arch, process.env.SMOKE_EXPECTED_ARCH);
   const require = createRequire("/opt/app/package.json");
@@ -239,6 +363,9 @@ try {
   const address = model.address();
   assert(address !== null && typeof address !== "string");
   stage = "production-startup";
+  secretRoot = await mkdtemp("/tmp/agentarts-supervisor-fixture-");
+  const secretPath = join(secretRoot, "key");
+  await writeFile(secretPath, modelKey, { mode: 0o600 });
   runtime = spawn(process.execPath, ["/opt/app/dist-agentarts/runtime/index.js"], {
     cwd: "/opt/app",
     detached: true,
@@ -248,9 +375,10 @@ try {
       PATH: process.env.PATH,
       HOME: "/tmp",
       NODE_ENV: "production",
-      DEEPSEEK_API_KEY: modelKey,
+      DEEPSEEK_API_KEY_FILE: secretPath,
       DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
       API_KEY: runtimeKey,
+      AGENTARTS_MODEL_EVIDENCE: "deterministic-fixture",
     },
   });
   const capture = (chunk) => {
@@ -276,6 +404,8 @@ try {
   assert.equal(reply.workspaceDigest, digest(JSON.stringify(files)));
   assert(Number.isSafeInteger(reply.durationMs) && reply.durationMs >= 0);
   assert.deepEqual(reply.output, expectedOutput);
+  assert.equal(reply.modelExecution.kind, "deterministic-fixture");
+  assert.equal(reply.modelExecution.requestCount, 2);
   assert.equal(reply.toolReceipts.length, 1);
   const receipt = reply.toolReceipts[0];
   assert.equal(receipt.id, "workspace.read");
@@ -301,6 +431,74 @@ try {
   checks.push(
     "Actual pinned DSH used the real read tool under observed UID/GID10001 with no root supplementary group.",
   );
+  casePassed(
+    "normal-review",
+    "Pinned DSH reads admitted source under UID10001, returns the expected finding and reconciled receipt without credentials.",
+  );
+  for (const operation of ["task", "diagnose"]) {
+    stage = `real-dsh-${operation}`;
+    const readOnlyTask = {
+      schemaVersion: 2,
+      taskId: randomUUID(),
+      operation,
+      binding: {
+        repository: task.binding.repository,
+        baseSha: task.binding.baseSha,
+        headSha: task.binding.headSha,
+        entity: { kind: "repository" },
+      },
+      trust: "trusted-read",
+      tools: ["workspace.read"],
+      toolCatalog: [],
+      timeoutMs: task.timeoutMs,
+      instructions: "Read the admitted example and return the strict operation result.",
+      context: {
+        untrusted: true,
+        fixtureCase: operation === "task" ? "SMOKE_TYPED_TASK" : "SMOKE_CI_DIAGNOSE",
+        ci: "Fixture assertion: inBounds(3, 3) must be false, observed true.",
+      },
+      files,
+      ...(operation === "task"
+        ? {
+            taskOutputSchema: {
+              type: "object",
+              additionalProperties: false,
+              properties: { answer: { type: "string" } },
+              required: ["answer"],
+            },
+          }
+        : {}),
+    };
+    const readOnlyResponse = await invoke(readOnlyTask);
+    assert.equal(readOnlyResponse.status, 200);
+    const migrated = await readOnlyResponse.json();
+    assert.equal(migrated.schemaVersion, 2);
+    assert.equal(migrated.taskId, readOnlyTask.taskId);
+    assert.equal(migrated.operation, operation);
+    assert.deepEqual(migrated.binding, readOnlyTask.binding);
+    assert.equal(migrated.taskDigest, digest(JSON.stringify(readOnlyTask)));
+    assert.equal(migrated.workspaceDigest, digest(JSON.stringify(files)));
+    assert.equal(migrated.toolReceipts[0].ok, true);
+    assert.equal(migrated.toolReceipts[0].completed, true);
+    assert.equal(migrated.modelExecution.requestCount, 2);
+    assert.equal(migrated.modelExecution.kind, "deterministic-fixture");
+    assert.equal(readOnlyRequests[operation], 2);
+    assert.equal(migrated.output.operation, operation);
+    if (operation === "task")
+      assert.deepEqual(migrated.output.taskOutput, {
+        answer: "The boundary comparison accepts length.",
+      });
+    else
+      assert.equal(
+        migrated.output.diagnosis,
+        "The supplied failing assertion concerns the inclusive upper bound.",
+      );
+    assert.deepEqual(await runtimeChildren(), []);
+    casePassed(
+      `readonly-${operation}`,
+      "Production v2 HTTP protocol runs pinned DSH under UID10001, uses a native read and validates the bound typed task/diagnosis result.",
+    );
+  }
   checks.push(
     "The read result contained the admitted source; its reconciled receipt, result, immutable binding and unchanged workspace digest matched.",
   );
@@ -310,6 +508,81 @@ try {
   assert.equal((await repeated.json()).error.code, "DUPLICATE_TASK");
   assert.equal(normalRequests, 2);
   checks.push("An identical task was refused before a second DSH execution.");
+  casePassed("duplicate-task", "A repeated UUID returns 409 with no second provider execution.");
+  stage = "permission-admission";
+  const deniedTask = { ...task, taskId: randomUUID(), tools: ["workspace.edit"] };
+  const deniedAdmission = await invoke(deniedTask);
+  assert.equal(deniedAdmission.status, 400);
+  assert.equal((await deniedAdmission.json()).error.code, "INVALID_TASK");
+  assert.equal(normalRequests, 2);
+  casePassed("ungranted-write", "An ungranted write request is rejected before any DSH execution.");
+  stage = "worker-permission-boundary";
+  const probe = await invoke({
+    ...task,
+    taskId: randomUUID(),
+    context: { ...task.context, fixtureCase: "SMOKE_PERMISSION_PROBE" },
+  });
+  assert.equal(probe.status, 200);
+  const probeReply = await probe.json();
+  assert.equal(deniedRequests, 2);
+  assert.equal(probeReply.toolReceipts.length, 1);
+  assert.equal(probeReply.toolReceipts[0].completed, true);
+  assert.equal(probeReply.toolReceipts[0].ok, false);
+  assert(
+    !JSON.stringify(probeReply).includes(modelKey) &&
+      !JSON.stringify(probeReply).includes(runtimeKey),
+  );
+  assert.deepEqual(await runtimeChildren(), []);
+  casePassed(
+    "root-environment-denied",
+    "An actual DSH read of the supervisor /proc environment fails; its tool receipt is completed/failed and credentials are absent.",
+  );
+  stage = "invalid-model-result";
+  const invalidTask = {
+    ...task,
+    taskId: randomUUID(),
+    context: { ...task.context, fixtureCase: "SMOKE_INVALID_OUTPUT" },
+  };
+  const invalid = await invoke(invalidTask);
+  assert.equal(invalid.status, 500);
+  const invalidBody = await invalid.json();
+  assert.equal(invalidBody.error.code, "WORKER_FAILED");
+  assert(!JSON.stringify(invalidBody).includes("INVALID_RESULT_FIXTURE_DO_NOT_PUBLISH"));
+  assert(invalidRequests >= 1);
+  assert.deepEqual(await runtimeChildren(), []);
+  assert.equal((await invoke(invalidTask)).status, 409);
+  casePassed(
+    "invalid-result",
+    "Malformed actual DSH output returns a bounded failure, terminates the worker and refuses the same UUID afterward.",
+  );
+  stage = "cancel-and-cleanup";
+  const cancelTask = {
+    ...task,
+    taskId: randomUUID(),
+    context: { ...task.context, fixtureCase: "SMOKE_CANCEL_HOLD" },
+  };
+  const cancellation = new AbortController();
+  const cancelled = fetch("http://127.0.0.1:8080/invocations", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(cancelTask),
+    signal: AbortSignal.any([cancellation.signal, deadline.signal]),
+  }).then(
+    () => "unexpected-response",
+    () => "cancelled",
+  );
+  const cancelWaitUntil = Date.now() + (emulated ? 20_000 : 8_000);
+  while (cancelRequests === 0 && Date.now() < cancelWaitUntil) await delay(50);
+  assert(cancelRequests > 0, "Cancellation must occur after an actual provider request");
+  cancellation.abort();
+  assert.equal(await cancelled, "cancelled");
+  await waitHealthy();
+  assert.deepEqual(await runtimeChildren(), []);
+  assert.equal((await invoke(cancelTask)).status, 409);
+  casePassed(
+    "cancelled-task",
+    "Disconnecting a real held provider request aborts/kills DSH, leaves Runtime healthy and refuses a repeated UUID.",
+  );
   stage = "timeout-and-cleanup";
   const timeoutTask = {
     ...task,
@@ -330,6 +603,10 @@ try {
   checks.push(
     "A real held provider request reached its declared deadline; the separate-UID DSH process was killed and no result was accepted.",
   );
+  casePassed(
+    "timeout-task",
+    "An actual held provider request reaches its hard deadline, returns 504 and leaves no worker process.",
+  );
   stage = "passed";
 } catch (error) {
   failure = typeof error.code === "string" ? error.code : error.name;
@@ -344,6 +621,7 @@ try {
   }
   model.closeAllConnections();
   await new Promise((accept) => model.close(() => accept()));
+  if (secretRoot !== undefined) await rm(secretRoot, { recursive: true, force: true });
   const evidence = {
     schemaVersion: 1,
     mode: "container",
@@ -356,12 +634,20 @@ try {
     dshVersion: "0.2.0-rc.2",
     workerUidVerified: observedUid,
     sourceCommit: process.env.SMOKE_SOURCE_SHA ?? "",
+    sourceDirty: process.env.SMOKE_SOURCE_DIRTY === "true",
+    sourceTreeDigest: process.env.SMOKE_SOURCE_TREE_DIGEST ?? "",
     imageId: process.env.SMOKE_IMAGE_ID ?? "",
     tools: measuredTools,
     result: { summary: measuredSummary },
     durationMs: Date.now() - startedAt,
     normalModelRequests: normalRequests,
     timeoutModelRequests: timeoutRequests,
+    cancelModelRequests: cancelRequests,
+    invalidModelRequests: invalidRequests,
+    deniedModelRequests: deniedRequests,
+    readOnlyModelRequests: readOnlyRequests,
+    modelEvidence: "deterministic-fixture",
+    cases,
     checks,
     ...(failure === undefined ? {} : { failureCode: failure }),
     limitations: [

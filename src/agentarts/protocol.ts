@@ -79,6 +79,24 @@ export const runtimeReplySchema = z.strictObject({
   durationMs: z.number().int().nonnegative(),
   workspaceDigest: z.string().regex(/^[a-f0-9]{64}$/u),
   toolReceipts: z.array(z.json()).max(1000),
+  modelExecution: z
+    .strictObject({
+      kind: z.enum(["live-provider", "deterministic-fixture", "unverified"]),
+      provider: z.literal("deepseek"),
+      model: z.enum(["deepseek-v4-pro", "deepseek-flash"]),
+      upstreamOrigin: z.url().max(2048),
+      requestCount: z.number().int().min(0).max(32),
+      requestLimit: z.number().int().min(1).max(32),
+      maxOutputTokens: z.number().int().min(1).max(8192),
+    })
+    .refine((value) => value.requestCount <= value.requestLimit, "Provider count exceeds policy")
+    .refine(
+      (value) =>
+        value.kind !== "live-provider" ||
+        (value.requestCount > 0 && value.upstreamOrigin === "https://api.deepseek.com"),
+      "Live evidence requires an actual official provider request",
+    )
+    .optional(),
 });
 export type RuntimeReply = z.infer<typeof runtimeReplySchema>;
 

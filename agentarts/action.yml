@@ -1,5 +1,5 @@
 name: Huawei-AgentArts-action
-description: Run pinned DeepSeek Harness PR Review on Huawei Cloud AgentArts; publish only after Controller checks.
+description: Run pinned DeepSeek Harness read-only tasks on AgentArts; publish only after Controller checks.
 author: Lixiaoyiao
 inputs:
   github-token:
@@ -19,7 +19,7 @@ inputs:
     description: API_KEY for Runtime inbound authentication; never enters DSH or task body.
     required: true
   prompt:
-    description: Optional trusted workflow review instructions.
+    description: Optional trusted workflow instructions.
     default: ""
   context-files:
     description: JSON list of immutable repository text files to include.
@@ -33,6 +33,21 @@ inputs:
   bot-user-id:
     description: Expected bot author ID for publication ownership checks.
     default: "41898282"
+  command:
+    description: auto, review, task or diagnose. Controlled fix and implement migration remains pending.
+    default: auto
+  allowed-tools:
+    description: JSON grant list. workspace.read/search or Controller github.checks.read (task/diagnose only).
+    default: '["workspace.read","workspace.search"]'
+  max-turns:
+    description: Bounded original Controller loop turns, including tool-result turns.
+    default: "3"
+  task-output-schema:
+    description: Trusted JSON output schema for command task, validated by the original Controller.
+    default: ""
+  base-branch:
+    description: Optional trusted branch for non-PR tasks; Controller resolves its immutable commit.
+    default: ""
 outputs:
   run-record:
     description: Absolute path of redacted task record for Demo and evidence.

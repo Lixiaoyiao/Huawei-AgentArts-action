@@ -40,10 +40,13 @@ async function close(server: Server): Promise<void> {
 
 /** Reproducible local proof, with original test SSE transport and no live model. */
 export async function runLocalProof(
-  options: { readonly linuxIsolation?: boolean } = {},
+  options: { readonly linuxIsolation?: boolean; readonly outputPath?: string } = {},
 ): Promise<string> {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
-  const outputPath = join(root, "agentarts", "evidence", "local-run-record.json");
+  const outputPath =
+    options.outputPath === undefined
+      ? join(root, "agentarts", "evidence", "local-run-record.json")
+      : resolve(options.outputPath);
   const startedAt = Date.now();
   const repository = "local-fixture/off-by-one";
   const source =
@@ -60,7 +63,16 @@ export async function runLocalProof(
   const record = {
     schemaVersion: 1,
     mode: "local",
-    task: { id: "", repository, pullNumber: 1, headSha, url: "" },
+    task: {
+      id: "",
+      repository,
+      pullNumber: 1,
+      headSha,
+      baseSha,
+      kind: "pull_request",
+      operation: "review",
+      url: "",
+    },
     stages,
     tools: [] as {
       id: string;
@@ -81,6 +93,11 @@ export async function runLocalProof(
         : "The local fixture uses the explicit test-only UID bypass; Linux cloud UID separation and Runtime deployment remain unverified.",
       "No GitHub API publication was attempted. The local task correlation ID is not an AgentArts Session ID.",
     ],
+    modelEvidence: {
+      kind: "deterministic-fixture",
+      provider: "deepseek",
+      model: "deepseek-v4-pro",
+    },
     environment: {
       node: process.version,
       platform: process.platform,
@@ -216,6 +233,7 @@ export async function runLocalProof(
       ...process.env,
       DEEPSEEK_API_KEY: modelKey,
       DEEPSEEK_BASE_URL: modelUrl,
+      AGENTARTS_MODEL_EVIDENCE: "deterministic-fixture",
       API_KEY: runtimeKey,
     };
     runtime = createAgentArtsServer({
@@ -391,7 +409,14 @@ export async function runLocalProof(
   return outputPath;
 }
 
-void runLocalProof({ linuxIsolation: process.argv.includes("--linux-isolation") })
+const outIndex = process.argv.indexOf("--out");
+const explicitOutput = outIndex === -1 ? undefined : process.argv[outIndex + 1];
+if (outIndex !== -1 && (explicitOutput === undefined || explicitOutput.startsWith("--")))
+  throw new Error("--out requires an output file path");
+void runLocalProof({
+  linuxIsolation: process.argv.includes("--linux-isolation"),
+  ...(explicitOutput === undefined ? {} : { outputPath: explicitOutput }),
+})
   .then((path) => {
     process.stdout.write(
       `Local proof passed: real DSH, deterministic model fixture, no cloud or GitHub publication.\nRecord: ${path}\n`,

@@ -93,6 +93,7 @@ function validate(record) {
       "durationMs",
       "warnings",
       "environment",
+      "modelEvidence",
     ],
     "record",
   );
@@ -107,7 +108,23 @@ function validate(record) {
     record.task.pullNumber < 0
   )
     throw new Error("Invalid Demo task metadata.");
-  fields(record.task, ["id", "repository", "pullNumber", "headSha", "url"], "task");
+  fields(
+    record.task,
+    ["id", "repository", "pullNumber", "headSha", "baseSha", "url", "kind", "operation"],
+    "task",
+  );
+  if (
+    record.task.kind !== undefined &&
+    !["pull_request", "issue", "repository"].includes(record.task.kind)
+  )
+    throw new Error("Invalid task kind.");
+  if (
+    record.task.operation !== undefined &&
+    !["review", "task", "diagnose"].includes(record.task.operation)
+  )
+    throw new Error("Invalid task operation.");
+  if (record.task.baseSha !== undefined && typeof record.task.baseSha !== "string")
+    throw new Error("Invalid Demo base commit metadata.");
   if (
     !Array.isArray(record.stages) ||
     record.stages.length > 1000 ||
@@ -187,6 +204,18 @@ function validate(record) {
         typeof record.environment.linuxIsolationVerified !== "boolean")
     )
       throw new Error("Invalid Demo environment metadata.");
+  }
+  if (record.modelEvidence !== undefined) {
+    fields(record.modelEvidence, ["kind", "provider", "model"], "modelEvidence");
+    if (
+      !["live-provider", "deterministic-fixture", "unverified"].includes(
+        record.modelEvidence.kind,
+      ) ||
+      record.modelEvidence.provider !== "deepseek" ||
+      (record.modelEvidence.model !== undefined &&
+        (typeof record.modelEvidence.model !== "string" || record.modelEvidence.model.length > 256))
+    )
+      throw new Error("Invalid model evidence; source must be explicitly recorded.");
   }
 }
 

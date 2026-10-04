@@ -1,12 +1,22 @@
 import { z } from "zod";
 import type { ReadableStreamReadResult } from "node:stream/web";
-import { DshAbortedError, DshConfigurationError, DshTimeoutError } from "../dsh/errors.js";
+import {
+  DshAbortedError,
+  DshConfigurationError,
+  DshError,
+  DshTimeoutError,
+} from "../dsh/errors.js";
 import {
   runtimeReplySchema,
   type ReviewTask,
   type RuntimeReply,
   MAX_TASK_BYTES,
 } from "./protocol.js";
+import {
+  readOnlyTaskReplySchema,
+  type ReadOnlyTask,
+  type ReadOnlyTaskReply,
+} from "./readonly-task-protocol.js";
 
 export interface RuntimeClientConfig {
   readonly origin: string;
@@ -51,6 +61,32 @@ export async function invokeReview(
     readonly onRequestId?: (id: string) => void;
   } = {},
 ): Promise<RuntimeReply> {
+  return invokeRuntime(config, task, runtimeReplySchema, options);
+}
+
+/** Uses the same bounded authenticated transport and fresh-session cleanup as review. */
+export async function invokeReadOnlyTask(
+  config: RuntimeClientConfig,
+  task: ReadOnlyTask,
+  options: {
+    readonly signal?: AbortSignal;
+    readonly fetchImplementation?: typeof fetch;
+    readonly onRequestId?: (id: string) => void;
+  } = {},
+): Promise<ReadOnlyTaskReply> {
+  return invokeRuntime(config, task, readOnlyTaskReplySchema, options);
+}
+
+async function invokeRuntime<T>(
+  config: RuntimeClientConfig,
+  task: ReviewTask | ReadOnlyTask,
+  replySchema: z.ZodType<T>,
+  options: {
+    readonly signal?: AbortSignal;
+    readonly fetchImplementation?: typeof fetch;
+    readonly onRequestId?: (id: string) => void;
+  },
+): Promise<T> {
   const fetcher = options.fetchImplementation ?? fetch;
   const url = runtimeUrl(config);
   const body = JSON.stringify(task);
@@ -73,6 +109,16 @@ export async function invokeReview(
     });
     const requestId = response.headers.get("x-request-id");
     if (requestId && /^[A-Za-z0-9_-]{1,128}$/u.test(requestId)) options.onRequestId?.(requestId);
+    if (response.status === 504)
+      throw new DshError(
+        "DSH_TIMEOUT",
+        "Runtime invocation timed out (HTTP 504); no result was accepted or retried",
+      );
+    if (response.status === 499)
+      throw new DshError(
+        "DSH_ABORTED",
+        "Runtime invocation was cancelled (HTTP 499); no result was accepted or retried",
+      );
     if (!response.ok)
       throw new DshConfigurationError(
         `Runtime invocation rejected (HTTP ${String(response.status)}); not retried`,
@@ -95,7 +141,17 @@ export async function invokeReview(
     } finally {
       await reader.cancel();
     }
-    return runtimeReplySchema.parse(JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(
+        new TextDecoder("utf-8", { fatal: true }).decode(Buffer.concat(chunks)),
+      ) as unknown;
+    } catch {
+      throw new DshConfigurationError(
+        "Runtime response was not valid UTF-8 JSON; body was not logged",
+      );
+    }
+    return replySchema.parse(parsed);
   } catch (error) {
     if (options.signal?.aborted) throw new DshAbortedError();
     if (timeout.aborted) throw new DshTimeoutError(task.timeoutMs);
@@ -103,7 +159,7 @@ export async function invokeReview(
       throw new DshConfigurationError("Runtime response failed strict schema validation");
     throw error;
   } finally {
-    // Stop only our fresh review session. Cleanup never changes the invocation outcome.
+    // Stop only this fresh invocation session. Cleanup never changes its outcome.
     // Abort need not propagate through the cloud frontend; the worker also has a hard deadline.
     try {
       const response = await fetcher(runtimeUrl(config, "sessions-stop"), {
