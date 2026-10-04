@@ -2,7 +2,7 @@
 
 [English](../session.md) · [配置](../configuration.md) · [安全边界](../../SECURITY.md)
 
-Session 是显式 opt-in，用于在后续 Actions run 中继续同一任务。它复用固定
+Session 是显式 opt-in，用于在后续 Actions run 中继续同一便携文本任务。它复用固定
 **DSH 0.2.0-rc.2** 的公开 JSONL persistence 和 `--session-id`。检查点保存完整的
 原始 v4 Session 日志及来源 manifest；headless NDJSON 事件投影、拼接历史评论都
 不能替代真实 Session 日志。
@@ -78,6 +78,19 @@ tool 或其他已跟踪操作、child/fork 血缘、不兼容 cwd/preset、未�
 artifact 仅含 `manifest.json` 与 `session.jsonl`，不保存完整 worker home、配置
 或 lease 文件。导入校验完整性后写入新的专用目录，拒绝覆盖现有状态。
 
+初版检查点只支持便携文本 Session。DSH 已发布的 attachment store 和 native
+`read_image` 等工具能创建持久图片或文件引用，其字节保存在
+`DSH_HOME/attachments/v1`，不在 raw JSONL 内。Action 的双文件 archive 不携带
+该存储，也未实现新 worker 的附件还原，因此导入 admission 和检查点收集都会
+拒绝 DSH 实际解释为图片/文件内容的持久引用，包括当前 run 工具生成的引用。
+保存会明确失败，不生成恢复后缺少附件字节的半套状态；诊断不回显引用的文件名
+或 attachment ID。文本中的文件名和普通业务 JSON 本身不是二进制附件。
+
+native 工具图继续可用，此限制不禁用 `read_image`，也不表示 DSH 没有图片能力。
+附件传输、存储生命周期及新 worker 还原是尚未完成的 Action 工程，与
+[运行时审计](../v0.9.2-runtime-audit.md#why-images-and-binary-attachments-are-deferred)
+记录的已发布 Headless 输入限制分别说明。
+
 初版不会自动快照 child Session。native 保留现有工具图；任务如果实际创建了
 subagent/child persistence，额外 Session 会使检查点收集失败并给出明确诊断，
 不会只保存父 Session 的半套状态。blocked 或失败任务不生成可恢复检查点；先
@@ -98,6 +111,8 @@ workflow/run/artifact 读取复用现有 Controller GitHub client 与配额诊�
 
 通过 run 结果和 artifact receipt 核对 source run、generation、校验值。只从
 最新、兼容、成功 run 的检查点恢复。过期或不兼容时，用新的维护者 key 启动新
-任务；损坏状态或凭据拒绝时，修复生成配置或输出并创建新 Session。手工编辑
+任务。当前 worker 生成持久图片/文件引用时，检查点可能在工具执行后收集失败；
+先核对 tool receipts 和已经确认的外部副作用，再选择新的逻辑 Session，不会
+生成部分附件检查点。损坏状态或凭据拒绝时，修复生成配置或输出并创建新 Session。手工编辑
 原始记录会失去完整性和无损恢复保证。配置检查入口不会假装已经核验在线来源、
 Docker 可用性或 artifact 权限；实际 run 会在模型启动前完成这些检查。
