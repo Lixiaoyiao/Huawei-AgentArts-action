@@ -24,7 +24,9 @@ RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund \
 COPY --from=build /opt/app/dist-agentarts/runtime ./dist-agentarts/runtime
 COPY assets ./assets
 COPY LICENSE THIRD_PARTY_NOTICES.md BUNDLED_DEPENDENCIES.md ./
-RUN chmod -R go-w /opt/app
+# Only repair writable files/directories; chmod on every dependency inode forces
+# an unnecessary overlay copy-up. Like recursive chmod, do not follow symlinks.
+RUN find /opt/app \( -type d -o -type f \) -perm /022 -exec chmod go-w {} +
 ENV NODE_ENV=production PORT=8080
 EXPOSE 8080
 # Supervisor must retain root only to construct sealed workspaces and drop the
