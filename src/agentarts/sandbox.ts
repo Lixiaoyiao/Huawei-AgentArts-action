@@ -37,6 +37,47 @@ export interface AgentArtsSandboxHandle {
 }
 const UID = 10001;
 const BWRAP = "/usr/bin/bwrap";
+export const AGENTARTS_PUBLIC_CA = "/etc/ssl/certs/ca-certificates.crt";
+
+/** Image public trust roots only; never expose /etc, Git config or operator credentials. */
+export async function agentArtsPublicCertificateArgs(): Promise<readonly string[]> {
+  for (const directory of ["/etc", "/etc/ssl", "/etc/ssl/certs"]) {
+    const details = await lstat(directory);
+    if (
+      !details.isDirectory() ||
+      details.isSymbolicLink() ||
+      details.uid !== 0 ||
+      (details.mode & 0o022) !== 0
+    )
+      throw new DshIsolationUnavailableError("Public CA parent must be immutable and root-owned");
+  }
+  const certificate = await lstat(AGENTARTS_PUBLIC_CA);
+  if (
+    !certificate.isFile() ||
+    certificate.isSymbolicLink() ||
+    certificate.uid !== 0 ||
+    (certificate.mode & 0o022) !== 0 ||
+    certificate.size === 0 ||
+    certificate.size > 4 * 1024 * 1024
+  )
+    throw new DshIsolationUnavailableError(
+      "Public CA bundle must be a bounded immutable root-owned regular file",
+    );
+  return [
+    "--dir",
+    "/etc",
+    "--dir",
+    "/etc/ssl",
+    "--dir",
+    "/etc/ssl/certs",
+    "--ro-bind",
+    AGENTARTS_PUBLIC_CA,
+    AGENTARTS_PUBLIC_CA,
+    "--setenv",
+    "GIT_SSL_CAINFO",
+    AGENTARTS_PUBLIC_CA,
+  ];
+}
 
 async function immutableExecutable(path: string): Promise<void> {
   const details = await lstat(path);
@@ -129,7 +170,8 @@ export async function prepareAgentArtsSandbox(
     )
       throw new DshConfigurationError("MCP mediation requires a sealed supervisor Unix socket");
   }
-  const probeArgs = agentArtsNamespaceArgs();
+  const certificateArgs = await agentArtsPublicCertificateArgs();
+  const probeArgs = [...agentArtsNamespaceArgs(), ...certificateArgs];
   if (!process.execPath.startsWith("/usr/")) {
     await immutableExecutable(process.execPath);
     probeArgs.push("--ro-bind", process.execPath, process.execPath);
@@ -182,7 +224,7 @@ export async function prepareAgentArtsSandbox(
     prepareProcess(spec, launchPlan) {
       if (closed) throw new DshConfigurationError("Sandbox is closed");
       assertNoGitHubCredentials(spec.env);
-      const args = agentArtsNamespaceArgs();
+      const args = [...agentArtsNamespaceArgs(), ...certificateArgs];
       if (!process.execPath.startsWith("/usr/"))
         args.push("--ro-bind", process.execPath, process.execPath);
       args.push(

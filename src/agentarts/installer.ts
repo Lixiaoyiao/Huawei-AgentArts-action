@@ -9,7 +9,11 @@ import {
 import { executeBoundedDshProcess, type DshProcessSpec } from "../dsh/process.js";
 import type { DshRuntime } from "../dsh/runtime.js";
 import { throwIfCancelled } from "../lifecycle/cancellation.js";
-import { agentArtsNamespaceArgs, agentArtsNamespaceProcess } from "./sandbox.js";
+import {
+  agentArtsNamespaceArgs,
+  agentArtsNamespaceProcess,
+  agentArtsPublicCertificateArgs,
+} from "./sandbox.js";
 import { egressPolicy, startAgentArtsEgressProxy } from "./egress-proxy.js";
 import { privateEntryPermissions } from "./private-permissions.js";
 
@@ -137,7 +141,7 @@ export async function installAgentArtsPackages(input: AgentArtsInstallerInput): 
   };
   await writableTree(input.runtime.packageRoot);
   await writableTree(input.runtime.npmCache);
-  const args = agentArtsNamespaceArgs();
+  const args = [...agentArtsNamespaceArgs(), ...(await agentArtsPublicCertificateArgs())];
   if (!process.execPath.startsWith("/usr/")) {
     const node = await lstat(process.execPath);
     if (!node.isFile() || node.isSymbolicLink() || node.uid !== 0 || (node.mode & 0o022) !== 0)

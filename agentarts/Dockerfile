@@ -27,7 +27,7 @@ FROM node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703
 WORKDIR /opt/app
 COPY package.json package-lock.json ./
 RUN apt-get update \
-    && apt-get install --no-install-recommends --yes libcap2 libselinux1 \
+    && apt-get install --no-install-recommends --yes libcap2 libselinux1 git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=namespace-build /build/bubblewrap/bwrap /usr/bin/bwrap
 COPY --from=namespace-build /build/sources /usr/share/doc/bubblewrap/agentarts-source
