@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "version": "0.8.0-2+deb12u1",
+  "upstream": "https://github.com/containers/bubblewrap/tree/v0.8.0",
+  "debian": "https://sources.debian.org/src/bubblewrap/0.8.0-2%2Bdeb12u1/",
+  "baseUrl": "https://deb.debian.org/debian/pool/main/b/bubblewrap/",
+  "files": [
+    {
+      "name": "bubblewrap_0.8.0-2+deb12u1.dsc",
+      "sha256": "155ac8bc44bd578a628d76f5b826817d6d091fc82e900ed8158d9921f650a41c"
+    },
+    {
+      "name": "bubblewrap_0.8.0.orig.tar.xz",
+      "sha256": "957ad1149db9033db88e988b12bcebe349a445e1efc8a9b59ad2939a113d333a"
+    },
+    {
+      "name": "bubblewrap_0.8.0-2+deb12u1.debian.tar.xz",
+      "sha256": "37917e8abdd6df1d1118f089e9cf1f9374e1b5bb21c8a70d7de4e9b5dfb10f6d"
+    }
+  ],
+  "patch": "bubblewrap-proc-subset.patch",
+  "patchedSourceSha256": "bb8e58e87d5ffde59e1567431375192111b33591753631598e400b358e58ecd1",
+  "licenseFile": "agentarts/LICENSE.bubblewrap",
+  "change": "Mount the new PID namespace procfs with subset=pid; keep Debian patches and all existing sandbox flags. No complete-proc fallback.",
+  "license": "LGPL-2.0-or-later",
+  "imageSourceDirectory": "/usr/share/doc/bubblewrap/agentarts-source",
+  "requiredKernelFeature": "procfs subset=pid (Linux 5.8 or later); actual namespace preflight must pass"
+}

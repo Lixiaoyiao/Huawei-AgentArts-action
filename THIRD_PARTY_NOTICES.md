@@ -48,6 +48,18 @@ adaptation does not change model selection, provider behavior or DSH permissions
 
 ## Moby seccomp profile
 
+The image separately builds **bubblewrap 0.8.0-2+deb12u1** from fixed Debian
+sources, retaining Debian patches and adding the dated `subset=pid` procfs patch
+in `agentarts/bubblewrap-proc-subset.patch`. Bubblewrap is LGPL-2.0-or-later; it
+runs as a separate executable and does not change this project's MIT license.
+Its complete corresponding upstream/Debian archives, descriptor, local patch,
+license, Debian copyright and build script accompany the image in
+`/usr/share/doc/bubblewrap/agentarts-source`. Source hashes and rebuild metadata
+are retained in `agentarts/bubblewrap-source.json` and
+`scripts/build-agentarts-bwrap.mjs`; the LGPL text is also retained in
+[`agentarts/LICENSE.bubblewrap`](agentarts/LICENSE.bubblewrap).
+Builder compilers are absent from Runtime.
+
 The separately loaded `agentarts/apparmor-runtime.profile` also derives from the
 Moby Docker default AppArmor template, pinned at
 [`6430e49a55babd9b8f4d08e70ecb2b68900770fe`](https://github.com/moby/moby/blob/6430e49a55babd9b8f4d08e70ecb2b68900770fe/profiles/apparmor/template.go).

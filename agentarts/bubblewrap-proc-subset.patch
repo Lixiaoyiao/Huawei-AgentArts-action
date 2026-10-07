@@ -1,0 +1,19 @@
+Description: Preserve masked parent proc paths when creating the worker PID namespace
+ Use a process-only procfs. The kernel may reject a new complete procfs from a
+ user namespace when the parent procfs contains masked files. Do not expose the
+ parent's procfs or retry without subset=pid on unsupported kernels.
+Author: Huawei-AgentArts-action contributors
+Forwarded: not-needed
+Last-Update: 2026-10-07
+--- a/bubblewrap.c
++++ b/bubblewrap.c
+@@ -1120,7 +1120,8 @@
+       break;
+ 
+     case PRIV_SEP_OP_PROC_MOUNT:
+-      if (mount ("proc", arg1, "proc", MS_NOSUID | MS_NOEXEC | MS_NODEV, NULL) != 0)
++      /* AgentArts, 2026-10-07: process-only procfs; fail closed if unsupported. */
++      if (mount ("proc", arg1, "proc", MS_NOSUID | MS_NOEXEC | MS_NODEV, "subset=pid") != 0)
+         die_with_error ("Can't mount proc on %s", arg1);
+       break;
+ 

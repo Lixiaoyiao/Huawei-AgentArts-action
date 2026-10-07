@@ -15,6 +15,8 @@ const read = (path) => {
 const proof = `
 const fs=require('node:fs'),os=require('node:os'),cp=require('node:child_process');
 const status=fs.readFileSync('/proc/self/status','utf8');
+if(fs.existsSync('/proc/sys')||fs.existsSync('/proc/meminfo'))process.exit(43);
+for(const pid of fs.readdirSync('/proc').filter(x=>/^[0-9]+$/.test(x))){const s=fs.readFileSync('/proc/'+pid+'/status','utf8');if(!/^Uid:\\s+10001\\s+/m.test(s))process.exit(44);}
 if(process.getuid()!==10001||process.getgid()!==10001||process.getgroups().includes(0)||!/^CapEff:\\s+0+$/m.test(status)||!/^NoNewPrivs:\\s+1$/m.test(status)||!/^Seccomp:\\s+2$/m.test(status)||Object.keys(os.networkInterfaces()).some(x=>x!=='lo'))process.exit(41);
 fs.accessSync('/usr/bin/unshare',fs.constants.X_OK);
 const nested=cp.spawnSync('/usr/bin/unshare',['--user','--','/usr/bin/true'],{encoding:'utf8',timeout:1000});

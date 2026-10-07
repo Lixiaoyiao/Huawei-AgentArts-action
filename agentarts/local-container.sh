@@ -18,7 +18,7 @@ source_dirty=false
 if ! git diff --quiet HEAD -- . || [ -n "$(git ls-files --others --exclude-standard)" ]; then source_dirty=true; fi
 # NUL-separated path lists must stay in a stream, never a shell variable.
 source_tree_digest="$(
-  { find src assets scripts -type f -print0; printf '%s\0' package.json package-lock.json tsconfig.json agentarts/Dockerfile test/fixtures/messages-sse.mjs test/fixtures/messages-sse.d.mts LICENSE THIRD_PARTY_NOTICES.md BUNDLED_DEPENDENCIES.md; } |
+  { find src assets scripts -type f -print0; printf '%s\0' package.json package-lock.json tsconfig.json agentarts/Dockerfile agentarts/bubblewrap-source.json agentarts/bubblewrap-proc-subset.patch test/fixtures/messages-sse.mjs test/fixtures/messages-sse.d.mts LICENSE THIRD_PARTY_NOTICES.md BUNDLED_DEPENDENCIES.md; } |
   LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | cut -d ' ' -f1
 )"
 build_args=()
