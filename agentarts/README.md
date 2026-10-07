@@ -1,8 +1,8 @@
 # AgentArts 上的 DeepSeek Harness Action
 
-这是原 Action 的完整能力迁移，PR Review 仍是第一条真实云验收链路。当前主入口复用原 `runAction`，将 DSH engine 接到 Runtime v3；事件解析、授权、工具回调、独立验证与发布继续使用原 Controller。账号准入待审批，没有真实 AgentArts 或 GitHub 发布验收。[能力表](../docs/agentarts/capability-matrix.md) 逐项列出代码接入、实测范围和待验条件；历史只读证据不代表本轮新代码通过。
+目标是迁移原 Action 的主要能力，PR Review 仍是第一条真实云验收链路。当前主入口复用原 `runAction`，将 DSH engine 接到 Runtime v3；事件解析、授权、工具回调、独立验证与发布继续使用原 Controller。账号准入待审批，真实AgentArts仍未验收；人工启动的本地Runtime→真实GitHub审查已通过。[能力表](../docs/agentarts/capability-matrix.md) 逐项列出代码接入、实测范围和待验条件；历史只读证据不代表本轮新代码通过。
 
-本地09e clean AMD64镜像已完成七个真实DeepSeek任务的自动rubric，四write实际delta与独立Docker契约通过；Demo另完成七记录16布局检查。合成GitHub身份、无发布/云、人工未复核、成本未知。最终610f685本地镜像修复五cap所有权交接后，smoke及额外源码测试中的真正默认安装器、Session恢复通过；源码harness与部署bundle分开记录。原生Ubuntu24双架构镜像CI仍在proc挂载时失败，新镜像不继承09e模型通过。[验证记录](../docs/agentarts/verification.md) 和 [部署门槛](../docs/agentarts/deployment.md) 明确范围；云审批后先确认租户可提供同等sandbox，不能满足时暂停该部署路线，再经用户同意评估架构备选。
+最终本地25b2072镜像重新跑完七例真实DSH/DeepSeek、四份实际修复与3852隐藏合同，并补齐固定Git包安装。真实测试PR已完成缺陷/clean审查、同状态目录跨进程复用和过期head拒绝，记录与[复现入口](../docs/agentarts/local-finish.md)独立保存。原生Ubuntu双架构仍在proc挂载时失败；云审批后须先确认租户可提供同等sandbox，不能满足时暂停该部署路线并评估安全备选。模型人工验收、实际费用和云效果不由本地自动通过代替。
 
 ```text
 GitHub 事件 → Controller 授权、实体/ref/提交绑定、原上下文与工作区

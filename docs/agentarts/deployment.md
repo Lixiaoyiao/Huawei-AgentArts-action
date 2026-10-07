@@ -268,6 +268,8 @@ unset AGENTARTS_LOCAL_API_KEY
 
 ## 5. 审批后按顺序验收
 
+本地最终镜像/模型与真实GitHub已按[收尾记录](local-finish.md)完成；可复用[本地GitHub CLI](local-github-review.md)检查原控制端发布。目标平台宿主能力以[最小诊断和放行门槛](host-requirements.md)为准：原生Ubuntu两架构现仍拒proc，不能因账号审批通过就视为可部署。
+
 先核对目标租户可提供等价namespace/privateproc/seccomp/LSM/五cap；能力未确认或无法满足时暂停该路线，不新建资源硬试。通过能力核对后，再得到账号、资源创建/费用与私有部署的明确授权，执行最小固定候选的实际probe和验收。备选架构须另行评估并取得用户同意，不能冒充当前已兼容。命令与各环境证据由 [验证记录](verification.md) 分别保存。
 
 1. **基础部署**：确认实际目标架构、固定镜像/版本/alias、API_KEY、日志和网络。核对 `/ping`、原 DSH 启动、UID/caps 与凭据边界；尚未安全通过前不安装可发布的 GitHub workflow。

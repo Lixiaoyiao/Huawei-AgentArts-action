@@ -1,0 +1,5 @@
+btfPresent=true
+function=mount_too_revealing accepted=false errorKind=not-recorded symbolPresent=true functionTracerListed=true
+function=security_sb_kern_mount accepted=false errorKind=not-recorded symbolPresent=true functionTracerListed=true
+function=security_sb_mount accepted=false errorKind=not-recorded symbolPresent=true functionTracerListed=true
+function=security_file_permission accepted=false errorKind=not-recorded symbolPresent=true functionTracerListed=true

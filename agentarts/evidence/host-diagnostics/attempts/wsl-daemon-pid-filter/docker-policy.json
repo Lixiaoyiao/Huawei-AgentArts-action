@@ -1,0 +1,1 @@
+{"kernel":"6.18.40.1-microsoft-standard-WSL2","os":"Ubuntu 26.04.1 LTS","architecture":"x86_64","securityOptions":["name=seccomp,profile=builtin","name=cgroupns"],"defaultRuntime":"runc","cgroupVersion":"2"}

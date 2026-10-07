@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "durationMs": 122853,
+  "runUrl": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1",
+  "policy": {
+    "trust": "trusted-read",
+    "allowed": true,
+    "reason": "Read-only operation; repository content remains untrusted data",
+    "capabilities": {
+      "readRepository": true,
+      "readCi": false,
+      "publishComments": true,
+      "executeRepositoryCode": false,
+      "loadExtensions": true,
+      "accessNetwork": true,
+      "modifyWorkspace": false,
+      "commit": false,
+      "push": false,
+      "createPullRequest": false,
+      "manageIssueLabels": false,
+      "manageIssueAssignees": false,
+      "updateIssueState": false,
+      "updatePullRequestMetadata": false
+    }
+  },
+  "agent": {
+    "durationMs": 15629,
+    "isolation": {
+      "backend": "agentarts",
+      "credentialMediated": true,
+      "repoToolsEnabled": true,
+      "processIsolated": true,
+      "networkIsolated": true,
+      "workspaceAccess": "read-only",
+      "extensionProfile": "github-action",
+      "limitations": [
+        "AgentArts deployment and tenant limits require separate cloud verification.",
+        "Native DSH mode owns its internal capability inventory; observed names are telemetry, not Controller tool grants.",
+        "Returned file bytes are staged and checked against the original snapshot; the original Controller validates tests and owns GitHub publication."
+      ]
+    },
+    "turns": 1,
+    "toolCalls": 0,
+    "validationRetries": 0,
+    "toolReceipts": [],
+    "extensionAudit": {
+      "schemaVersion": 1,
+      "profile": "github-action",
+      "digest": "245efc0673f454fb4d8c3503e6a87caa548621dab57865e94cde27f492aafd94",
+      "network": false,
+      "entries": []
+    }
+  },
+  "permission": {
+    "schemaVersion": 1,
+    "profile": "custom",
+    "requestedTools": [
+      "workspace.read",
+      "workspace.search"
+    ],
+    "disallowedTools": [],
+    "effectiveTools": [
+      "workspace.read",
+      "workspace.search"
+    ],
+    "deniedTools": [],
+    "network": "host-gateway",
+    "workspaceWrite": false,
+    "extensionDigest": "245efc0673f454fb4d8c3503e6a87caa548621dab57865e94cde27f492aafd94",
+    "trustedExtensions": [],
+    "digest": "9739e7cb954831a830a07df4cfc08cce89d74f2e35158cbca4eefb24d4e72591"
+  },
+  "toolPolicy": {
+    "schemaVersion": 1,
+    "policyOwner": "controller",
+    "requestedTools": [
+      "workspace.read",
+      "workspace.search"
+    ],
+    "effectiveTools": [
+      "workspace.read",
+      "workspace.search"
+    ],
+    "deniedTools": []
+  },
+  "dsh": {
+    "mode": "controlled",
+    "composition": "github-action-controlled"
+  },
+  "authority": {
+    "schemaVersion": 1,
+    "scope": "action-known-sources",
+    "knownSources": [
+      {
+        "kind": "controller-credential",
+        "service": "github",
+        "holder": "controller",
+        "credentialExposure": "not-exposed-to-worker"
+      },
+      {
+        "kind": "controller-credential",
+        "service": "deepseek",
+        "holder": "controller",
+        "credentialExposure": "not-exposed-to-worker",
+        "mediation": "run-scoped-proxy"
+      }
+    ]
+  },
+  "githubRequests": {
+    "credentialScope": "production-action",
+    "clientRole": "main-controller",
+    "requests": 686,
+    "cacheHits": 0,
+    "coalesced": 0,
+    "retries": 0,
+    "waitMs": 0,
+    "quotaFailures": 0
+  },
+  "conclusion": "success",
+  "operation": "review",
+  "summary": "Reviewed the added examples/acceptance/bounds.mjs. The `at` function validates that `index` is an integer within `[0, values.length)`, throws RangeError otherwise, and returns `values[index]`. Behavior matches the documented contract, and no correctness, security, concurrency, reliability, or regression issues were found.",
+  "findingsCount": 0,
+  "publication": {
+    "selected": 0,
+    "inlinePublished": 0,
+    "inlineUpdated": 0,
+    "duplicatesSkipped": 0,
+    "summaryOnly": 0,
+    "failures": []
+  },
+  "validation": {
+    "status": "not-applicable",
+    "commandCount": 0
+  }
+}

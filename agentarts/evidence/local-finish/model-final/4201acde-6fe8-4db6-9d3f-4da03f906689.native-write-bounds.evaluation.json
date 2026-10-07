@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "native-write-bounds",
+  "caseVersion": 1,
+  "operation": "task",
+  "dshMode": "native",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+  "acceptanceDigest": "c7ae2a37654eee2a2bb910f6c6a0ccefd47f6578bf0557ec4221bfbda82b9c1f",
+  "candidateSha": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+  "candidateEvidence": {
+    "path": "/var/tmp/codex-agentarts-01a10594/local-finish-20261007/model-final-2/4201acde-6fe8-4db6-9d3f-4da03f906689.native-write-bounds.candidate.json",
+    "maxBytes": 262144
+  },
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Native DSH tool observations were recorded (telemetry, not individual tool grants or proof of a source read)",
+      "passed": true
+    }
+  ],
+  "validation": [
+    {
+      "argv": [
+        "node",
+        "tests/acceptance.mjs"
+      ],
+      "result": {
+        "exitCode": 0,
+        "stdout": "Frozen contract cases passed: 72\n",
+        "stderr": "",
+        "timedOut": false,
+        "outputTruncated": false
+      }
+    }
+  ],
+  "taskDigest": "09d30b774fb56248eb7d023600f0d5ac563b83ea29f999a24c07c2ff81d8fb6a",
+  "workspaceDigest": "4bcc59ddf955497a2f0d823ca7db535e75bceaa3050571f4e089c1a9874cc91a",
+  "delta": {
+    "inputDigest": "4bcc59ddf955497a2f0d823ca7db535e75bceaa3050571f4e089c1a9874cc91a",
+    "resultDigest": "55002f929c1ae5d2061211209317343710944130888e521cd021f439ec2c0ea0",
+    "changes": [
+      {
+        "kind": "modified",
+        "path": "src/bounds.ts"
+      }
+    ]
+  },
+  "output": {
+    "protocolVersion": 1,
+    "operation": "task",
+    "state": "final",
+    "summary": "Fixed the inBounds function in src/bounds.ts so valid integer indices are 0 through length-1 for nonnegative integer length, and empty collections (length 0) have no valid index. Changed the upper-bound check from index <= length to index < length, preserving the exported API and public function contract.",
+    "findings": [],
+    "diagnosis": "The original implementation used index <= length, which incorrectly treated the index equal to length as valid and returned true for empty collections (length 0, index 0). The corrected check index < length enforces the documented contract.",
+    "changePlan": [
+      {
+        "path": "src/bounds.ts",
+        "summary": "Changed return index >= 0 && index <= length to return index >= 0 && index < length."
+      }
+    ],
+    "verification": [
+      {
+        "command": "node tests/acceptance.mjs",
+        "status": "skipped",
+        "summary": "Tests left to the Controller; per instructions I did not run them."
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 5,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-write"
+  },
+  "durationMs": 12050,
+  "startedAt": "2026-10-07T08:05:41.507Z",
+  "completedAt": "2026-10-07T08:05:53.557Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 5,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+    "sourceCommit": "6d07c5088aa1e8f919296917f3ea87299b49354e",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

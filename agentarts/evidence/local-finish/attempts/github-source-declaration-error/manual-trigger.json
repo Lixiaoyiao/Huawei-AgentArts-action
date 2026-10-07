@@ -1,0 +1,36 @@
+{
+  "action": "synchronize",
+  "repository": {
+    "id": 1404063896,
+    "full_name": "Lixiaoyiao/Huawei-AgentArts-action",
+    "name": "Huawei-AgentArts-action",
+    "owner": {
+      "login": "Lixiaoyiao"
+    },
+    "default_branch": "main"
+  },
+  "sender": {
+    "login": "Lixiaoyiao"
+  },
+  "pull_request": {
+    "number": 1,
+    "state": "open",
+    "draft": false,
+    "head": {
+      "sha": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+      "ref": "acceptance/local-runtime-review-20261007",
+      "repo": {
+        "id": 1404063896,
+        "full_name": "Lixiaoyiao/Huawei-AgentArts-action"
+      }
+    },
+    "base": {
+      "sha": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+      "ref": "main",
+      "repo": {
+        "id": 1404063896,
+        "full_name": "Lixiaoyiao/Huawei-AgentArts-action"
+      }
+    }
+  }
+}

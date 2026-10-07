@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "source": "https://github.com/moby/moby/blob/6430e49a55babd9b8f4d08e70ecb2b68900770fe/profiles/apparmor/template.go",
+  "sourceCommit": "6430e49a55babd9b8f4d08e70ecb2b68900770fe",
+  "sourceSha256": "42130ca5908f45263facef820961d9e1a988e82f8a2937f4658e7bcccc96cc07",
+  "sourceVersion": "v28.0.4",
+  "license": "Apache-2.0",
+  "licenseFile": "agentarts/LICENSE.moby-seccomp",
+  "generator": "scripts/generate-agentarts-apparmor.mjs",
+  "profile": "agentarts-runtime-bwrap-v1",
+  "changes": [
+    "Independent profile name; the daemon and host signal peer uses Moby's unconfined fallback.",
+    "AppArmor 4 ABI and explicit userns creation for the trusted namespace bootstrap.",
+    "Replace deny mount with mount allowance; outer capabilities exclude SYS_ADMIN and the worker drops all capabilities.",
+    "Allow only the two fixed root pivots used by pinned bubblewrap 0.8; preserve all other Docker default rules."
+  ],
+  "limitations": [
+    "AppArmor profile loading is a host operator requirement, not an AgentArts cloud capability claim.",
+    "The application must still pass its namespace probe and install worker BPF; no UID-only fallback is permitted."
+  ]
+}

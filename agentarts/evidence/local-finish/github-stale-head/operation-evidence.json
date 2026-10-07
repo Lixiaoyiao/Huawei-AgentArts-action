@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "42a95aa3-8b51-4fa6-9ae6-b6ee0b69f82a",
+  "plan": {
+    "mode": "local-real-model",
+    "execute": true,
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "pullNumber": 1,
+    "expectedHead": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+    "expectedBase": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+    "sourceCommit": "7da336670bb62f04f598bc94c95ed7ec75baef23",
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+    "provenance": "operator-declared-not-attested",
+    "operation": "review",
+    "dshVersion": "0.2.0-rc.2",
+    "maxTurns": 1,
+    "allowedTools": [
+      "workspace.read",
+      "workspace.search"
+    ],
+    "maxModelRequests": 8,
+    "maxOutputTokens": 4096,
+    "timeoutMinutes": 5,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false,
+    "cloudVerification": "not-performed",
+    "githubTrigger": "explicit-local-manual-PR-trigger",
+    "githubPublisher": "original-controller",
+    "deduplicationScope": "local-private-driver-ledger-not-Action-or-global-API-idempotency",
+    "runtimeCountScope": "controller-prepared-attempts-not-server-admission",
+    "modelCountScope": "validated-supervisor-replies-only-unconfirmed-calls-unknown"
+  },
+  "operationKey": "",
+  "status": "failed-or-unconfirmed",
+  "failureCode": "POLICY_DENIED",
+  "failureReason": "Current real PR repository, open state or expected base/head binding changed",
+  "runtimeInvocations": 0,
+  "modelRequests": 0,
+  "comments": [],
+  "automaticReplay": "refused",
+  "actualCost": "unknown",
+  "manualVerdict": "not-reviewed"
+}

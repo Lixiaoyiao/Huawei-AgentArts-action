@@ -6,4 +6,6 @@ package-lock.json
 # Immutable execution evidence; preserve the recorded bytes.
 agentarts/evidence/current/
 agentarts/evidence/full-v3/
+agentarts/evidence/local-finish/
+agentarts/evidence/host-diagnostics/
 .dsh-*-test-*/

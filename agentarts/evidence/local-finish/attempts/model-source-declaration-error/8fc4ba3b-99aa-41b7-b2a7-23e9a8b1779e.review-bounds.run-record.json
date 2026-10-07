@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "d41eaf5b-a685-43b7-859f-613ecec32d41",
+    "repository": "agentarts-fixtures/full-v1",
+    "url": "",
+    "pullNumber": 1,
+    "kind": "pull_request",
+    "operation": "review",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd"
+  },
+  "stages": [
+    {
+      "name": "Runtime + DSH + Controller boundary + business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:00:54.141Z",
+      "completedAt": "2026-10-07T08:01:34.750Z"
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.search",
+      "runtimeName": "glob",
+      "ok": true,
+      "completed": true,
+      "durationMs": 29
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 7
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 7
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "PASS: The fixed diff reconstructs exactly the admitted base and head source",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 1",
+      "PASS: Independent contract oracle matches the frozen expected and observed values for example 2",
+      "PASS: At least one frozen input independently demonstrates the introduced defect",
+      "PASS: All retained actionable findings map to admitted changed source lines",
+      "PASS: The known regression has a location-bound, evidence-backed finding",
+      "PASS: No unrelated actionable finding survives the precision filter",
+      "PASS: Runtime returned a final result",
+      "PASS: Real source context was read through a successful completed tool receipt"
+    ]
+  },
+  "result": {
+    "summary": "The PR changes inBounds from `index < length` to `index <= length`, introducing an off-by-one regression. The function now incorrectly returns true when index equals length, which is always out of bounds, and for empty collections (length 0) it returns true for index 0. This breaks the public contract that valid indices are 0 through length-1."
+  },
+  "runtime": {
+    "sessionId": "d41eaf5b-a685-43b7-859f-613ecec32d41",
+    "endpoint": "loopback-production-full-container",
+    "dshVersion": "0.2.0-rc.2"
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 40614,
+  "warnings": [
+    "Budget approval is not a dollar-denominated hard cap. Configure the trusted supervisor request ceiling before execution.",
+    "Automatic contract rubric only; human acceptance remains pending.",
+    "This loopback production Runtime evidence is not Huawei AgentArts or real GitHub task evidence.",
+    "GitHub binding is synthetic; no GitHub publication was attempted.",
+    "One AgentLoop turn per case. Multi-turn repair is covered separately by offline Controller integration tests.",
+    "Human acceptance pending; actual dollar cost unknown."
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "task-write-roles",
+  "caseVersion": 1,
+  "operation": "task",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+    "headSha": "dd42c54e3064617dfd82b90122aeab71a7a749a8",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "437efd0aad7b7c4a46c59f82999aa20107eda5bbdb815b55d7f3c94471695030",
+  "acceptanceDigest": "2aa431663acc59b6f04a143ae8706b43530f0e3740f9ab2a09b9e247d337a75c",
+  "candidateSha": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+  "candidateEvidence": {
+    "path": "/var/tmp/codex-agentarts-01a10594/local-finish-20261007/model-final-2/4201acde-6fe8-4db6-9d3f-4da03f906689.task-write-roles.candidate.json",
+    "maxBytes": 262144
+  },
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [
+    {
+      "argv": [
+        "node",
+        "tests/acceptance.mjs"
+      ],
+      "result": {
+        "exitCode": 0,
+        "stdout": "Frozen contract cases passed: 38\n",
+        "stderr": "",
+        "timedOut": false,
+        "outputTruncated": false
+      }
+    }
+  ],
+  "taskDigest": "93bb2feb513c69285b477b5c31ed6881984b872576885d9f2d0318c9fd148c11",
+  "workspaceDigest": "4c6fee108800cd67277d0b213ee8692c9664495eb68115c21e0d802b5db93f95",
+  "delta": {
+    "inputDigest": "4c6fee108800cd67277d0b213ee8692c9664495eb68115c21e0d802b5db93f95",
+    "resultDigest": "293cc78c3c10e4376fd96a7dfb68f9ca22b34801b2bd9e543ffb3ba81072bada",
+    "changes": [
+      {
+        "kind": "modified",
+        "path": "src/access.ts"
+      }
+    ]
+  },
+  "output": {
+    "protocolVersion": 1,
+    "operation": "task",
+    "state": "final",
+    "summary": "Updated src/access.ts so hasRequiredRoles requires every role in requiredRoles (Array.prototype.every), preserving empty-requiredRoles behavior since every() returns true for an empty array. The exported API and function signature are unchanged, and the frozen acceptance tests were not modified.",
+    "findings": [],
+    "changePlan": [
+      {
+        "path": "src/access.ts",
+        "summary": "Changed requiredRoles.some(...) to requiredRoles.every(...) to enforce all required roles rather than any one role."
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 6,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-write"
+  },
+  "durationMs": 13990,
+  "startedAt": "2026-10-07T08:05:15.250Z",
+  "completedAt": "2026-10-07T08:05:29.240Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 6,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+    "sourceCommit": "6d07c5088aa1e8f919296917f3ea87299b49354e",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

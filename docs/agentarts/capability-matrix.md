@@ -1,12 +1,12 @@
 # 原能力迁移表
 
-核对日期：2026-10-07。目标是原 `deepseek-harness-action` 的完整AgentArts迁移版，PR Review仍是第一条真实云验收链路。共同历史和完整原实现保留；基线 [upstream-lock.json](../../agentarts/upstream-lock.json) 为 `891570ef2254334dff8de22af948f3f0105e933e`，DSH `0.2.0-rc.2`。账号准入待审批，真实AgentArts与GitHub发布未验收。
+核对日期：2026-10-07。目标是原 `deepseek-harness-action` 的完整AgentArts迁移版，PR Review仍是第一条真实云验收链路。共同历史和完整原实现保留；基线 [upstream-lock.json](../../agentarts/upstream-lock.json) 为 `891570ef2254334dff8de22af948f3f0105e933e`，DSH `0.2.0-rc.2`。账号准入待审批，真实AgentArts未验收；本地Runtime与真实GitHub审查发布已完成。
 
 “代码接入”表示主Action实际选择原Controller加v3Runtime engine；不表示本轮新源码全部生产环境测试已完成。各次源码、镜像、实际模型/夹具与平台验收分别记录于 [verification.md](verification.md)。历史v1/v2只读镜像与四例真实模型评测保留原记录，不能继承为v3/native/write证据。
 
-本轮09e clean AMD64生产镜像已通过默认v3十四检查与安全拒绝；同镜像七个真实DeepSeek任务自动rubric通过，含四write真实delta和独立Docker契约测试。人工判读仍未完成，无真实GitHub/AgentArts。新a3e process-only procfs候选在原生Ubuntu24双架构CI专用AppArmor enforce下仍报proc mount EPERM；不把09e本地通过扩展为新镜像或所有宿主通过。
+最新25b2072 clean AMD64镜像完成v3十四检查、七例真实DSH/DeepSeek与四份实际修复/隐藏合同；固定Git安装三例通过。真实本仓库PR的defect/clean审查、跨进程历史复用与过期head拒绝另有记录，人工仍未验收。[本轮结果](local-finish.md)逐项区分模拟、本地真实模型和真实GitHub；云端尚未通过。
 
-最终610f685本地镜像另通过固定模型smoke，五cap所有权修复后的真正默认安装器/Session恢复在同image只读源码harness通过；其范围独立于部署bundle HTTP与09e模型。86普通CI通过，原生镜像CI仍拒proc；审批后先核对目标租户等价sandbox能力，不能满足就暂停该部署路线，经用户同意另评备选，不新建资源硬试。
+原生Ubuntu两架构仍拒proc挂载，已交付最小无凭据诊断和宿主门槛；精确内核分支未查明，不将诊断job绿色记作Runtime通过。审批后先核对目标租户等价sandbox能力，不能满足就暂停该部署路线并评估安全备选，不新建资源硬试。历史09e/610证据仍在[验证记录](verification.md)，不会移记到新镜像。
 
 ## Operation、事件和输入
 
@@ -14,7 +14,7 @@
 
 | 原能力                                      | 当前迁移实现                                                                | 当前边界/验收                                                                                  |
 | ------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| PR `review`                                 | 原diff/精度过滤/行映射/publisher，通过v3 engine运行DSH                      | 本轮v3本地真实DeepSeek defect/clean自动rubric通过；合成PR、人工未复核，云/GitHub待验           |
+| PR `review`                                 | 原diff/精度过滤/行映射/publisher，通过v3 engine运行DSH                      | 本地真实模型及真实本仓库PR defect/clean发布通过；人工启动，非Actions/webhook/云验收            |
 | `task --read`                               | 原Issue/PR/automation任务、typed taskOutput和答复finalizer                  | 代码接入；当前发送原准备工作区全部文件；不可信任务仍只有上下文                                 |
 | `diagnose`                                  | 原head绑定check-runs/jobs/有界不可信日志，Controller工具请求/反馈与发布     | 代码接入；GitHub读凭据不进入Runtime；真实失败run、日志权限及云环境待验                         |
 | PR `fix`                                    | v3真实编辑/delta导入后进入原验证/finishFix/API提交                          | 本地真实模型delta+独立Docker契约通过；仍需allow-write/原授权/固定head/ref，真实云/GitHub写待验 |

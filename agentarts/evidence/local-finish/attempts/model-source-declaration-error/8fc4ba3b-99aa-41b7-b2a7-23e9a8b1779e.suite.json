@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "runId": "8fc4ba3b-99aa-41b7-b2a7-23e9a8b1779e",
+  "plan": {
+    "schemaVersion": 1,
+    "suiteVersion": "full-runtime-contracts-v1",
+    "mode": "local-real-model",
+    "execute": true,
+    "suiteDigest": "56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9",
+    "cases": [
+      {
+        "id": "review-bounds",
+        "version": 1,
+        "operation": "review",
+        "access": "read",
+        "dshMode": "controlled",
+        "sourceFixture": "bounds-defect",
+        "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+        "criteria": "Report an actionable correctness finding on the changed upper-bound comparison, supported by the concrete index===length counterexample; no unrelated actionable finding."
+      }
+    ],
+    "maximumRuntimeInvocations": 1,
+    "maximumTurnsPerCase": 1,
+    "approvedProviderRequestsPerCase": 8,
+    "approvedMaxOutputTokens": 4096,
+    "maximumProviderRequests": 8,
+    "perCaseTimeoutMs": 300000,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d",
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false,
+    "githubBinding": "synthetic-content-hash-identities",
+    "githubPublication": "not-attempted",
+    "cloudVerification": "not-performed",
+    "warnings": [
+      "Budget approval is not a dollar-denominated hard cap. Configure the trusted supervisor request ceiling before execution.",
+      "Automatic contract rubric only; human acceptance remains pending.",
+      "This loopback production Runtime evidence is not Huawei AgentArts or real GitHub task evidence."
+    ]
+  },
+  "status": "passed",
+  "records": [
+    {
+      "caseId": "review-bounds",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/local-finish-20261007/model-first/8fc4ba3b-99aa-41b7-b2a7-23e9a8b1779e.review-bounds.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/local-finish-20261007/model-first/8fc4ba3b-99aa-41b7-b2a7-23e9a8b1779e.review-bounds.run-record.json"
+    }
+  ],
+  "successRate": "not-computed",
+  "statusMeaning": "Automatic execution and fixed contract rubric only",
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "actualCost": "unknown",
+  "githubPublication": "not-attempted",
+  "cloudVerification": "not-performed"
+}

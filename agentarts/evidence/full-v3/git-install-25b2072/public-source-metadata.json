@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-07T08:02:28.005Z",
+  "pinnedCommit": "98e8ff1da1a89f93d1397a24d7413ed15421c139",
+  "sources": [
+    {
+      "url": "https://registry.npmjs.org/is-number/7.0.0",
+      "status": 200,
+      "metadata": {
+        "name": "is-number",
+        "version": "7.0.0",
+        "gitHead": "98e8ff1da1a89f93d1397a24d7413ed15421c139",
+        "repository": {
+          "url": "git+https://github.com/jonschlinkert/is-number.git",
+          "type": "git"
+        }
+      }
+    },
+    {
+      "url": "https://api.github.com/repos/jonschlinkert/is-number/git/ref/tags/7.0.0",
+      "status": 200,
+      "metadata": {
+        "ref": "refs/tags/7.0.0",
+        "object": {
+          "sha": "98e8ff1da1a89f93d1397a24d7413ed15421c139",
+          "type": "commit",
+          "url": "https://api.github.com/repos/jonschlinkert/is-number/git/commits/98e8ff1da1a89f93d1397a24d7413ed15421c139"
+        }
+      }
+    }
+  ],
+  "credentialsUsed": false
+}

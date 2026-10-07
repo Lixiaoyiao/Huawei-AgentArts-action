@@ -1,0 +1,1 @@
+{"schemaVersion":1,"kind":"fixed-namespace-diagnostic","status":"failed","architecture":"x64","apparmor":"docker-default (enforce)","apparmorUsernsRestriction":"1","usernsClone":"1","usernsMaximum":"63795","exitCode":1,"signal":null,"stderr":"bwrap: Failed to make / slave: Permission denied\n","spawnError":null,"realModelCalled":false,"cloudCalled":false,"githubCalled":false}

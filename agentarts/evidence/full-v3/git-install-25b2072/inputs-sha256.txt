@@ -1,0 +1,4 @@
+7de4110dc843caf84d7519ad5551e61ac36869c1a84beb8eea1dd67352da182a  /var/tmp/codex-agentarts-01a10594/git-ca-candidate-25b2072/test/agentarts-git-install.test.ts
+94f04328f5b6777ec3cc76c7f77604771b3dd6117a2168242645af39392e66cf  /var/tmp/codex-agentarts-01a10594/git-ca-candidate-25b2072/src/agentarts/sandbox.ts
+06d92b4a2ac5b3fd0eace4e5d246f95a8255920455e37c5277c4328f8731c609  /var/tmp/codex-agentarts-01a10594/git-ca-candidate-25b2072/src/agentarts/installer.ts
+c561c066f64477ff7f114ebd144eeb9a1d929ba5dedbf9fb41b3060b867d4497  /var/tmp/codex-agentarts-01a10594/git-ca-candidate-25b2072/agentarts/seccomp-bwrap.json

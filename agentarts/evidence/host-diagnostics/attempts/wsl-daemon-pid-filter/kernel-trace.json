@@ -1,0 +1,1 @@
+{"schemaVersion":1,"status":"armed","matches":"comm=bwrap and this container PID descendants","pidFilterApplied":true,"functions":["mount_too_revealing","security_sb_kern_mount","security_sb_mount"],"limitation":"EPERM without an observed kernel return does not identify the exact rejection branch"}

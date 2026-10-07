@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "91813fbf-962d-4475-b15c-0935cc22148e",
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "pullNumber": 1,
+    "headSha": "0567c02295f8dccd0e4968f908e35d5690fd9411",
+    "baseSha": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+    "kind": "pull_request",
+    "operation": "review",
+    "url": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1"
+  },
+  "stages": [
+    {
+      "name": "真实 GitHub 身份与 PR 绑定",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:14:09.923Z",
+      "completedAt": "2026-10-07T08:14:13.916Z"
+    },
+    {
+      "name": "本机生产 Runtime 与真实模型限额预检",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:14:13.916Z",
+      "completedAt": "2026-10-07T08:15:53.252Z"
+    },
+    {
+      "name": "真实 DSH / DeepSeek 审查（本机生产容器）",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:15:53.253Z",
+      "completedAt": "2026-10-07T08:16:10.635Z"
+    },
+    {
+      "name": "原控制端 precision / diff / 写前 head 校验与发布",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:16:10.635Z",
+      "completedAt": "2026-10-07T08:16:16.812Z"
+    },
+    {
+      "name": "真实 GitHub 发布结果只读核验",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:16:16.812Z",
+      "completedAt": "2026-10-07T08:16:22.028Z"
+    }
+  ],
+  "tools": [],
+  "observedTools": [],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "v3 严格结果协议与 task/operation/entity/ref/base/head/grant 绑定",
+      "输入工作区摘要与只读实际文件检查",
+      "生产 bwrap / 网络隔离回执",
+      "可信 supervisor 模型来源与实际请求上限",
+      "原控制端 precision / diff 与发布前 head 检查完成",
+      "发布后 PR base/head 和实际评论数字作者/链接归属核验"
+    ]
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "runtime": {
+    "sessionId": "91813fbf-962d-4475-b15c-0935cc22148e",
+    "endpoint": "http://127.0.0.1:8080",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "durationMs": 132111,
+  "result": {
+    "summary": "Reviewed the added examples/acceptance/bounds.mjs. The `at` function validates that `index` is an integer within `[0, values.length)`, throws RangeError otherwise, and returns `values[index]`. Behavior matches the documented contract, and no correctness, security, concurrency, reliability, or regression issues were found.",
+    "githubUrl": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841"
+  },
+  "warnings": [
+    "本机生产 Runtime；未验证华为云。此入口由人工显式启动，未接收 GitHub webhook。",
+    "镜像和控制端 commit 由操作者声明，非远程证明。模型成本未知，美元预算不是硬上限。",
+    "原控制端只发布审查；独立业务人工验收仍待完成。"
+  ]
+}

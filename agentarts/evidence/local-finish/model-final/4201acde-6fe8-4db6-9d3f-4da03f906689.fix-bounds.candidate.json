@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "caseId": "fix-bounds",
+  "taskId": "9c6b3a82-108a-42e1-a214-2f26066e6f32",
+  "taskDigest": "ac409ae65b948e3658cb1abf1e05467f5b68b24a985570dd6a8b7bd740a3fe38",
+  "binding": {
+    "taskId": "9c6b3a82-108a-42e1-a214-2f26066e6f32",
+    "operation": "fix",
+    "operationIdentity": "live-full:4201acde-6fe8-4db6-9d3f-4da03f906689:fix-bounds",
+    "repository": "agentarts-fixtures/full-v1",
+    "entity": {
+      "kind": "pull_request",
+      "number": 4
+    },
+    "ref": "fixture-pr",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "revision": 0,
+    "grantDigest": "c984d1180cb47f97e0cf7d3c2b7b0119dd086a51df2568163414871182acb211"
+  },
+  "original": {
+    "path": "src/bounds.ts",
+    "sha256": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+    "mode": 420,
+    "encoding": "utf8",
+    "content": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index <= length;\n}\n"
+  },
+  "candidate": {
+    "path": "src/bounds.ts",
+    "sha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+    "mode": 420,
+    "encoding": "utf8",
+    "content": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n"
+  },
+  "delta": {
+    "schemaVersion": 1,
+    "binding": {
+      "repository": "agentarts-fixtures/full-v1",
+      "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+      "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+      "revision": 0,
+      "taskId": "9c6b3a82-108a-42e1-a214-2f26066e6f32",
+      "operation": "fix",
+      "entity": {
+        "kind": "pull_request",
+        "number": 4
+      },
+      "ref": "fixture-pr",
+      "grantDigest": "c984d1180cb47f97e0cf7d3c2b7b0119dd086a51df2568163414871182acb211",
+      "operationIdentity": "live-full:4201acde-6fe8-4db6-9d3f-4da03f906689:fix-bounds"
+    },
+    "inputDigest": "97ebc2ed46b530e6fbb3c59108bd19af599c4065f72a4655a39550a77c538c81",
+    "resultDigest": "5e4ac6d70ca3ffecb5a54c38114b8bd459e9b5334ca3ac8c5b5395aed47dc8ae",
+    "changes": [
+      {
+        "kind": "modified",
+        "original": {
+          "path": "src/bounds.ts",
+          "sha256": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+          "mode": 420
+        },
+        "file": {
+          "path": "src/bounds.ts",
+          "sha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+          "mode": 420,
+          "encoding": "utf8",
+          "content": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n"
+        }
+      }
+    ]
+  },
+  "notice": "Untrusted candidate source for human inspection only; no publication or execution is performed by this JSON artifact."
+}

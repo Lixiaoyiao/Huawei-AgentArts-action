@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "reviewKind": "ai-independent-review-and-hidden-contracts",
+  "reviewer": "Codex independent AI reviewer",
+  "reviewedAt": "2026-10-07T08:08:39.376Z",
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "modelCalled": false,
+  "cloudCalled": false,
+  "githubPublished": false,
+  "network": "none",
+  "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d",
+  "records": [
+    {
+      "caseId": "fix-bounds",
+      "status": "passed",
+      "contracts": 896,
+      "passed": true,
+      "artifactSha256": "365caca413f6352f2a9c7db3e051627ce5c9e754ccc9717d24b0160ceb025d35",
+      "candidateSha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+      "durationMs": 382
+    },
+    {
+      "caseId": "task-write-roles",
+      "status": "passed",
+      "contracts": 1030,
+      "passed": true,
+      "artifactSha256": "5abb42af05da0f2ce95e8bbdef8572875a5844e0a3364ff559fbf2ead7921537",
+      "candidateSha256": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+      "durationMs": 338
+    },
+    {
+      "caseId": "implement-roles",
+      "status": "passed",
+      "contracts": 1030,
+      "passed": true,
+      "artifactSha256": "24373ce9e0596918f54b69f812f188b0d44819d796e38518d0f0a1958a0a8c8f",
+      "candidateSha256": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+      "durationMs": 341
+    },
+    {
+      "caseId": "native-write-bounds",
+      "status": "passed",
+      "contracts": 896,
+      "passed": true,
+      "artifactSha256": "7de6ea7ce0ccfb495acfbdf8698c6a37707227cc58533d2a387bf4494b47ebae",
+      "candidateSha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+      "durationMs": 300
+    }
+  ],
+  "limitations": [
+    "AI review is not a human acceptance verdict.",
+    "Original model results, source/candidate bytes and manualVerdict were not edited.",
+    "Bounds acceptance is restricted to the documented nonnegative integer-length/integer-index domain.",
+    "Additional contracts cannot prove arbitrary requirements or code correctness."
+  ]
+}

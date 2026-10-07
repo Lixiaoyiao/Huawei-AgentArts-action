@@ -1,8 +1,14 @@
 # 验证记录
 
-更新日期：2026-10-07。项目 Huawei-AgentArts-action；上游基线 `891570ef2254334dff8de22af948f3f0105e933e`，DSH `0.2.0-rc.2`，Node `24.15.0`。完整源码/共同历史/许可保留，原仓库未修改；真实AgentArts与GitHub发布未验收。本轮完整迁移与下方历史只读实现分开记录，不继承旧commit的通过状态。
+更新日期：2026-10-07。项目 Huawei-AgentArts-action；上游基线 `891570ef2254334dff8de22af948f3f0105e933e`，DSH `0.2.0-rc.2`，Node `24.15.0`。完整源码/共同历史/许可保留，原仓库未修改。真实AgentArts未验收；本地Runtime与真实GitHub审查已通过，属于人工启动，不是Actions/webhook或平台执行。
 
-## 当前完整任务迁移：本地回归与待完成验收
+## 最新本地收尾
+
+最新25b2072最终镜像七例真实模型、四份实际修复及3852隐藏合同、固定Git安装三例、真实GitHub PR defect/clean、重复执行与stale拒绝见[完整收尾记录](local-finish.md)。完整源码回归2082通过/42跳过，后续测试小改另有定向与远程CI记录；编译入口扩为6bundle+4dry-run。原始证据在[local-finish](../../agentarts/evidence/local-finish/)，不覆盖下方旧结果。
+
+两次原生AMD64/ARM64宿主诊断仍拒proc；WSL通过，内核精确拒绝分支unknown。[宿主调查](host-requirements.md)记录实际版本、无凭据最小复现与清理；没有放宽隔离策略或声称AgentArts兼容。临时凭据/容器已清理，真实测试PR关闭且未合并。
+
+## 先前完整任务迁移：09e至610本地记录
 
 主Action已选择v3 FullEngine，五种operation、受检完整workspace/delta、原Controller验证/finalizer、controlled/native、扩展和原DSH Session均有主链路代码。代码接入与真实环境验收分别见 [能力表](capability-matrix.md)。完整迁移源码 `09e41d9a14542be47afaaee334210101142f0e4c` 已推新仓库main，通用npm alias修复独立提交为 `8f9dd60d1b654a57d8b54e79d53676dfbd7fa693`。下列源码回归在提交前工作树执行；最终clean镜像另记录准确源码与构建摘要，不把两者写成同一次验证。下方1890项与旧镜像不能代替本轮验证。
 

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "6d2c12c2-0917-4e4a-8dc6-55508c1a23ba",
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "pullNumber": 1,
+    "headSha": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+    "baseSha": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+    "kind": "pull_request",
+    "operation": "review",
+    "url": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1"
+  },
+  "stages": [
+    {
+      "name": "真实 GitHub 身份与 PR 绑定",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:13:03.918Z",
+      "completedAt": "2026-10-07T08:13:09.627Z"
+    },
+    {
+      "name": "已完成任务的历史结果复用（本次 0 Runtime / 0 发布）",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:13:09.627Z",
+      "completedAt": "2026-10-07T08:13:09.627Z"
+    }
+  ],
+  "tools": [],
+  "observedTools": [],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "重新读取真实 PR 并校验仓库/base/head/状态",
+      "历史结果评论数字作者与 PR 链接归属复核",
+      "本次没有模型或 GitHub 写入调用"
+    ]
+  },
+  "modelEvidence": {
+    "kind": "unverified",
+    "provider": "deepseek",
+    "model": ""
+  },
+  "runtime": {
+    "sessionId": "",
+    "endpoint": "http://127.0.0.1:8080",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "durationMs": 5714,
+  "result": {
+    "summary": "Reviewed the added examples/acceptance/bounds.mjs. The bounds check has an off-by-one error: it allows index === values.length, which should be rejected as out of bounds.",
+    "githubUrl": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841"
+  },
+  "warnings": [
+    "本机生产 Runtime；未验证华为云。此入口由人工显式启动，未接收 GitHub webhook。",
+    "镜像和控制端 commit 由操作者声明，非远程证明。模型成本未知，美元预算不是硬上限。",
+    "原控制端只发布审查；独立业务人工验收仍待完成。",
+    "历史复用：本次 0 Runtime、0 模型请求、0 发布；此前证据目录见 operation-evidence.json。仅证明本地 driver 跨重启幂等。"
+  ]
+}

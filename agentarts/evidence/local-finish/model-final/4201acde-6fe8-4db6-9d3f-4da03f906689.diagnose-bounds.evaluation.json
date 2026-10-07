@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "diagnose-bounds",
+  "caseVersion": 1,
+  "operation": "diagnose",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+  "acceptanceDigest": "c7ae2a37654eee2a2bb910f6c6a0ccefd47f6578bf0557ec4221bfbda82b9c1f",
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Diagnosis identifies the exclusive upper bound and a concrete equality/empty counterexample",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [],
+  "taskDigest": "409c5b19e44fdac3569ebe7ac93409746e24ca5cc5e10927a6adeb4ff6818fee",
+  "workspaceDigest": "0779aabdbb4547366e54c6c57935c2be5faf7151662ea3a0cd22e5d72ac8961c",
+  "delta": null,
+  "output": {
+    "protocolVersion": 1,
+    "operation": "diagnose",
+    "state": "final",
+    "summary": "The public `inBounds` function uses `index <= length`, an off-by-one comparison that admits `length` as a valid index and admits index 0 for empty collections, violating the contract that valid indices are 0 through length-1 and empty collections have no valid index.",
+    "findings": [
+      {
+        "title": "Off-by-one bounds check admits length and empty-collection index 0 as valid",
+        "body": "`inBounds(index, length)` returns `index >= 0 && index <= length`. For a nonnegative integer `length`, the valid integer indices are `0 .. length-1`. The `<=` operator incorrectly includes `length` itself, so `inBounds(3, 3)` evaluates to `3 >= 0 && 3 <= 3` = true when it should be false. It also makes every empty collection claim a valid index 0, since `inBounds(0, 0)` evaluates to `0 >= 0 && 0 <= 0` = true when no valid index exists for an empty collection.",
+        "severity": "high",
+        "category": "correctness",
+        "confidence": 1,
+        "path": "src/bounds.ts",
+        "line": 2,
+        "evidence": "Frozen counterexamples: input {index:3,length:3} expected false but observed true; input {index:0,length:0} expected false but observed true. Source line 2 reads `return index >= 0 && index <= length;`.",
+        "suggestion": "Change the upper-bound comparison to strict less-than: `return index >= 0 && index < length;`"
+      }
+    ],
+    "diagnosis": "The bounds check on line 2 of src/bounds.ts uses `index <= length` instead of `index < length`, causing both an off-by-one inclusion of the length value and a spurious valid index for empty collections."
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 4,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-only"
+  },
+  "durationMs": 14753,
+  "startedAt": "2026-10-07T08:04:47.302Z",
+  "completedAt": "2026-10-07T08:05:02.055Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 4,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+    "sourceCommit": "6d07c5088aa1e8f919296917f3ea87299b49354e",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

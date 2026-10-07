@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "checkedAt": "2026-10-07T08:20:17.606Z",
+  "reports": [
+    "browser-qa-github-defect-verified+github-duplicate.json",
+    "browser-qa-github-clean+github-stale-head.json"
+  ],
+  "browser": "Microsoft Edge (Chromium)",
+  "browserVersion": "154.0.4258.48",
+  "runner": "playwright@1.63.0",
+  "freshIndependentProfiles": true,
+  "inAppBrowser": "bootstrap unavailable; troubleshooting read; approved independent Edge fallback",
+  "viewCount": 4,
+  "screenshotCount": 12,
+  "widths": [
+    1280,
+    390,
+    320
+  ],
+  "views": [
+    {
+      "caseId": "github-defect-verified",
+      "taskId": "6d2c12c2-0917-4e4a-8dc6-55508c1a23ba",
+      "mode": "local",
+      "displayedModelLabel": "真实模型服务 · DeepSeek",
+      "historicalSnapshot": true,
+      "recordValidationStatus": "passed",
+      "errorPanelVisible": false,
+      "githubResultLink": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841",
+      "operationStatus": "completed",
+      "toolReceiptCount": 0,
+      "runtimeInvocations": 1,
+      "modelRequestCount": 2
+    },
+    {
+      "caseId": "github-duplicate",
+      "taskId": "6d2c12c2-0917-4e4a-8dc6-55508c1a23ba",
+      "mode": "local",
+      "displayedModelLabel": "模型来源未验证",
+      "historicalSnapshot": true,
+      "recordValidationStatus": "passed",
+      "errorPanelVisible": false,
+      "githubResultLink": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841",
+      "operationStatus": "reused",
+      "toolReceiptCount": 0,
+      "runtimeInvocations": 0,
+      "modelRequestCount": 0
+    },
+    {
+      "caseId": "github-clean",
+      "taskId": "91813fbf-962d-4475-b15c-0935cc22148e",
+      "mode": "local",
+      "displayedModelLabel": "真实模型服务 · DeepSeek",
+      "historicalSnapshot": true,
+      "recordValidationStatus": "passed",
+      "errorPanelVisible": false,
+      "githubResultLink": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841",
+      "operationStatus": "completed",
+      "toolReceiptCount": 0,
+      "runtimeInvocations": 1,
+      "modelRequestCount": 1
+    },
+    {
+      "caseId": "github-stale-head",
+      "taskId": "42a95aa3-8b51-4fa6-9ae6-b6ee0b69f82a",
+      "mode": "local",
+      "displayedModelLabel": "模型来源未验证",
+      "historicalSnapshot": true,
+      "recordValidationStatus": "failed",
+      "errorPanelVisible": true,
+      "githubResultLink": null,
+      "operationStatus": "failed-or-unconfirmed",
+      "toolReceiptCount": 0,
+      "runtimeInvocations": 0,
+      "modelRequestCount": 0
+    }
+  ],
+  "recordBytesPreservedByExport": true,
+  "noHorizontalOverflow": true,
+  "pageErrors": [],
+  "cspErrors": [],
+  "staticPollingDisabled": true,
+  "manualStaticReloadVerified": true,
+  "visualInspection": {
+    "screenshotsReviewed": [
+      "github-defect-verified-1280.png",
+      "github-duplicate-320.png",
+      "github-clean-390.png",
+      "github-stale-head-320.png"
+    ],
+    "result": "No overlapping or truncated controls, incorrect state, invented tool receipts or unsafe result link found."
+  },
+  "manualBusinessVerdict": "not-reviewed",
+  "actualCost": "unknown",
+  "browserQaModelCalls": 0,
+  "browserQaGitHubCalls": 0,
+  "browserQaCloudCalls": 0,
+  "productSourceModified": false,
+  "limitations": [
+    "Local production Runtime and actual GitHub evidence, not Huawei AgentArts cloud acceptance.",
+    "The duplicate is historical result reuse with no new model execution; its model label remains unverified.",
+    "Actual defect and clean records contain zero tool receipts; the viewer honestly displays zero.",
+    "The original publisher upserts a shared summary comment across revisions; an old historical record link may now show a newer review.",
+    "This visual QA checks rendering and recorded links; it does not navigate GitHub or replace publication evidence and human business acceptance.",
+    "Screenshots and exported static sites remain local; no Demo publication was performed."
+  ]
+}

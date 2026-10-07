@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "909f92c1-61b0-4114-b2dc-0f875a3d0518",
+  "plan": {
+    "mode": "local-real-model",
+    "execute": true,
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "pullNumber": 1,
+    "expectedHead": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+    "expectedBase": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+    "sourceCommit": "7da336670bb62f04f598bc94c95ed7ec75baef23",
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+    "provenance": "operator-declared-not-attested",
+    "operation": "review",
+    "dshVersion": "0.2.0-rc.2",
+    "maxTurns": 1,
+    "allowedTools": [
+      "workspace.read",
+      "workspace.search"
+    ],
+    "maxModelRequests": 8,
+    "maxOutputTokens": 4096,
+    "timeoutMinutes": 5,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false,
+    "cloudVerification": "not-performed",
+    "githubTrigger": "explicit-local-manual-PR-trigger",
+    "githubPublisher": "original-controller",
+    "deduplicationScope": "local-private-driver-ledger-not-Action-or-global-API-idempotency",
+    "runtimeCountScope": "controller-prepared-attempts-not-server-admission",
+    "modelCountScope": "validated-supervisor-replies-only-unconfirmed-calls-unknown"
+  },
+  "identity": {
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "repositoryId": 1404063896,
+    "pullNumber": 1,
+    "baseSha": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+    "headSha": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+    "headRef": "acceptance/local-runtime-review-20261007",
+    "actorId": 223438451,
+    "actor": "Lixiaoyiao",
+    "configurationDigest": "dee512d979f269f519b183ccc989f8246b80316b60471265c849c2d5b985ea21",
+    "dshVersion": "0.2.0-rc.2",
+    "sourceCommit": "7da336670bb62f04f598bc94c95ed7ec75baef23",
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412"
+  },
+  "operationKey": "0833be1022194f820e73fbfe949fded8de714c258205a61867aba4774962703f",
+  "status": "reused",
+  "runtimeInvocations": 0,
+  "modelRequests": 0,
+  "publicationAttempts": 0,
+  "comments": [
+    {
+      "kind": "summary",
+      "id": 6033762841,
+      "url": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841"
+    },
+    {
+      "kind": "finding",
+      "id": 4204535137,
+      "url": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#discussion_r4204535137",
+      "commitSha": "3a08f598b0124598fb78a873169f3d9a0f53e5ef"
+    }
+  ],
+  "previousEvidenceDirectory": "/var/tmp/codex-agentarts-01a10594/local-finish-20261007/github-defect-verified",
+  "manualVerdict": "not-reviewed",
+  "actualCost": "unknown"
+}

@@ -1,4 +1,19 @@
-# 当前开发交接：2026-10-07
+# 当前开发交接：2026-10-07 本地收尾完成
+
+先检查`git status`、`git log`和远程main；不reset/clean。本节为当前交接，下方旧记录/旧下一步仅作历史，不重复执行。
+
+- 本地四项已收尾，结果入口为[local-finish](docs/agentarts/local-finish.md)。Runtime clean源码`25b207246e37f282b51bad12ea0e88d7775ab888`，本地AMD64 image`sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412`，DSH0.2.0-rc.2。后来Controller/诊断/文档提交不当作新镜像验收。
+- 新补固定Git安装/公开CA最小只读挂载，三个真实安装/拒绝case通过。最终镜像legacy9/startup2/v3十四/namespace负例3；七例真实模型34请求，四实际修复及3852隐藏合同通过。独立AI复核保留无执行证据的测试措辞，人工仍not-reviewed。
+- 真实本仓库PR #1已完成：正式Controller`7da336670bb62f04f598bc94c95ed7ec75baef23`，defect2模型请求/正确finding，clean1请求/0finding；同私有state目录跨进程复用0Runtime/model/publish；stale绑定拒绝0调用。原publisher更新同评论。PR已关闭未合并，仅专用分支已删除；原仓库未动。
+- local-github入口复用原全仓tree/blob物化、runAction、FullEngine与publisher；人工启动，不是webhook或Actions run，不造runURL。Controller原模型输入是代理占位，真实模型key仅在Runtime Root。
+- 源码完整回归2082pass/42skip/0fail、51.41s；之后测试小改另定向5pass/6skip。6bundle+4dryrun和type/lint/generated/release/DSH通过，最终远程CI另看实际run。Demo四份真实GH记录12截图，无overflow/CSP/JS错误，fresh Edge，不动用户ICT页。
+- 原始证据新增local-finish、host-diagnostics与full-v3/git-install-25b2072。两次operator源SHA填错的准备运行与容器已停止的预检失败保留，不计正式验收。模型key文件、本地capability文件、专用容器已验证清除；GitHub token未写文件，已知凭据原字节扫描通过。不要从历史聊天或scratch提取key。
+- 宿主调查收尾：WSL通过；原生Ubuntu两架构两次真实诊断仍拒proc，kretprobe EINVAL，精确拒绝分支unknown。诊断workflow绿仅采证/清理完成，不继续盲追或弱化隔离。[宿主门槛](docs/agentarts/host-requirements.md)及安全VM/独立执行备选已交付。
+- 主要原operation已接，仍有credentialed stdio/任意Plugin凭据无安全通用等价接入等明确差异。OAuth原未实现；原publisher不承诺跨独立Controller原子去重，localledger只保障同state/identity，unknown拒自动重放，无断电保证。[兼容审计](docs/agentarts/compatibility-audit.md)。
+- **下一步**：审批后先核对目标区域/项目与namespace/proc/seccomp/LSM/五cap，跑无凭据固定probe；满足后才经批准创建最小云资源，按deployment验收平台认证/网络/固定版本/超时取消及同一真实PR。AgentArts Runtime、Gateway/MCP、平台观测/评估仍未真实验收；账号审批本身不能消除宿主限制。没有创建云资源或release。
+- 不重复整套本地测试；只在新修改、失败或平台条件变化时重跑相关项。仍保留原五operation完整迁移目标，不永久缩成Review。
+
+## 此前交接（历史记录；以本页顶部为准）
 
 任务已经恢复，2026-10-05的暂停交接已过时。目标是保留原Action全部可合理迁移的能力，PR Review仍是第一条真实云验收；不能把当前本地迁移验证写成AgentArts/GitHub闭环已通过。此文件记录本轮源码与各次证据，不是云release声明。
 

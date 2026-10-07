@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "caseId": "native-write-bounds",
+  "taskId": "dcfeb9bb-84ab-49a6-a1eb-5b522fe788ce",
+  "taskDigest": "09d30b774fb56248eb7d023600f0d5ac563b83ea29f999a24c07c2ff81d8fb6a",
+  "binding": {
+    "taskId": "dcfeb9bb-84ab-49a6-a1eb-5b522fe788ce",
+    "operation": "task",
+    "operationIdentity": "live-full:4201acde-6fe8-4db6-9d3f-4da03f906689:native-write-bounds",
+    "repository": "agentarts-fixtures/full-v1",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "revision": 0,
+    "grantDigest": "6b6e8697d4d541537c4b6c0fa9a109785914316291567d1b52edda252d1c5730"
+  },
+  "original": {
+    "path": "src/bounds.ts",
+    "sha256": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+    "mode": 420,
+    "encoding": "utf8",
+    "content": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index <= length;\n}\n"
+  },
+  "candidate": {
+    "path": "src/bounds.ts",
+    "sha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+    "mode": 420,
+    "encoding": "utf8",
+    "content": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n"
+  },
+  "delta": {
+    "schemaVersion": 1,
+    "binding": {
+      "repository": "agentarts-fixtures/full-v1",
+      "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+      "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+      "revision": 0,
+      "taskId": "dcfeb9bb-84ab-49a6-a1eb-5b522fe788ce",
+      "operation": "task",
+      "entity": {
+        "kind": "repository"
+      },
+      "ref": "main",
+      "grantDigest": "6b6e8697d4d541537c4b6c0fa9a109785914316291567d1b52edda252d1c5730",
+      "operationIdentity": "live-full:4201acde-6fe8-4db6-9d3f-4da03f906689:native-write-bounds"
+    },
+    "inputDigest": "4bcc59ddf955497a2f0d823ca7db535e75bceaa3050571f4e089c1a9874cc91a",
+    "resultDigest": "55002f929c1ae5d2061211209317343710944130888e521cd021f439ec2c0ea0",
+    "changes": [
+      {
+        "kind": "modified",
+        "original": {
+          "path": "src/bounds.ts",
+          "sha256": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+          "mode": 420
+        },
+        "file": {
+          "path": "src/bounds.ts",
+          "sha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+          "mode": 420,
+          "encoding": "utf8",
+          "content": "export function inBounds(index: number, length: number): boolean {\n  return index >= 0 && index < length;\n}\n"
+        }
+      }
+    ]
+  },
+  "notice": "Untrusted candidate source for human inspection only; no publication or execution is performed by this JSON artifact."
+}

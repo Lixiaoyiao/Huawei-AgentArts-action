@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "review-clean",
+  "caseVersion": 1,
+  "operation": "review",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "85b785703e441f74cd946e77f6cda5beca418eb7",
+    "entity": {
+      "kind": "pull_request",
+      "number": 2
+    },
+    "ref": "fixture-pr"
+  },
+  "sourceDigest": "3f74c40e784889100c774938ebec377182fb64ef9cb54ee93b90d80cbedd3b5a",
+  "acceptanceDigest": "ec386637e8770642d0766d8dc2d69be4d3d7daf99acd4ce5ab55350279f52c44",
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "The fixed diff reconstructs exactly the admitted base and head source",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 3",
+      "passed": true
+    },
+    {
+      "name": "Every frozen input preserves the required behavior",
+      "passed": true
+    },
+    {
+      "name": "All retained actionable findings map to admitted changed source lines",
+      "passed": true
+    },
+    {
+      "name": "Correct change has no high-precision actionable false positive",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [],
+  "taskDigest": "b3fd8a4e42df8bf30fc3ce6ebb74ac042a2be4b02b34a78497ba48b82698030c",
+  "workspaceDigest": "188baca18e895382900714e1b0221bf8eb01643c284a4505893d3ae29640bb66",
+  "delta": null,
+  "output": {
+    "protocolVersion": 1,
+    "operation": "review",
+    "state": "final",
+    "summary": "The PR is a behavior-preserving readability refactor of inBounds. It extracts index < length into a local constant belowUpperBound and returns index >= 0 && belowUpperBound, which is logically equivalent to the original index >= 0 && index < length. Both operands are primitive number values, so the change in evaluation order (the upper-bound comparison now always evaluates before the lower-bound check) has no observable side effects or exceptions. For nonnegative integer length the function still returns true only for 0 <= index <= length-1, and for empty collections (length 0) it returns false for all indices, preserving the public contract. The acceptance test covers boundary and empty-collection cases and passes. No high-confidence defects found.",
+    "findings": [],
+    "changePlan": [],
+    "verification": [
+      {
+        "command": "node tests/acceptance.mjs",
+        "status": "skipped",
+        "summary": "Read-only review; test cases were inspected and are consistent with the refactor."
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 4,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-only"
+  },
+  "durationMs": 12047,
+  "startedAt": "2026-10-07T08:04:35.254Z",
+  "completedAt": "2026-10-07T08:04:47.301Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 4,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+    "sourceCommit": "6d07c5088aa1e8f919296917f3ea87299b49354e",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

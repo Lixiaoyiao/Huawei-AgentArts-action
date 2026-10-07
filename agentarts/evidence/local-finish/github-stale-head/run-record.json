@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "42a95aa3-8b51-4fa6-9ae6-b6ee0b69f82a",
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "pullNumber": 1,
+    "headSha": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+    "baseSha": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+    "kind": "pull_request",
+    "operation": "review",
+    "url": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1"
+  },
+  "stages": [
+    {
+      "name": "真实 GitHub 身份与 PR 绑定",
+      "status": "failed",
+      "startedAt": "2026-10-07T08:14:10.119Z",
+      "completedAt": "2026-10-07T08:14:13.941Z"
+    }
+  ],
+  "tools": [],
+  "observedTools": [],
+  "validation": {
+    "status": "failed",
+    "checks": []
+  },
+  "modelEvidence": {
+    "kind": "unverified",
+    "provider": "deepseek",
+    "model": ""
+  },
+  "runtime": {
+    "sessionId": "",
+    "endpoint": "http://127.0.0.1:8080",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "durationMs": 3827,
+  "result": {
+    "error": "POLICY_DENIED: Current real PR repository, open state or expected base/head binding changed Automatic replay is refused."
+  },
+  "warnings": [
+    "本机生产 Runtime；未验证华为云。此入口由人工显式启动，未接收 GitHub webhook。",
+    "镜像和控制端 commit 由操作者声明，非远程证明。模型成本未知，美元预算不是硬上限。",
+    "原控制端只发布审查；独立业务人工验收仍待完成。"
+  ]
+}

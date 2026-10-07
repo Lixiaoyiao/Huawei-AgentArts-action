@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "runId": "4201acde-6fe8-4db6-9d3f-4da03f906689",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "implement-roles",
+  "caseVersion": 1,
+  "operation": "implement",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+    "headSha": "24d15b46c22a27133c6f3e69cdc58038c85322a9",
+    "entity": {
+      "kind": "issue",
+      "number": 6
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "93180753bf8e5ae5bfb784ea630666f80dcb507da186963bc452c641a0f8c212",
+  "acceptanceDigest": "2aa431663acc59b6f04a143ae8706b43530f0e3740f9ab2a09b9e247d337a75c",
+  "candidateSha": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+  "candidateEvidence": {
+    "path": "/var/tmp/codex-agentarts-01a10594/local-finish-20261007/model-final-2/4201acde-6fe8-4db6-9d3f-4da03f906689.implement-roles.candidate.json",
+    "maxBytes": 262144
+  },
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [
+    {
+      "argv": [
+        "node",
+        "tests/acceptance.mjs"
+      ],
+      "result": {
+        "exitCode": 0,
+        "stdout": "Frozen contract cases passed: 38\n",
+        "stderr": "",
+        "timedOut": false,
+        "outputTruncated": false
+      }
+    }
+  ],
+  "taskDigest": "2ff8747c0c9c57d412ea8a987101f103b07931968c895ee73774a08e07989394",
+  "workspaceDigest": "025dbae50403ad44563f74e47bfca517542cd4300815cf630b8b7706ae36386e",
+  "delta": {
+    "inputDigest": "025dbae50403ad44563f74e47bfca517542cd4300815cf630b8b7706ae36386e",
+    "resultDigest": "92b0034c4aa0184a3cff776803da3ec95ad756e025ff26dac7f75232dd60bc76",
+    "changes": [
+      {
+        "kind": "modified",
+        "path": "src/access.ts"
+      }
+    ]
+  },
+  "output": {
+    "protocolVersion": 1,
+    "operation": "implement",
+    "state": "final",
+    "summary": "Implemented hasRequiredRoles to require every role in requiredRoles (every), preserving authorization behavior including empty requiredRoles which returns true.",
+    "findings": [],
+    "changePlan": [
+      {
+        "path": "src/access.ts",
+        "summary": "Replaced the thrown 'Not implemented' error with `return requiredRoles.every(role => userRoles.includes(role));`"
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 5,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-write"
+  },
+  "durationMs": 12263,
+  "startedAt": "2026-10-07T08:05:29.242Z",
+  "completedAt": "2026-10-07T08:05:41.505Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 5,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+    "sourceCommit": "6d07c5088aa1e8f919296917f3ea87299b49354e",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

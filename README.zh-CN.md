@@ -6,7 +6,9 @@
 
 当前 Action 已将原 `review`、通用读写 `task`、CI `diagnose`、受控 `fix` 和 Issue→PR `implement` 接到版本化 Runtime engine，并适配 controlled/native 组合、原工具回调、扩展和 DSH checkpoint 传输。这是代码接入状态，各环境实际验收另见 [能力迁移表](docs/agentarts/capability-matrix.md)。**真实 GitHub → AgentArts → DSH → GitHub 闭环尚未验收；账号准入仍待审批。**
 
-本地 `09e41d9` clean AMD64生产镜像已通过七个真实DeepSeek案例，含四次实际文件修改与独立Docker契约测试；合成GitHub身份、自动规则通过，人工未复核、费用未知。最终本地 `610f685` 镜像修复所有权交接后，固定模型smoke与额外五cap源码测试中的扩展安装、Session恢复通过；原生Ubuntu24镜像CI仍拒绝proc挂载。[验证记录](docs/agentarts/verification.md) 分开保存证据范围，创建云资源前须先确认目标租户能满足所需沙箱。
+最终本地 `25b2072` AMD64镜像已重跑七个真实DSH/DeepSeek案例，四份实际修复通过独立Docker验证和3852个隐藏合同。另在本仓库[真实测试PR](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1)完成缺陷审查、无缺陷审查、跨进程重复请求与过期head拒绝；这是人工启动的本地Runtime闭环，尚非GitHub Actions或华为云执行。测试PR已关闭且未合并。[本轮结果与复现](docs/agentarts/local-finish.md) 保留真实记录、失败尝试和AI复核意见；人工验收与费用仍未知。
+
+原生Ubuntu双架构仍拒绝proc挂载，当前部署路线有实际宿主门槛；没有为通过测试关闭隔离。审批通过后先按[宿主检查](docs/agentarts/host-requirements.md)确认AgentArts能提供所需沙箱，再创建资源。凭据stdio/Plugin等剩余迁移差异见[兼容审计](docs/agentarts/compatibility-audit.md)，不能由主要operation接入推断所有扩展均兼容。
 
 代码通过绑定任务、实体、ref、提交和权限的受检工作区清单送入 Runtime。DSH 必须在 Linux 文件、进程、用户和网络 namespace 内运行；真实凭据留在受信监督进程。停止 DSH 后捕获的实际文件差异返回 Controller，继续使用原独立 Docker 测试、验证完整性检查和 GitHub finalizer。监督进程代理已接入受限只读 HTTP MCP 凭据工具，任务中的明文凭据定义仍拒绝；这不等于华为 Gateway/MCP 服务已验收。
 

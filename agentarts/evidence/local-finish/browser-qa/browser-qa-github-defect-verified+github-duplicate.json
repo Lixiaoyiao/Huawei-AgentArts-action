@@ -1,0 +1,158 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "checkedAt": "2026-10-07T08:16:55.388Z",
+  "browser": "Microsoft Edge (Chromium)",
+  "browserVersion": "154.0.4258.48",
+  "runner": "playwright@1.63.0",
+  "execution": "Real installed Edge headless rendering with a fresh isolated temporary profile; all page requests restricted to loopback.",
+  "inAppBrowser": {
+    "status": "unavailable",
+    "bootstrapAttempted": true,
+    "troubleshootingRead": true,
+    "reason": "privileged native pipe bridge is not available; browser-client is not trusted"
+  },
+  "inputScope": "Actual GitHub task/publication + local production Runtime + actual DSH/DeepSeek, or explicitly labelled historical reuse.",
+  "exportsRoot": "outputs/pr-review-demo-qa/local-finish-github/static-Bz7xid",
+  "recordBytePreservation": true,
+  "views": [
+    {
+      "caseId": "github-defect-verified",
+      "record": "outputs/Huawei-AgentArts-action/agentarts/evidence/local-finish/github-defect-verified/run-record.json",
+      "recordSha256": "2c932ed698c92de3e796ac8466695e4e17fd7618b4724b17ca773f124214b393",
+      "taskId": "6d2c12c2-0917-4e4a-8dc6-55508c1a23ba",
+      "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+      "pullNumber": 1,
+      "headSha": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+      "baseSha": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+      "mode": "local",
+      "displayedModelLabel": "真实模型服务 · DeepSeek",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "validationStatus": "passed",
+      "originalRepositoryTests": "not-applicable-review",
+      "toolReceiptCount": 0,
+      "githubResultLink": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841",
+      "linkNavigated": false,
+      "errorPanelVisible": false,
+      "operationStatus": "completed",
+      "runtimeInvocations": 1,
+      "declaredControllerSourceCommit": "7da336670bb62f04f598bc94c95ed7ec75baef23",
+      "declaredRuntimeImageId": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+      "modelRequestCount": 2,
+      "publication": {
+        "selected": 1,
+        "inlinePublished": 0,
+        "inlineUpdated": 1,
+        "duplicatesSkipped": 0,
+        "summaryOnly": 0,
+        "failures": []
+      },
+      "manualVerdict": "not-reviewed",
+      "actualCost": "unknown",
+      "durationMs": 145428
+    },
+    {
+      "caseId": "github-duplicate",
+      "record": "outputs/Huawei-AgentArts-action/agentarts/evidence/local-finish/github-duplicate/run-record.json",
+      "recordSha256": "b1e93c3fb960f8c807a3f3b3ad050815080541893b818042b1e84504a9b985c1",
+      "taskId": "6d2c12c2-0917-4e4a-8dc6-55508c1a23ba",
+      "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+      "pullNumber": 1,
+      "headSha": "3a08f598b0124598fb78a873169f3d9a0f53e5ef",
+      "baseSha": "7a101aa74f56594bcae5d5b1706ce166ce4cecb9",
+      "mode": "local",
+      "displayedModelLabel": "模型来源未验证",
+      "modelEvidence": {
+        "kind": "unverified",
+        "provider": "deepseek",
+        "model": ""
+      },
+      "historicalSnapshot": true,
+      "validationStatus": "passed",
+      "originalRepositoryTests": "not-applicable-review",
+      "toolReceiptCount": 0,
+      "githubResultLink": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/1#issuecomment-6033762841",
+      "linkNavigated": false,
+      "errorPanelVisible": false,
+      "operationStatus": "reused",
+      "runtimeInvocations": 0,
+      "declaredControllerSourceCommit": "7da336670bb62f04f598bc94c95ed7ec75baef23",
+      "declaredRuntimeImageId": "sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412",
+      "modelRequestCount": 0,
+      "publication": {
+        "attempts": 0
+      },
+      "manualVerdict": "not-reviewed",
+      "actualCost": "unknown",
+      "durationMs": 5714
+    }
+  ],
+  "layouts": [
+    {
+      "caseId": "github-defect-verified",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "screenshot": "outputs/pr-review-demo-qa/local-finish-github/github-defect-verified-1280.png"
+    },
+    {
+      "caseId": "github-defect-verified",
+      "width": 390,
+      "scrollWidth": 390,
+      "screenshot": "outputs/pr-review-demo-qa/local-finish-github/github-defect-verified-390.png"
+    },
+    {
+      "caseId": "github-defect-verified",
+      "width": 320,
+      "scrollWidth": 320,
+      "screenshot": "outputs/pr-review-demo-qa/local-finish-github/github-defect-verified-320.png"
+    },
+    {
+      "caseId": "github-duplicate",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "screenshot": "outputs/pr-review-demo-qa/local-finish-github/github-duplicate-1280.png"
+    },
+    {
+      "caseId": "github-duplicate",
+      "width": 390,
+      "scrollWidth": 390,
+      "screenshot": "outputs/pr-review-demo-qa/local-finish-github/github-duplicate-390.png"
+    },
+    {
+      "caseId": "github-duplicate",
+      "width": 320,
+      "scrollWidth": 320,
+      "screenshot": "outputs/pr-review-demo-qa/local-finish-github/github-duplicate-320.png"
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:52543/project/github-defect-verified/",
+    "http://127.0.0.1:52543/project/github-defect-verified/run-record.json",
+    "http://127.0.0.1:52543/project/github-defect-verified/run-record.json",
+    "http://127.0.0.1:52543/project/github-duplicate/",
+    "http://127.0.0.1:52543/project/github-duplicate/run-record.json"
+  ],
+  "pageErrors": [],
+  "cspErrors": [],
+  "staticSnapshot": {
+    "autoPolling": false,
+    "reloadButtonVerified": true
+  },
+  "browserQaModelCalls": 0,
+  "browserQaGitHubCalls": 0,
+  "browserQaCloudCalls": 0,
+  "limitations": [
+    "GitHub links were compared against confirmed Controller records; this QA did not navigate or call GitHub.",
+    "The Controller supplied publication/ownership evidence. Browser rendering cannot independently establish publication correctness.",
+    "Manual business acceptance remains not-reviewed; automatic checks do not upgrade that verdict.",
+    "The repeated driver attempt is confirmed historical reuse, not a new DSH/model execution.",
+    "This is local Runtime acceptance only. Huawei AgentArts cloud acceptance was not performed.",
+    "A real review may use its admitted diff/context without tools. Zero receipts are shown as zero, never invented from the allowed tool list.",
+    "Screenshots and static exports remain local. This browser QA did not publish a Demo."
+  ]
+}
