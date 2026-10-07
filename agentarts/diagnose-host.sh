@@ -3,6 +3,26 @@
 # Usage: bash agentarts/diagnose-host.sh IMAGE_SHA256 NEW_OUTPUT [--kernel-trace]
 # Optional AGENTARTS_APPARMOR_PROFILE=agentarts-runtime-bwrap-v1 must already be loaded.
 set -euo pipefail
+classify_registration_error() {
+  [[ "$1" =~ ^agentarts_[a-zA-Z0-9]{8}$ && "$2" =~ ^(mount_too_revealing|security_sb_kern_mount|security_sb_mount|admission)$ ]]
+  # Read but never export the global error log. Match only our exact command
+  # and reduce the preceding error message to a closed, non-sensitive enum.
+  awk -v group="$1" -v event="$2" '
+    /error:/ { message=$0 }
+    index($0,"Command: r:" group "/" event " ") {
+      if (message ~ /BTF|btf/) kind="btf-unavailable";
+      else if (message ~ /[Ll]ockdown|[Pp]ermission|[Dd]enied|permitted/) kind="policy-denied";
+      else if (message ~ /[Ss]ymbol|[Pp]robe point|blacklist/) kind="symbol-unavailable";
+      else if (message ~ /[Aa]rgument|[Vv]ariable|[Tt]ype|[Ff]etch|[Nn]ame|[Ii]dentifier/) kind="syntax-unsupported";
+      else kind="unclassified";
+    }
+    END { print kind == "" ? "not-recorded" : kind }
+  '
+}
+if [[ $# == 3 && "$1" == --classify-registration-error ]]; then
+  classify_registration_error "$2" "$3"
+  exit 0
+fi
 [[ $# == 2 || ( $# == 3 && "$3" == --kernel-trace ) ]]
 image_id="$1"
 [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ && -S /var/run/docker.sock ]]
@@ -28,6 +48,16 @@ armed_events=()
 trace_status=not-requested
 pid_filter_applied=false
 active_pipeline=""
+record_registration() {
+  local event="$1" function_name="$2" accepted="$3" kind symbol_present=false function_tracer_listed=false
+  kind=not-applicable
+  if [[ "$accepted" != true ]]; then
+    kind="$(sudo --non-interactive cat "$trace_root/error_log" 2>/dev/null | classify_registration_error "$trace_group" "$event")" || kind=not-recorded
+  fi
+  if sudo --non-interactive awk -v name="$function_name" '$3==name { found=1 } END { exit !found }' /proc/kallsyms; then symbol_present=true; fi
+  if sudo --non-interactive awk -v name="$function_name" '$1==name { found=1 } END { exit !found }' "$trace_root/available_filter_functions"; then function_tracer_listed=true; fi
+  printf 'function=%s accepted=%s errorKind=%s symbolPresent=%s functionTracerListed=%s\n' "$function_name" "$accepted" "$kind" "$symbol_present" "$function_tracer_listed" >> "$output/kernel-registration.txt"
+}
 cleanup() {
   local original_status=$? cleanup_status=passed observed_label
   trap - EXIT INT TERM
@@ -96,22 +126,31 @@ if [[ "${3:-}" == --kernel-trace ]]; then
   fi
   if [[ -n "$trace_root" ]] && sudo --non-interactive mkdir "$trace_root/instances/$trace_group"; then
     trace_instance="$trace_root/instances/$trace_group"
+    btf_present=false
+    if sudo --non-interactive test -r /sys/kernel/btf/vmlinux; then btf_present=true; fi
+    printf 'btfPresent=%s\n' "$btf_present" > "$output/kernel-registration.txt"
     printf '0\n' | sudo --non-interactive tee "$trace_instance/tracing_on" >/dev/null
     printf '64\n' | sudo --non-interactive tee "$trace_instance/buffer_size_kb" >/dev/null
     for function_name in mount_too_revealing security_sb_kern_mount security_sb_mount; do
       if printf 'r:%s/%s %s return_value=$retval:s64 task_comm=$comm:string\n' "$trace_group" "$function_name" "$function_name" | sudo --non-interactive tee -a "$trace_root/kprobe_events" >/dev/null; then
         trace_events+=("$function_name")
+        record_registration "$function_name" "$function_name" true
         if printf 'task_comm == "bwrap"\n' | sudo --non-interactive tee "$trace_instance/events/$trace_group/$function_name/filter" >/dev/null; then
           armed_events+=("$function_name")
         fi
+      else
+        record_registration "$function_name" "$function_name" false
       fi
     done
     if [[ " ${armed_events[*]} " == *' mount_too_revealing '* ]]; then trace_status=armed; else trace_status=partial; fi
     if printf 'r:%s/admission security_file_permission return_value=$retval:s64 task_comm=$comm:string\n' "$trace_group" | sudo --non-interactive tee -a "$trace_root/kprobe_events" >/dev/null; then
       trace_events+=(admission)
+      record_registration admission security_file_permission true
       printf 'task_comm == "%s"\n' "$diagnostic_comm" | sudo --non-interactive tee "$trace_instance/events/$trace_group/admission/filter" >/dev/null
       printf '1\n' | sudo --non-interactive tee "$trace_instance/events/$trace_group/admission/enable" >/dev/null
       printf '1\n' | sudo --non-interactive tee "$trace_instance/tracing_on" >/dev/null
+    else
+      record_registration admission security_file_permission false
     fi
   fi
 fi

@@ -12,6 +12,53 @@ function evaluate(source: string): unknown {
 }
 
 describe("fixed no-credential host diagnostics", () => {
+  it.skipIf(process.platform === "win32")(
+    "classifies only this run's registration error without exporting the global log",
+    () => {
+      const result = spawnSync(
+        "bash",
+        [
+          "agentarts/diagnose-host.sh",
+          "--classify-registration-error",
+          "agentarts_Test1234",
+          "mount_too_revealing",
+        ],
+        {
+          input:
+            "[1] trace_kprobe: error: private-other-message\n  Command: r:other/probe private-symbol\n[2] trace_kprobe: error: Failed to find BTF function type\n  Command: r:agentarts_Test1234/mount_too_revealing mount_too_revealing return_value=$retval:s64\n[3] trace_kprobe: error: private-later-message\n  Command: r:other/probe private-later-symbol\n",
+          encoding: "utf8",
+          timeout: 5000,
+        },
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toBe("btf-unavailable\n");
+      expect(result.stdout).not.toContain("private");
+    },
+  );
+
+  it.skipIf(process.platform === "win32")(
+    "does not infer a trace denial cause from another run's error",
+    () => {
+      const result = spawnSync(
+        "bash",
+        [
+          "agentarts/diagnose-host.sh",
+          "--classify-registration-error",
+          "agentarts_Test1234",
+          "mount_too_revealing",
+        ],
+        {
+          input:
+            "[1] trace_kprobe: error: Permission denied\n  Command: r:agentarts_Other123/mount_too_revealing mount_too_revealing\n",
+          encoding: "utf8",
+          timeout: 5000,
+        },
+      );
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toBe("not-recorded\n");
+    },
+  );
+
   it("exports every proc mount and its covers without unrelated host paths or mount sources", () => {
     const lines = [
       "1 0 0:1 / / rw - overlay overlay rw,lowerdir=/host/private/token-path",
