@@ -803,6 +803,19 @@ export async function runAgentArtsRuntimeTask(
             await proxy?.close();
           }
         } finally {
+          // The explicit non-root fixture seam owns its sealed directories but
+          // cannot unlink children until owner-write is restored. Production
+          // keeps its root supervisor cleanup and never enters this branch.
+          if (testOnly && root !== undefined) {
+            const restore = async (directory: string): Promise<void> => {
+              if ((await lstat(directory)).isSymbolicLink()) return;
+              await chmod(directory, 0o700);
+              for (const item of await readdir(directory, { withFileTypes: true })) {
+                if (item.isDirectory()) await restore(join(directory, item.name));
+              }
+            };
+            await restore(root);
+          }
           if (runtime !== undefined) await disposeDshRuntime(runtime);
           if (root !== undefined) await rm(root, { recursive: true, force: true, maxRetries: 3 });
         }
