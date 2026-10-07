@@ -6,17 +6,19 @@
 
 原五种operation、十类事件、自动路由、actor/fork政策、controlled/native composition、原工具catalog、真实工作区修改、独立验证、baseline replay、GitHub finalizer及DSH Session均已经进入v3主链路。并不表示所有扩展组合或平台均已验收；具体入口见[能力表](capability-matrix.md)。
 
-| 上游能力/配置                                                                | 当前情况                                                                                                                                                    | 分类                                                     |
-| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| GitHub固定40SHA的`git+https`包源                                             | 原schema与lock audit保留；发现原Runtime镜像没有Git，现补Git与公开CA的最小适配，实际固定Git安装证明另记录                                                    | 真实环境兼容缺口，不能用npm registry安装通过替代         |
-| native MCP的`credentialEnv`、`credentialHeaders`与Plugin的`credentialConfig` | 这些字段在上游确实已有。新Runtime拒绝在任务中传明文凭据；只读HTTPS MCP可用operator reference和supervisor代理。任意credentialed stdio/Plugin尚无通用等价接入 | 原能力的明确迁移差异，不默默删除、不向不可信进程传Secret |
-| 无凭据stdio、公开HTTP MCP、Bundle/Plugin                                     | 原schema、原composition、安装锁和工具权限继续使用；每个外部可执行文件、网络代理兼容性及插件业务功能仍须检查                                                 | 已接代码，不能由安装成功推断业务成功                     |
-| 自选DSH版本/可执行文件、process隔离、模型origin/key                          | 这六项输入由Runtime受信部署管理，Controller拒绝请求覆盖；其余原Action contract输入由代码导出复用                                                            | 明确部署接口变化，符合固定版本和云隔离要求               |
-| 宿主已有任意命令/私网访问                                                    | 固定镜像只提供已声明二进制；worker无直接网络，只能经批准的精确origin代理                                                                                    | 运行环境与安全边界变化，不能保证任意宿主扩展原样运行     |
-| OAuth、长订阅MCP、多模态附件                                                 | 上游没有这些完整实现，当前也不提供                                                                                                                          | 不是原能力迁移丢失，不为补齐表格而新增                   |
-| AgentArts Gateway、平台Trace、平台评估                                       | 属于此次新增的目标云能力，尚未真实接入/验收                                                                                                                 | 不属于原仓库回归，不能声称平台已工作                     |
+| 上游能力/配置                                                                | 当前情况                                                                                                                                                    | 分类                                                              |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| GitHub固定40SHA的`git+https`包源                                             | 原schema与lock audit保留；补Git和只读公开CA，固定公开提交安装及lock audit、越权origin和错误SHA负例在25b镜像真实通过                                         | 已补最小适配；scope为同生产镜像source-harness，非插件业务或云验收 |
+| native MCP的`credentialEnv`、`credentialHeaders`与Plugin的`credentialConfig` | 这些字段在上游确实已有。新Runtime拒绝在任务中传明文凭据；只读HTTPS MCP可用operator reference和supervisor代理。任意credentialed stdio/Plugin尚无通用等价接入 | 原能力的明确迁移差异，不默默删除、不向不可信进程传Secret          |
+| 无凭据stdio、公开HTTP MCP、Bundle/Plugin                                     | 原schema、原composition、安装锁和工具权限继续使用；每个外部可执行文件、网络代理兼容性及插件业务功能仍须检查                                                 | 已接代码，不能由安装成功推断业务成功                              |
+| 自选DSH版本/可执行文件、process隔离、模型origin/key                          | 这六项输入由Runtime受信部署管理，Controller拒绝请求覆盖；其余原Action contract输入由代码导出复用                                                            | 明确部署接口变化，符合固定版本和云隔离要求                        |
+| 宿主已有任意命令/私网访问                                                    | 固定镜像只提供已声明二进制；worker无直接网络，只能经批准的精确origin代理                                                                                    | 运行环境与安全边界变化，不能保证任意宿主扩展原样运行              |
+| OAuth、长订阅MCP、多模态附件                                                 | 上游没有这些完整实现，当前也不提供                                                                                                                          | 不是原能力迁移丢失，不为补齐表格而新增                            |
+| AgentArts Gateway、平台Trace、平台评估                                       | 属于此次新增的目标云能力，尚未真实接入/验收                                                                                                                 | 不属于原仓库回归，不能声称平台已工作                              |
 
 实际字段证据见原共同历史的`src/extensions/schema.ts`与当前同名文件；Runtime凭据拒绝和原plan重建见[runtime-task-protocol](../../src/agentarts/runtime-task-protocol.ts)。通用stdio/Plugin凭据没有统一可安全注入的语义：直接复原原明文字段会把真实Secret交给仓库工具或插件。后续只能在明确需要的协议上设计受信代理并单独验收，不能通过放宽拒绝实现“兼容”。
+
+固定Git证明使用源码`25b207246e37f282b51bad12ea0e88d7775ab888`和镜像`sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412`，3项测试通过、97.15秒。公开`is-number`7.0.0的npm gitHead及GitHub tag分别核对到`98e8ff1da1a89f93d1397a24d7413ed15421c139`，安装输入只使用该固定40SHA。namespace仅挂镜像root所有且不可写的公开CA单文件，不挂整个`/etc`、Git配置或凭据，不禁TLS校验。保持五cap、NNP、只读源与依赖；公开网络仅经批准registry/GitHub/codeload精确origin代理。没有模型、云或GitHub发布；没有执行所安装包的Plugin业务。原始[绑定/日志/结果](../../agentarts/evidence/full-v3/git-install-25b2072/)和[测试](../../test/agentarts-git-install.test.ts)可复查。
 
 ## 并发、重启、取消与发布
 
