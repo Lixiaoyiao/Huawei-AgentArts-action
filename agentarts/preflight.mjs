@@ -22,6 +22,8 @@ const readinessFields = [
   "modelKeyInSupervisor",
   "githubCredentialInController",
   "uidAndCapabilitiesVerified",
+  "namespaceAndSeccompVerified",
+  "privateProcfsVerified",
   "metadataBoundaryVerified",
   "modelEgressVerified",
   "timeoutAndStopVerified",
@@ -332,7 +334,7 @@ async function main() {
       )
     : { checked: false };
   process.stdout.write(
-    `${JSON.stringify({ schemaVersion: 1, mode: "offline-preflight", localConfiguration: "passed", cloudAcceptance: "unverified", image, credentialVariableNamesPresent: Object.fromEntries(credentialNames.map((name) => [name, Object.hasOwn(process.env, name)])), operatorDeclaredPending: readinessFields.filter((name) => !config.readiness[name]), notes: ["No key value was read, printed or passed to Docker. Variable presence does not prove validity or remote Secret configuration.", "No resource, registry, Runtime, model or GitHub API was called. Image inspection only reads a local daemon using an empty temporary Docker config.", "Operator readiness flags are declarations, not cloud evidence. Verify alias/version/digest, UID/caps, metadata, egress, timeout/stop and real PR results after approval.", "This checker validates basic SWR registry naming only. Confirm the target SWR edition and artifact media type before upload; it does not validate OCI support.", ...(config.architecture === "amd64" ? ["ARM64 is the documented first-deployment profile; AMD64 requires explicit tenant confirmation."] : []), ...(config.region !== "cn-southwest-2" ? ["The current SDK guide lists cn-southwest-2 only; confirm this region in the actual tenant."] : [])] }, null, 2)}\n`,
+    `${JSON.stringify({ schemaVersion: 1, mode: "offline-preflight", localConfiguration: "passed", cloudAcceptance: "unverified", image, credentialVariableNamesPresent: Object.fromEntries(credentialNames.map((name) => [name, Object.hasOwn(process.env, name)])), operatorDeclaredPending: readinessFields.filter((name) => !config.readiness[name]), notes: ["No key value was read, printed or passed to Docker. Variable presence does not prove validity or remote Secret configuration.", "No resource, registry, Runtime, model or GitHub API was called. Image inspection only reads a local daemon using an empty temporary Docker config.", "Operator readiness flags are declarations, not cloud evidence. Verify alias/version/digest, UID/caps, metadata, egress, timeout/stop and real PR results after approval.", "V3 requires actual target Runtime checks of user/PID/mount/network namespaces, outer seccomp compatibility and the installed worker BPF. UID/capability checks alone are insufficient; namespaceAndSeccompVerified is only an operator declaration.", "V3 must actually mount and verify worker-private procfs inside its PID namespace on the target Runtime. An image build or another host's passing probe is insufficient. A /proc denial must stop deployment; do not weaken namespace, procfs or seccomp isolation. privateProcfsVerified is only an operator declaration.", "This checker validates basic SWR registry naming only. Confirm the target SWR edition and artifact media type before upload; it does not validate OCI support.", ...(config.architecture === "amd64" ? ["ARM64 is the documented first-deployment profile; AMD64 requires explicit tenant confirmation."] : []), ...(config.region !== "cn-southwest-2" ? ["The current SDK guide lists cn-southwest-2 only; confirm this region in the actual tenant."] : [])] }, null, 2)}\n`,
   );
 }
 

@@ -65,6 +65,7 @@ describe("offline deployment preflight", () => {
       image: { checked: boolean };
       credentialVariableNamesPresent: Record<string, boolean>;
       operatorDeclaredPending: string[];
+      notes: string[];
     };
     expect(result.localConfiguration).toBe("passed");
     expect(result.cloudAcceptance).toBe("unverified");
@@ -75,6 +76,18 @@ describe("offline deployment preflight", () => {
       GITHUB_TOKEN: true,
     });
     expect(result.operatorDeclaredPending).toContain("serviceApproved");
+    expect(result.operatorDeclaredPending).toContain("namespaceAndSeccompVerified");
+    expect(result.operatorDeclaredPending).toContain("privateProcfsVerified");
+    expect(
+      result.notes.some((note) => note.includes("outer seccomp") && note.includes("worker BPF")),
+    ).toBe(true);
+    expect(
+      result.notes.some(
+        (note) =>
+          note.includes("/proc denial must stop deployment") &&
+          note.includes("only an operator declaration"),
+      ),
+    ).toBe(true);
     expect(stdout).not.toContain("private-runtime-value");
     expect(stdout).not.toContain("private-model-value");
     expect(stdout).not.toContain("private-github-value");
@@ -82,6 +95,33 @@ describe("offline deployment preflight", () => {
     expect(await readFile(configPath)).toEqual(original);
     expect(await readdir(root)).toEqual(["deployment.json"]);
   });
+
+  it.each(["namespaceAndSeccompVerified", "privateProcfsVerified"])(
+    "strictly rejects missing or credential-valued readiness field %s without printing secrets",
+    async (field) => {
+      for (const omitted of [true, false]) {
+        const config = await validConfig();
+        const readiness = config.readiness as Record<string, unknown>;
+        if (omitted)
+          config.readiness = Object.fromEntries(
+            Object.entries(readiness).filter(([name]) => name !== field),
+          );
+        else readiness[field] = "private-readiness-value-never-print";
+        await writeFile(configPath, JSON.stringify(config));
+        const failure = await refusal("--config", configPath);
+        expect(failure.stderr).toContain(
+          omitted ? "operator readiness fields" : "operator-recorded booleans",
+        );
+        for (const secret of [
+          "private-readiness-value",
+          "private-runtime-value",
+          "private-model-value",
+          "private-github-value",
+        ])
+          expect(failure.stderr).not.toContain(secret);
+      }
+    },
+  );
 
   it.each(["latest", "main"])("rejects floating image tag %s", async (tag) => {
     const config = await validConfig();

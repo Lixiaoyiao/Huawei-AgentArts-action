@@ -41,6 +41,8 @@
     "modelKeyInSupervisor": false,
     "githubCredentialInController": false,
     "uidAndCapabilitiesVerified": false,
+    "namespaceAndSeccompVerified": false,
+    "privateProcfsVerified": false,
     "metadataBoundaryVerified": false,
     "modelEgressVerified": false,
     "timeoutAndStopVerified": false,
