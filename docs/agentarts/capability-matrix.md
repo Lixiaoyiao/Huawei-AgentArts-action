@@ -4,7 +4,7 @@
 
 “代码接入”表示主Action实际选择原Controller加v3Runtime engine；不表示本轮新源码全部生产环境测试已完成。各次源码、镜像、实际模型/夹具与平台验收分别记录于 [verification.md](verification.md)。历史v1/v2只读镜像与四例真实模型评测保留原记录，不能继承为v3/native/write证据。
 
-最新25b2072 clean AMD64镜像完成v3十四检查、七例真实DSH/DeepSeek与四份实际修复/隐藏合同；固定Git安装三例通过。真实本仓库PR的defect/clean审查、跨进程历史复用与过期head拒绝另有记录，人工仍未验收。[本轮结果](local-finish.md)逐项区分模拟、本地真实模型和真实GitHub；云端尚未通过。
+最新14bd277 clean AMD64镜像完成v3十四检查、七例真实DSH/DeepSeek与四份实际修复/隐藏合同；真实PR #2完成983文件完整收发与发布。前轮25b的Git安装/clean/stale证明保留各自绑定，人工仍未验收。[本轮结果](capacity-finish.md)逐项区分模拟、本地真实模型和真实GitHub；云端尚未通过。
 
 原生Ubuntu两架构仍拒proc挂载，已交付最小无凭据诊断和宿主门槛；精确内核分支未查明，不将诊断job绿色记作Runtime通过。审批后先核对目标租户等价sandbox能力，不能满足就暂停该部署路线并评估安全备选，不新建资源硬试。历史09e/610证据仍在[验证记录](verification.md)，不会移记到新镜像。
 

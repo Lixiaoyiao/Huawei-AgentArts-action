@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "runId": "275254cb-06c4-4076-96fc-90f33958a2c4",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "implement-roles",
+  "caseVersion": 1,
+  "operation": "implement",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+    "headSha": "24d15b46c22a27133c6f3e69cdc58038c85322a9",
+    "entity": {
+      "kind": "issue",
+      "number": 6
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "93180753bf8e5ae5bfb784ea630666f80dcb507da186963bc452c641a0f8c212",
+  "acceptanceDigest": "2aa431663acc59b6f04a143ae8706b43530f0e3740f9ab2a09b9e247d337a75c",
+  "candidateSha": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+  "candidateEvidence": {
+    "path": "/var/tmp/codex-agentarts-01a10594/capacity-finish-20261007/model-final/275254cb-06c4-4076-96fc-90f33958a2c4.implement-roles.candidate.json",
+    "maxBytes": 262144
+  },
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [
+    {
+      "argv": [
+        "node",
+        "tests/acceptance.mjs"
+      ],
+      "result": {
+        "exitCode": 0,
+        "stdout": "Frozen contract cases passed: 38\n",
+        "stderr": "",
+        "timedOut": false,
+        "outputTruncated": false
+      }
+    }
+  ],
+  "taskDigest": "b73cfef488ab0635bcdcdc7c066268ce58fb6dc4b0dee9dbd5367be733d107cf",
+  "workspaceDigest": "f75ac1db4b39a2991716f997300d11dd713f03577d9dd38885a400530131f65f",
+  "delta": {
+    "inputDigest": "f75ac1db4b39a2991716f997300d11dd713f03577d9dd38885a400530131f65f",
+    "resultDigest": "c92563030600dc81b9eeab455d780b88fdc2cbda9fb1fbb08ea8212cfe3657ae",
+    "changes": [
+      {
+        "kind": "modified",
+        "path": "src/access.ts"
+      }
+    ]
+  },
+  "output": {
+    "protocolVersion": 1,
+    "operation": "implement",
+    "state": "final",
+    "summary": "Implemented hasRequiredRoles to require every role in requiredRoles to be present in userRoles, preserving empty-requiredRoles access (Array.prototype.every returns true for empty arrays).",
+    "findings": [],
+    "changePlan": [
+      {
+        "path": "src/access.ts",
+        "summary": "Replaced the thrown Not implemented error with requiredRoles.every(role => userRoles.includes(role))."
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 5,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-write"
+  },
+  "durationMs": 12079,
+  "startedAt": "2026-10-07T08:40:23.245Z",
+  "completedAt": "2026-10-07T08:40:35.324Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 5,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:6a5b8920363586a3a59a68ed33cdab09d9f2d04854312b51d17882ae3538006e",
+    "sourceCommit": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

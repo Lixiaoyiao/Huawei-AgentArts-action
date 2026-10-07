@@ -1,0 +1,15 @@
+
+ RUN  v4.1.11 C:/Users/lenovo/Documents/Codex/2026-10-04/agentarts-ict-https-github-com-lixiaoyiao/outputs/Huawei-AgentArts-action
+
+{"event":"capacity.phase","phase":"original-snapshot","durationMs":3206}
+{"event":"capacity.phase","phase":"pack-complete-manifest","durationMs":4254}
+{"event":"capacity.measurement","sourceCommit":"4da864c2e6b11575ffc72216a92f59aa2a63a52a","files":982,"payloadBytes":12992284,"maxPayloadBytes":16777216}
+{"event":"capacity.phase","phase":"validate-materialize-recapture","durationMs":7217}
+{"event":"capacity.phase","phase":"original-byte-comparison","durationMs":25}
+{"event":"capacity.phase","phase":"cleanup","durationMs":742}
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:40:37
+   Duration  16.46s (transform 474ms, setup 0ms, import 836ms, tests 15.45s, environment 0ms)
+

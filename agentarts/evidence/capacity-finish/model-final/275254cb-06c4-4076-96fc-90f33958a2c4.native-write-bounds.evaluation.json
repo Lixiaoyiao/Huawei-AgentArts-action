@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "runId": "275254cb-06c4-4076-96fc-90f33958a2c4",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "native-write-bounds",
+  "caseVersion": 1,
+  "operation": "task",
+  "dshMode": "native",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+  "acceptanceDigest": "c7ae2a37654eee2a2bb910f6c6a0ccefd47f6578bf0557ec4221bfbda82b9c1f",
+  "candidateSha": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+  "candidateEvidence": {
+    "path": "/var/tmp/codex-agentarts-01a10594/capacity-finish-20261007/model-final/275254cb-06c4-4076-96fc-90f33958a2c4.native-write-bounds.candidate.json",
+    "maxBytes": 262144
+  },
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Native DSH tool observations were recorded (telemetry, not individual tool grants or proof of a source read)",
+      "passed": true
+    }
+  ],
+  "validation": [
+    {
+      "argv": [
+        "node",
+        "tests/acceptance.mjs"
+      ],
+      "result": {
+        "exitCode": 0,
+        "stdout": "Frozen contract cases passed: 72\n",
+        "stderr": "",
+        "timedOut": false,
+        "outputTruncated": false
+      }
+    }
+  ],
+  "taskDigest": "a8af19be63b5eb765fd71ec4445a8a6f58e04bede8031dbc50f17dab8644493a",
+  "workspaceDigest": "f56e779c28f412da73eb947d720d1d2a6845b1b251a92a6c6ce0db068e24c5ec",
+  "delta": {
+    "inputDigest": "f56e779c28f412da73eb947d720d1d2a6845b1b251a92a6c6ce0db068e24c5ec",
+    "resultDigest": "f1021e2c23347b9c6f58bbe346f1f1c116af074fe4b870533a97fa48d0e43fdf",
+    "changes": [
+      {
+        "kind": "modified",
+        "path": "src/bounds.ts"
+      }
+    ]
+  },
+  "output": {
+    "protocolVersion": 1,
+    "operation": "task",
+    "state": "final",
+    "summary": "Fixed inBounds in src/bounds.ts: changed `index <= length` to `index < length` so that valid indices are 0 through length-1 for nonnegative lengths, and empty collections (length 0) have no valid index. This satisfies the frozen counterexamples (index 3, length 3 -> false; index 0, length 0 -> false) while preserving the exported API.",
+    "findings": [
+      {
+        "title": "Off-by-one in index bounds check",
+        "body": "The inBounds function used `index <= length`, incorrectly treating `length` itself as a valid index and treating index 0 as valid for empty collections. The contract requires valid indices 0 through length-1, so the comparison must be strict.",
+        "severity": "high",
+        "category": "correctness",
+        "confidence": 0.98,
+        "path": "src/bounds.ts",
+        "line": 2,
+        "evidence": "Frozen counterexamples: {index:3,length:3} expected false observed true; {index:0,length:0} expected false observed true.",
+        "suggestion": "Use `index >= 0 && index < length`."
+      }
+    ],
+    "changePlan": [
+      {
+        "path": "src/bounds.ts",
+        "summary": "Changed `index <= length` to `index < length` in the inBounds return expression."
+      }
+    ],
+    "verification": [
+      {
+        "command": "node tests/acceptance.mjs",
+        "status": "skipped",
+        "summary": "Controller runs tests independently; not run per instructions."
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 5,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-write"
+  },
+  "durationMs": 12814,
+  "startedAt": "2026-10-07T08:40:35.325Z",
+  "completedAt": "2026-10-07T08:40:48.139Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 5,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:6a5b8920363586a3a59a68ed33cdab09d9f2d04854312b51d17882ae3538006e",
+    "sourceCommit": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

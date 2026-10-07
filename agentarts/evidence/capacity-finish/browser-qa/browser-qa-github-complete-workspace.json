@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "checkedAt": "2026-10-07T08:46:39.363Z",
+  "browser": "Microsoft Edge (Chromium)",
+  "browserVersion": "154.0.4258.48",
+  "runner": "playwright@1.63.0",
+  "execution": "Real installed Edge headless rendering with a fresh isolated temporary profile; all page requests restricted to loopback.",
+  "inAppBrowser": {
+    "status": "unavailable",
+    "bootstrapAttempted": true,
+    "troubleshootingRead": true,
+    "reason": "privileged native pipe bridge is not available; browser-client is not trusted"
+  },
+  "inputScope": "Actual GitHub task/publication + local production Runtime + actual DSH/DeepSeek, or explicitly labelled historical reuse.",
+  "exportsRoot": "outputs/pr-review-demo-qa/capacity-finish-github/static-RgHJq3",
+  "recordBytePreservation": true,
+  "views": [
+    {
+      "caseId": "github-complete-workspace",
+      "record": "outputs/Huawei-AgentArts-action/agentarts/evidence/capacity-finish/github-complete-workspace/run-record.json",
+      "recordSha256": "59dff63dd584157daafaff7cd751c77b4e9c178986cd04e7ccd74c64e2faca04",
+      "taskId": "08f7b606-154b-4ccb-846c-9cc4d923f2c9",
+      "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+      "pullNumber": 2,
+      "headSha": "fcdc256a0cdd8bd2fd81a7ca787747cf181602f1",
+      "baseSha": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+      "mode": "local",
+      "displayedModelLabel": "真实模型服务 · DeepSeek",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "validationStatus": "passed",
+      "originalRepositoryTests": "not-applicable-review",
+      "toolReceiptCount": 6,
+      "githubResultLink": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/2#issuecomment-6034312465",
+      "linkNavigated": false,
+      "errorPanelVisible": false,
+      "failureCode": null,
+      "operationStatus": "completed",
+      "runtimeInvocations": 1,
+      "declaredControllerSourceCommit": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+      "declaredRuntimeImageId": "sha256:6a5b8920363586a3a59a68ed33cdab09d9f2d04854312b51d17882ae3538006e",
+      "modelRequestCount": 4,
+      "publication": {
+        "selected": 1,
+        "inlinePublished": 1,
+        "inlineUpdated": 0,
+        "duplicatesSkipped": 0,
+        "summaryOnly": 0,
+        "failures": []
+      },
+      "manualVerdict": "not-reviewed",
+      "actualCost": "unknown",
+      "durationMs": 179964,
+      "runtimeBinding": {
+        "taskDigest": "528cc7b3a8c2f7669b6bf26d7220811b08a2787702e4e8c70a9a6916e0263d97",
+        "workspaceDigest": "c60c15d20b5a826a7e6a6b13546de11f09ad5f006e8221321aa3f6a3a066018a",
+        "binding": {
+          "taskId": "08f7b606-154b-4ccb-846c-9cc4d923f2c9",
+          "operation": "review",
+          "operationIdentity": "edd5395dd690147b53846064569aa7c02318ab5283a0b57ca5755611b2ee2ae5",
+          "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+          "entity": {
+            "kind": "pull_request",
+            "number": 2
+          },
+          "ref": "acceptance/local-runtime-review-capacity-20261007",
+          "baseSha": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+          "headSha": "fcdc256a0cdd8bd2fd81a7ca787747cf181602f1",
+          "revision": 0,
+          "grantDigest": "6e7ab23097ea7806b1f2b587d2141b22963cf0c78648a500dbe970bad1b92a29"
+        },
+        "sandboxEvidence": {
+          "backend": "agentarts-bwrap",
+          "credentialMediated": true,
+          "processIsolated": true,
+          "networkIsolated": true,
+          "workspaceAccess": "read-only"
+        },
+        "workspaceFileCount": "Not carried in the Demo/reply; complete materialization evidence is retained separately by the Controller."
+      }
+    }
+  ],
+  "layouts": [
+    {
+      "caseId": "github-complete-workspace",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "screenshot": "outputs/pr-review-demo-qa/capacity-finish-github/github-complete-workspace-1280.png"
+    },
+    {
+      "caseId": "github-complete-workspace",
+      "width": 390,
+      "scrollWidth": 390,
+      "screenshot": "outputs/pr-review-demo-qa/capacity-finish-github/github-complete-workspace-390.png"
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:55674/project/github-complete-workspace/",
+    "http://127.0.0.1:55674/project/github-complete-workspace/run-record.json",
+    "http://127.0.0.1:55674/project/github-complete-workspace/run-record.json"
+  ],
+  "pageErrors": [],
+  "cspErrors": [],
+  "staticSnapshot": {
+    "autoPolling": false,
+    "reloadButtonVerified": true
+  },
+  "browserQaModelCalls": 0,
+  "browserQaGitHubCalls": 0,
+  "browserQaCloudCalls": 0,
+  "limitations": [
+    "GitHub links were compared against confirmed Controller records; this QA did not navigate or call GitHub.",
+    "The Controller supplied publication/ownership evidence. Browser rendering cannot independently establish publication correctness.",
+    "Manual business acceptance remains not-reviewed; automatic checks do not upgrade that verdict.",
+    "The repeated driver attempt is confirmed historical reuse, not a new DSH/model execution.",
+    "This is local Runtime acceptance only. Huawei AgentArts cloud acceptance was not performed.",
+    "A real review may use its admitted diff/context without tools. Zero receipts are shown as zero, never invented from the allowed tool list.",
+    "Tool failures remain visible independently from overall task/validation status; failed individual searches do not fabricate a failed or successful task.",
+    "Original publisher upserts the same summary comment across revisions; a historical record live GitHub link may now show a newer review.",
+    "Screenshots and static exports remain local. This browser QA did not publish a Demo."
+  ],
+  "visualInspection": {
+    "screenshotsReviewed": [
+      "github-complete-workspace-1280.png",
+      "github-complete-workspace-390.png"
+    ],
+    "result": "Both real Edge screenshots reviewed: no clipped or overlapping controls; six actual tool rows include two failed searches; overall task validation remains passed as recorded."
+  },
+  "productSourceModified": false
+}

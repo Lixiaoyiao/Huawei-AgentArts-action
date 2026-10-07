@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "runId": "275254cb-06c4-4076-96fc-90f33958a2c4",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "fix-bounds",
+  "caseVersion": 1,
+  "operation": "fix",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "entity": {
+      "kind": "pull_request",
+      "number": 4
+    },
+    "ref": "fixture-pr"
+  },
+  "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+  "acceptanceDigest": "c7ae2a37654eee2a2bb910f6c6a0ccefd47f6578bf0557ec4221bfbda82b9c1f",
+  "candidateSha": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+  "candidateEvidence": {
+    "path": "/var/tmp/codex-agentarts-01a10594/capacity-finish-20261007/model-final/275254cb-06c4-4076-96fc-90f33958a2c4.fix-bounds.candidate.json",
+    "maxBytes": 262144
+  },
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [
+    {
+      "argv": [
+        "node",
+        "tests/acceptance.mjs"
+      ],
+      "result": {
+        "exitCode": 0,
+        "stdout": "Frozen contract cases passed: 72\n",
+        "stderr": "",
+        "timedOut": false,
+        "outputTruncated": false
+      }
+    }
+  ],
+  "taskDigest": "da09ffa13fc0861d78b4f8830ea4c6d09adc72db0f544a89005cf78dea91ed3b",
+  "workspaceDigest": "c5cf56551325898c05476c1d5b5c317001e59dce89b72dd0d6f2f068e86546ba",
+  "delta": {
+    "inputDigest": "c5cf56551325898c05476c1d5b5c317001e59dce89b72dd0d6f2f068e86546ba",
+    "resultDigest": "772307c359e184dcf0d0911079878c64f21ca600f9aabb71b08c28522e96d722",
+    "changes": [
+      {
+        "kind": "modified",
+        "path": "src/bounds.ts"
+      }
+    ]
+  },
+  "output": {
+    "protocolVersion": 1,
+    "operation": "fix",
+    "state": "final",
+    "summary": "Restored the inBounds function to use a strict less-than comparison so valid indices for a nonnegative integer length are 0 through length-1, and empty collections (length 0) have no valid index.",
+    "findings": [
+      {
+        "title": "Off-by-one in inBounds allows out-of-range index",
+        "body": "The function used `index <= length`, which incorrectly treats `length` itself as a valid index and makes `index 0` valid for empty collections (length 0).",
+        "severity": "high",
+        "category": "correctness",
+        "confidence": 1,
+        "path": "src/bounds.ts",
+        "line": 2,
+        "evidence": "Counterexamples: inBounds(3, 3) returned true (expected false) and inBounds(0, 0) returned true (expected false).",
+        "suggestion": "Use `index >= 0 && index < length`."
+      }
+    ],
+    "changePlan": [
+      {
+        "path": "src/bounds.ts",
+        "summary": "Changed `return index >= 0 && index <= length;` to `return index >= 0 && index < length;`."
+      }
+    ],
+    "verification": [
+      {
+        "command": "node tests/acceptance.mjs",
+        "status": "skipped",
+        "summary": "Not run in this session; the Controller will independently run the frozen tests."
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 5,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-write"
+  },
+  "durationMs": 12441,
+  "startedAt": "2026-10-07T08:39:57.866Z",
+  "completedAt": "2026-10-07T08:40:10.307Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 5,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:6a5b8920363586a3a59a68ed33cdab09d9f2d04854312b51d17882ae3538006e",
+    "sourceCommit": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

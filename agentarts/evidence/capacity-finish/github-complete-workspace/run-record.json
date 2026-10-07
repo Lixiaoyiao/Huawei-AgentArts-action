@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "08f7b606-154b-4ccb-846c-9cc4d923f2c9",
+    "repository": "Lixiaoyiao/Huawei-AgentArts-action",
+    "pullNumber": 2,
+    "headSha": "fcdc256a0cdd8bd2fd81a7ca787747cf181602f1",
+    "baseSha": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+    "kind": "pull_request",
+    "operation": "review",
+    "url": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/2"
+  },
+  "stages": [
+    {
+      "name": "真实 GitHub 身份与 PR 绑定",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:41:07.718Z",
+      "completedAt": "2026-10-07T08:41:12.034Z"
+    },
+    {
+      "name": "本机生产 Runtime 与真实模型限额预检",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:41:12.034Z",
+      "completedAt": "2026-10-07T08:43:28.272Z"
+    },
+    {
+      "name": "真实 DSH / DeepSeek 审查（本机生产容器）",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:43:28.272Z",
+      "completedAt": "2026-10-07T08:43:53.104Z"
+    },
+    {
+      "name": "原控制端 precision / diff / 写前 head 校验与发布",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:43:53.104Z",
+      "completedAt": "2026-10-07T08:44:02.712Z"
+    },
+    {
+      "name": "真实 GitHub 发布结果只读核验",
+      "status": "passed",
+      "startedAt": "2026-10-07T08:44:02.712Z",
+      "completedAt": "2026-10-07T08:44:07.677Z"
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 7
+    },
+    {
+      "id": "workspace.search",
+      "runtimeName": "glob",
+      "ok": true,
+      "completed": true,
+      "durationMs": 14
+    },
+    {
+      "id": "workspace.search",
+      "runtimeName": "grep",
+      "ok": false,
+      "completed": true,
+      "durationMs": 193
+    },
+    {
+      "id": "workspace.search",
+      "runtimeName": "glob",
+      "ok": true,
+      "completed": true,
+      "durationMs": 14
+    },
+    {
+      "id": "workspace.search",
+      "runtimeName": "grep",
+      "ok": true,
+      "completed": true,
+      "durationMs": 35
+    },
+    {
+      "id": "workspace.search",
+      "runtimeName": "grep",
+      "ok": false,
+      "completed": true,
+      "durationMs": 221
+    }
+  ],
+  "observedTools": [],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "v3 严格结果协议与 task/operation/entity/ref/base/head/grant 绑定",
+      "输入工作区摘要与只读实际文件检查",
+      "生产 bwrap / 网络隔离回执",
+      "可信 supervisor 模型来源与实际请求上限",
+      "原控制端 precision / diff 与发布前 head 检查完成",
+      "发布后 PR base/head 和实际评论数字作者/链接归属核验"
+    ]
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "runtime": {
+    "sessionId": "08f7b606-154b-4ccb-846c-9cc4d923f2c9",
+    "endpoint": "http://127.0.0.1:8080",
+    "dshVersion": "0.2.0-rc.2",
+    "requestId": ""
+  },
+  "durationMs": 179964,
+  "result": {
+    "summary": "Reviewed the single added file examples/acceptance/bounds.mjs. The `at` function's bounds guard has an off-by-one error: it tests `index > values.length`, which allows `index === values.length` to pass the guard and return `values[values.length]` (i.e. `undefined`) instead of throwing RangeError as the documented contract requires.",
+    "githubUrl": "https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/2#issuecomment-6034312465"
+  },
+  "warnings": [
+    "本机生产 Runtime；未验证华为云。此入口由人工显式启动，未接收 GitHub webhook。",
+    "镜像和控制端 commit 由操作者声明，非远程证明。模型成本未知，美元预算不是硬上限。",
+    "原控制端只发布审查；独立业务人工验收仍待完成。"
+  ]
+}

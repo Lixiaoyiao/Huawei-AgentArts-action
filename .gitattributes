@@ -6,4 +6,5 @@
 # Keep measured evidence byte-for-byte, including original line endings.
 agentarts/evidence/full-v3/** -text -whitespace
 agentarts/evidence/local-finish/** -text -whitespace
+agentarts/evidence/capacity-finish/** -text -whitespace
 agentarts/evidence/host-diagnostics/** -text -whitespace

@@ -1,0 +1,1401 @@
+test	Set up job	﻿2026-10-07T08:40:00.6332821Z Current runner version: '2.337.0'
+test	Set up job	2026-10-07T08:40:00.6361697Z ##[group]Runner Image Provisioner
+test	Set up job	2026-10-07T08:40:00.6362640Z Hosted Compute Agent
+test	Set up job	2026-10-07T08:40:00.6363264Z Version: 20260901.588
+test	Set up job	2026-10-07T08:40:00.6363875Z Commit: f88ec8081b781fac6c440065ac7ff9e710ce3d0b
+test	Set up job	2026-10-07T08:40:00.6364568Z Build Date: 2026-09-01T19:56:44Z
+test	Set up job	2026-10-07T08:40:00.6365237Z Worker ID: {141e45dd-f76f-451d-bad0-9ff2b2666926}
+test	Set up job	2026-10-07T08:40:00.6365921Z Azure Region: centralus
+test	Set up job	2026-10-07T08:40:00.6366537Z ##[endgroup]
+test	Set up job	2026-10-07T08:40:00.6368045Z ##[group]Operating System
+test	Set up job	2026-10-07T08:40:00.6368863Z Ubuntu
+test	Set up job	2026-10-07T08:40:00.6369533Z 24.04.5
+test	Set up job	2026-10-07T08:40:00.6370040Z LTS
+test	Set up job	2026-10-07T08:40:00.6370543Z ##[endgroup]
+test	Set up job	2026-10-07T08:40:00.6371097Z ##[group]Runner Image
+test	Set up job	2026-10-07T08:40:00.6371670Z Image: ubuntu-24.04
+test	Set up job	2026-10-07T08:40:00.6372213Z Version: 20260927.320.1
+test	Set up job	2026-10-07T08:40:00.6373214Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260927.320/images/ubuntu/Ubuntu2404-Readme.md
+test	Set up job	2026-10-07T08:40:00.6374875Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260927.320
+test	Set up job	2026-10-07T08:40:00.6375765Z ##[endgroup]
+test	Set up job	2026-10-07T08:40:00.6376849Z ##[group]GITHUB_TOKEN Permissions
+test	Set up job	2026-10-07T08:40:00.6379500Z Contents: read
+test	Set up job	2026-10-07T08:40:00.6380157Z Metadata: read
+test	Set up job	2026-10-07T08:40:00.6380691Z ##[endgroup]
+test	Set up job	2026-10-07T08:40:00.6382698Z Secret source: Actions
+test	Set up job	2026-10-07T08:40:00.6383637Z Cache mode: write
+test	Set up job	2026-10-07T08:40:00.6384292Z Prepare workflow directory
+test	Set up job	2026-10-07T08:40:00.6697379Z Prepare all required actions
+test	Set up job	2026-10-07T08:40:00.6747136Z Getting action download info
+test	Set up job	2026-10-07T08:40:00.9626503Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+test	Set up job	2026-10-07T08:40:01.1755534Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+test	Set up job	2026-10-07T08:40:01.7445919Z Complete job name: test
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	﻿2026-10-07T08:40:01.8195671Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8196795Z with:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8197461Z   ref: 4da864c2e6b11575ffc72216a92f59aa2a63a52a
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8198202Z   persist-credentials: false
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8199153Z   repository: Lixiaoyiao/Huawei-AgentArts-action
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8203823Z   token: ***
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8204367Z   ssh-strict: true
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8204947Z   ssh-user: git
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8205510Z   clean: true
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8206151Z   sparse-checkout-cone-mode: true
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8206816Z   fetch-depth: 1
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8207371Z   fetch-tags: false
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8207950Z   show-progress: true
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8208520Z   lfs: false
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8209317Z   submodules: false
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8210032Z   set-safe-directory: true
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8210682Z   allow-unsafe-pr-checkout: false
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.8211571Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9221306Z Syncing repository: Lixiaoyiao/Huawei-AgentArts-action
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9224378Z ##[group]Getting Git version info
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9225816Z Working directory is '/home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action'
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9227812Z [command]/usr/bin/git version
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9310322Z git version 2.55.0
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9361409Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9370374Z Temporarily overriding HOME='/home/runner/work/_temp/d9b0ddbf-10fe-412e-949a-b978b842fecf' before making global git config changes
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9372885Z Adding repository directory to the temporary git global config as a safe directory
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9375147Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9410032Z Deleting the contents of '/home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action'
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9417438Z ##[group]Initializing the repository
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9422813Z [command]/usr/bin/git init /home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9512741Z hint: Using 'master' as the name for the initial branch. This default branch name
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9515596Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9517234Z hint: to use in all of your new repositories, which will suppress this warning,
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9518833Z hint: call:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9520052Z hint:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9521041Z hint: 	git config --global init.defaultBranch <name>
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9522139Z hint:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9523283Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9525127Z hint: 'development'. The just-created branch can be renamed via this command:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9526392Z hint:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9527169Z hint: 	git branch -m <name>
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9528012Z hint:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9529674Z hint: Disable this message with "git config set advice.defaultBranchName false"
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9531939Z Initialized empty Git repository in /home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action/.git/
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9535490Z [command]/usr/bin/git remote add origin https://github.com/Lixiaoyiao/Huawei-AgentArts-action
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9708543Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9710605Z ##[group]Disabling automatic garbage collection
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9711919Z [command]/usr/bin/git config --local gc.auto 0
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9743244Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9744790Z ##[group]Setting up auth
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9749241Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:01.9781699Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0107817Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0139559Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0320245Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0350090Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0531564Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0568820Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0571689Z ##[group]Fetching the repository
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:02.0579650Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin 4da864c2e6b11575ffc72216a92f59aa2a63a52a
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9022534Z From https://github.com/Lixiaoyiao/Huawei-AgentArts-action
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9024706Z  * branch            4da864c2e6b11575ffc72216a92f59aa2a63a52a -> FETCH_HEAD
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9027967Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9029402Z ##[group]Determining the checkout info
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9030347Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9035088Z [command]/usr/bin/git sparse-checkout disable
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9086493Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9117023Z ##[group]Checking out the ref
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:03.9120380Z [command]/usr/bin/git checkout --progress --force 4da864c2e6b11575ffc72216a92f59aa2a63a52a
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0682730Z Note: switching to '4da864c2e6b11575ffc72216a92f59aa2a63a52a'.
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0683453Z 
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0683843Z You are in 'detached HEAD' state. You can look around, make experimental
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0684994Z changes and commit them, and you can discard any commits you make in this
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0685908Z state without impacting any branches by switching back to a branch.
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0686756Z 
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0687162Z If you want to create a new branch to retain commits you create, you may
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0687785Z do so (now or later) by using -c with the switch command. Example:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0688129Z 
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0688298Z   git switch -c <new-branch-name>
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0688631Z 
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0688812Z Or undo this operation with:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0689286Z 
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0689513Z   git switch -
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0689841Z 
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0690299Z Turn off this advice by setting config variable advice.detachedHead to false
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0690822Z 
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0691184Z HEAD is now at 4da864c build(agentarts): bundle the paired workspace encoding update
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0692846Z ##[endgroup]
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0732151Z [command]/usr/bin/git log -1 --format=%H
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0756171Z 4da864c2e6b11575ffc72216a92f59aa2a63a52a
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0765031Z ##[group]Removing auth
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0769292Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0797623Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.0980384Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.1003367Z http.https://github.com/.extraheader
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.1008414Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.1042606Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.1225235Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.1249456Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+test	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:40:04.1426974Z ##[endgroup]
+test	Verify exact candidate checkout	﻿2026-10-07T08:40:04.1627635Z ##[group]Run set -euo pipefail
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1628273Z ^[[36;1mset -euo pipefail^[[0m
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1628843Z ^[[36;1m[[ "$CANDIDATE_SHA" =~ ^[a-f0-9]{40}$ ]]^[[0m
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1629577Z ^[[36;1m[[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]^[[0m
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1630247Z ^[[36;1m! git config --local --get-regexp '^(http\..*\.extraheader|credential\.)' >/dev/null 2>&1^[[0m
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1833284Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1834088Z env:
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1834604Z   CANDIDATE_SHA: 4da864c2e6b11575ffc72216a92f59aa2a63a52a
+test	Verify exact candidate checkout	2026-10-07T08:40:04.1835106Z ##[endgroup]
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	﻿2026-10-07T08:40:04.2070422Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.2071024Z with:
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.2071373Z   node-version: 24
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.2071736Z   cache: npm
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.2072136Z   always-auth: false
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.2072534Z   check-latest: false
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.2075303Z   token: ***
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.2075649Z ##[endgroup]
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.3510029Z Found in cache @ /opt/hostedtoolcache/node/24.21.0/x64
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.3514639Z (node:2442) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.3516190Z (Use `node --trace-deprecation ...` to show where the warning was created)
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.3520437Z ##[group]Environment details
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.7535476Z node: v24.21.0
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.7536264Z npm: 11.19.0
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.7536810Z yarn: 1.22.22
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.7537944Z ##[endgroup]
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.7586827Z [command]/opt/hostedtoolcache/node/24.21.0/x64/bin/npm config get cache
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:04.8611998Z /home/runner/.npm
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:05.0307468Z Cache hit for: node-cache-Linux-x64-npm-40fb1d2282e35d70ece7de0c177d9943ac177f21ec1d49c2bf5090f03b2fe8bd
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:05.0404856Z (node:2442) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:06.1976447Z Received 121634816 of 178158713 (68.3%), 116.0 MBs/sec
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:06.5709911Z Received 178158713 of 178158713 (100.0%), 123.7 MBs/sec
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:06.5710769Z Cache Size: ~170 MB (178158713 B)
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:06.5743442Z [command]/usr/bin/tar -xf /home/runner/work/_temp/06ec4bd8-5eed-4e8e-a6c0-88968196a14a/cache.tzst -P -C /home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action --use-compress-program unzstd
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:06.7965671Z Cache restored successfully
+test	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:40:06.8036467Z Cache restored from key: node-cache-Linux-x64-npm-40fb1d2282e35d70ece7de0c177d9943ac177f21ec1d49c2bf5090f03b2fe8bd
+test	Run npm ci	﻿2026-10-07T08:40:06.8175770Z ##[group]Run npm ci
+test	Run npm ci	2026-10-07T08:40:06.8176198Z ^[[36;1mnpm ci^[[0m
+test	Run npm ci	2026-10-07T08:40:06.8279359Z shell: /usr/bin/bash -e {0}
+test	Run npm ci	2026-10-07T08:40:06.8279837Z ##[endgroup]
+test	Run npm ci	2026-10-07T08:40:12.8938938Z npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+test	Run npm ci	2026-10-07T08:40:13.5801474Z npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+test	Run npm ci	2026-10-07T08:40:17.9726511Z 
+test	Run npm ci	2026-10-07T08:40:17.9727890Z added 892 packages, and audited 893 packages in 11s
+test	Run npm ci	2026-10-07T08:40:17.9728737Z 
+test	Run npm ci	2026-10-07T08:40:17.9729592Z 160 packages are looking for funding
+test	Run npm ci	2026-10-07T08:40:17.9736954Z   run `npm fund` for details
+test	Run npm ci	2026-10-07T08:40:17.9773518Z 
+test	Run npm ci	2026-10-07T08:40:17.9800151Z 16 vulnerabilities (7 moderate, 8 high, 1 critical)
+test	Run npm ci	2026-10-07T08:40:17.9801527Z npm warn install-scripts 5 packages have install scripts not yet covered by allowScripts:
+test	Run npm ci	2026-10-07T08:40:17.9803222Z npm warn install-scripts   @deepseek-ai/dsh-subprocess-local@0.2.0-rc.2 (postinstall: node scripts/ensure-spawn-helper.mjs)
+test	Run npm ci	2026-10-07T08:40:17.9804465Z npm warn install-scripts   @google/genai@2.21.0 (preinstall: echo 'preinstall: no-op')
+test	Run npm ci	2026-10-07T08:40:17.9805887Z npm warn install-scripts   koffi@3.1.1 (install: node ./cnoke.cjs -P . -D src/koffi --prebuild --release)
+test	Run npm ci	2026-10-07T08:40:17.9807532Z npm warn install-scripts   node-pty@1.2.0-beta.15 (install: node scripts/prebuild.js || node-gyp rebuild; postinstall: node scripts/post-install.js)
+test	Run npm ci	2026-10-07T08:40:17.9808791Z npm warn install-scripts   protobufjs@7.6.6 (postinstall: node scripts/postinstall)
+test	Run npm ci	2026-10-07T08:40:17.9809800Z npm warn install-scripts
+test	Run npm ci	2026-10-07T08:40:17.9810839Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+test	Run npm ci	2026-10-07T08:40:17.9811589Z 
+test	Run npm ci	2026-10-07T08:40:17.9811964Z To address issues that do not require attention, run:
+test	Run npm ci	2026-10-07T08:40:17.9812651Z   npm audit fix
+test	Run npm ci	2026-10-07T08:40:17.9812885Z 
+test	Run npm ci	2026-10-07T08:40:17.9813313Z To address all issues (including breaking changes), run:
+test	Run npm ci	2026-10-07T08:40:17.9813941Z   npm audit fix --force
+test	Run npm ci	2026-10-07T08:40:17.9814244Z 
+test	Run npm ci	2026-10-07T08:40:17.9814483Z Run `npm audit` for details.
+test	Run npm run check	﻿2026-10-07T08:40:18.0466444Z ##[group]Run npm run check
+test	Run npm run check	2026-10-07T08:40:18.0466833Z ^[[36;1mnpm run check^[[0m
+test	Run npm run check	2026-10-07T08:40:18.0514609Z shell: /usr/bin/bash -e {0}
+test	Run npm run check	2026-10-07T08:40:18.0515119Z ##[endgroup]
+test	Run npm run check	2026-10-07T08:40:18.1467537Z 
+test	Run npm run check	2026-10-07T08:40:18.1490410Z > huawei-agentarts-action@0.9.3 check
+test	Run npm run check	2026-10-07T08:40:18.1522193Z > npm run test:generated && npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:release-contract && npm run test:dsh-config && npm run build:check && npm run build:agentarts:check
+test	Run npm run check	2026-10-07T08:40:18.1523815Z 
+test	Run npm run check	2026-10-07T08:40:18.2423436Z 
+test	Run npm run check	2026-10-07T08:40:18.2425063Z > huawei-agentarts-action@0.9.3 test:generated
+test	Run npm run check	2026-10-07T08:40:18.2426929Z > node scripts/generate-action-contract.mjs && node scripts/generate-agentarts-action.mjs && node scripts/generate-agentarts-seccomp.mjs
+test	Run npm run check	2026-10-07T08:40:18.2427938Z 
+test	Run npm run check	2026-10-07T08:40:19.0438828Z AgentArts Action contract checked.
+test	Run npm run check	2026-10-07T08:40:19.1783705Z 
+test	Run npm run check	2026-10-07T08:40:19.1785181Z > huawei-agentarts-action@0.9.3 format:check
+test	Run npm run check	2026-10-07T08:40:19.1792677Z > prettier --check .
+test	Run npm run check	2026-10-07T08:40:19.1793312Z 
+test	Run npm run check	2026-10-07T08:40:19.2610060Z Checking formatting...
+test	Run npm run check	2026-10-07T08:40:26.9975410Z All matched files use Prettier code style!
+test	Run npm run check	2026-10-07T08:40:27.1128462Z 
+test	Run npm run check	2026-10-07T08:40:27.1129636Z > huawei-agentarts-action@0.9.3 lint
+test	Run npm run check	2026-10-07T08:40:27.1130707Z > eslint . --max-warnings=0
+test	Run npm run check	2026-10-07T08:40:27.1131097Z 
+test	Run npm run check	2026-10-07T08:40:48.4651139Z 
+test	Run npm run check	2026-10-07T08:40:48.4653927Z > huawei-agentarts-action@0.9.3 typecheck
+test	Run npm run check	2026-10-07T08:40:48.4654551Z > tsc --noEmit
+test	Run npm run check	2026-10-07T08:40:48.4654910Z 
+test	Run npm run check	2026-10-07T08:40:56.0275614Z 
+test	Run npm run check	2026-10-07T08:40:56.0277280Z > huawei-agentarts-action@0.9.3 test:coverage
+test	Run npm run check	2026-10-07T08:40:56.0278282Z > vitest run --coverage
+test	Run npm run check	2026-10-07T08:40:56.0279117Z 
+test	Run npm run check	2026-10-07T08:40:56.3613110Z 
+test	Run npm run check	2026-10-07T08:40:56.3616772Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv4.1.11 ^[[39m^[[90m/home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action^[[39m
+test	Run npm run check	2026-10-07T08:40:56.3617794Z       ^[[2mCoverage enabled with ^[[22m^[[33mv8^[[39m
+test	Run npm run check	2026-10-07T08:40:56.3618128Z 
+test	Run npm run check	2026-10-07T08:40:57.5863542Z  ^[[32m✓^[[39m test/github-tools.test.ts ^[[2m(^[[22m^[[2m41 tests^[[22m^[[2m)^[[22m^[[32m 158^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:40:58.3533607Z  ^[[32m✓^[[39m test/agent-loop.test.ts ^[[2m(^[[22m^[[2m25 tests^[[22m^[[2m)^[[22m^[[32m 87^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:40:58.7113874Z  ^[[32m✓^[[39m test/dsh-runner.test.ts ^[[2m(^[[22m^[[2m84 tests^[[22m^[[2m)^[[22m^[[33m 1229^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:40:59.7509330Z  ^[[32m✓^[[39m test/agentarts-workspace-transfer.test.ts ^[[2m(^[[22m^[[2m59 tests^[[22m^[[2m)^[[22m^[[33m 2288^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:40:59.9980815Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.0047486Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.0107542Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.0163633Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.0647226Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.0650787Z Task accepted: review; phase=context; trust=untrusted; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.0752683Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.0792673Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.0795416Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.0985168Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.0990773Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.1166754Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.1170494Z Task accepted: diagnose; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.1331360Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.1337409Z Task accepted: diagnose; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.1581890Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.1588214Z Task accepted: diagnose; phase=context; trust=untrusted; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.1659302Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.1670430Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.1700255Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.1730411Z Task accepted: implement; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.1740006Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.1767530Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.1973618Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.1977975Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.2065114Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.2068397Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.2182427Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.2185212Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.2262690Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.2290455Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.2801680Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.2860009Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.3073294Z  ^[[32m✓^[[39m test/agentarts-controller.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[32m 246^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:00.3890962Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.3895245Z Task accepted: implement; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.5187956Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.5244970Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.5575669Z  ^[[32m✓^[[39m test/session-checkpoint.test.ts ^[[2m(^[[22m^[[2m96 tests^[[22m^[[2m)^[[22m^[[33m 439^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:00.7235147Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.7249887Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.9287616Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:00.9291014Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:00.9643359Z  ^[[32m✓^[[39m test/e2e-workflow.test.ts ^[[2m(^[[22m^[[2m24 tests^[[22m^[[2m)^[[22m^[[32m 175^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:01.0142310Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.0145622Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.0878535Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.0960351Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.1574451Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.1667508Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.2220893Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.2267163Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.2991350Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.3011772Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.3666566Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.3688496Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.3935665Z  ^[[32m✓^[[39m test/session-artifacts.test.ts ^[[2m(^[[22m^[[2m69 tests^[[22m^[[2m)^[[22m^[[32m 282^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:01.4250321Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.4254883Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.4728729Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.4739702Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.5300687Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.5316835Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.6021643Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.6043447Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.6510531Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.6523401Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.7643317Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.7661914Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.8784271Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.8814859Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:01.8877265Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:01.8881166Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.0079364Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:02.0091717Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.1767439Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:02.1806262Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.2220622Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:02.2225649Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.3034677Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:02.3040234Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.3642869Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:02.3727210Z Task accepted: diagnose; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.4205404Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:02.4209688Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.4890802Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:02.4912875Z Task accepted: fix; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:02.6800828Z  ^[[32m✓^[[39m test/installer.test.ts ^[[2m(^[[22m^[[2m61 tests^[[22m^[[2m)^[[22m^[[33m 1303^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:02.6802985Z      ^[[33m^[[2m✓^[[22m^[[39m requires the real release SHA and deterministically builds four bound templates ^[[33m 449^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:02.6804748Z      ^[[33m^[[2m✓^[[22m^[[39m keeps the formal npm pack stdout machine-readable ^[[33m 562^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:03.8573418Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:03.8645998Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9093763Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:03.9150926Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9315859Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:03.9325405Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9378734Z DSH mode native; composition dsh-native-headless
+test	Run npm run check	2026-10-07T08:41:03.9381930Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9429769Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:03.9434629Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9470653Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:03.9473798Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9644226Z DSH mode native; composition dsh-native-headless
+test	Run npm run check	2026-10-07T08:41:03.9680686Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9699464Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:03.9701990Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9745598Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:03.9749975Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:03.9772808Z DSH mode native; composition dsh-native-headless
+test	Run npm run check	2026-10-07T08:41:03.9785721Z Task accepted: task; phase=context; trust=trusted-write; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:04.0506162Z  ^[[32m✓^[[39m test/orchestrator-no-change.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 142^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:04.0891740Z  ^[[32m✓^[[39m test/agentarts-full-controller.test.ts ^[[2m(^[[22m^[[2m27 tests^[[22m^[[2m)^[[22m^[[33m 4013^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:04.0894394Z      ^[[33m^[[2m✓^[[22m^[[39m runs the real pinned DSH read/edit process through Action and HTTP, then original independent validation and mock GitHub write ^[[33m 1518^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:04.9494023Z  ^[[32m✓^[[39m test/security-invariant-matrix.test.ts ^[[2m(^[[22m^[[2m43 tests^[[22m^[[2m)^[[22m^[[32m 135^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:05.0416732Z  ^[[32m✓^[[39m test/agentarts-readonly-task.test.ts ^[[2m(^[[22m^[[2m33 tests^[[22m^[[2m)^[[22m^[[33m 2891^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:05.0418846Z      ^[[33m^[[2m✓^[[22m^[[39m boots actual pinned DSH and reads source for task through a deterministic loopback model fixture ^[[33m 1352^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:05.0441769Z      ^[[33m^[[2m✓^[[22m^[[39m boots actual pinned DSH and reads source for diagnose through a deterministic loopback model fixture ^[[33m 1319^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:05.0515739Z  ^[[32m✓^[[39m test/validation-integrity.test.ts ^[[2m(^[[22m^[[2m31 tests^[[22m^[[2m)^[[22m^[[33m 383^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:05.3711868Z  ^[[32m✓^[[39m test/extensions.test.ts ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[32m 66^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:05.9791643Z  ^[[32m✓^[[39m test/agentarts-mcp-credentials.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m | ^[[22m^[[33m13 skipped^[[39m^[[2m)^[[22m^[[32m 24^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:06.7488790Z  ^[[32m✓^[[39m test/result.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[32m 65^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:07.1486601Z {"schemaVersion":1,"event":"task.accepted","timestamp":"2026-10-07T08:41:07.146Z","taskId":"a9701ba3-a44d-482e-b643-f882d0557399","repository":"owner/repository","pullNumber":1,"operation":"review","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":0}
+test	Run npm run check	2026-10-07T08:41:07.1535624Z {"schemaVersion":1,"event":"task.failed","timestamp":"2026-10-07T08:41:07.151Z","taskId":"a9701ba3-a44d-482e-b643-f882d0557399","repository":"owner/repository","pullNumber":1,"operation":"review","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":5,"code":"TASK_CANCELLED"}
+test	Run npm run check	2026-10-07T08:41:07.1547985Z {"schemaVersion":1,"event":"task.accepted","timestamp":"2026-10-07T08:41:07.154Z","taskId":"8267648b-7e3b-4443-bacb-aeff010c21a3","repository":"owner/repository","pullNumber":1,"operation":"review","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":0}
+test	Run npm run check	2026-10-07T08:41:07.1854281Z {"schemaVersion":1,"event":"task.failed","timestamp":"2026-10-07T08:41:07.185Z","taskId":"8267648b-7e3b-4443-bacb-aeff010c21a3","repository":"owner/repository","pullNumber":1,"operation":"review","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":31,"code":"TASK_TIMEOUT"}
+test	Run npm run check	2026-10-07T08:41:07.2368118Z  ^[[32m✓^[[39m test/agentarts-worker.test.ts ^[[2m(^[[22m^[[2m19 tests^[[22m^[[2m)^[[22m^[[33m 1521^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:07.2369802Z      ^[[33m^[[2m✓^[[22m^[[39m boots real pinned DSH, calls an actual read tool and returns reconciled receipts through the model proxy ^[[33m 1138^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:07.8422926Z  ^[[32m✓^[[39m test/agentarts-live-review.test.ts ^[[2m(^[[22m^[[2m57 tests^[[22m^[[2m)^[[22m^[[33m 472^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:08.2348512Z  ^[[32m✓^[[39m test/dsh-composition.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 89^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:08.2701896Z {"schemaVersion":1,"event":"task.accepted","timestamp":"2026-10-07T08:41:08.265Z","taskId":"4e4b22c1-d0a5-49b2-b284-ce5d1c3eb2e3","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"task","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":0}
+test	Run npm run check	2026-10-07T08:41:08.6531697Z  ^[[32m✓^[[39m test/action-metadata.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 182^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:09.7082703Z {"schemaVersion":1,"event":"task.completed","timestamp":"2026-10-07T08:41:09.707Z","taskId":"4e4b22c1-d0a5-49b2-b284-ce5d1c3eb2e3","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"task","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":1442,"tools":[{"id":"workspace.read","ok":true,"durationMs":28}]}
+test	Run npm run check	2026-10-07T08:41:09.7256064Z {"schemaVersion":1,"event":"task.accepted","timestamp":"2026-10-07T08:41:09.724Z","taskId":"d7bbbb39-7391-4e98-b860-f3566d528ed4","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"review","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":0}
+test	Run npm run check	2026-10-07T08:41:10.9553390Z {"schemaVersion":1,"event":"task.completed","timestamp":"2026-10-07T08:41:10.953Z","taskId":"d7bbbb39-7391-4e98-b860-f3566d528ed4","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"review","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":1229,"tools":[{"id":"workspace.read","ok":true,"durationMs":16}]}
+test	Run npm run check	2026-10-07T08:41:10.9685575Z {"schemaVersion":1,"event":"task.accepted","timestamp":"2026-10-07T08:41:10.967Z","taskId":"9fea0e5b-ea4e-4e6d-9bcd-c2240ed47e97","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"diagnose","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":0}
+test	Run npm run check	2026-10-07T08:41:12.2057954Z {"schemaVersion":1,"event":"task.completed","timestamp":"2026-10-07T08:41:12.200Z","taskId":"9fea0e5b-ea4e-4e6d-9bcd-c2240ed47e97","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"diagnose","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":1233,"tools":[{"id":"workspace.read","ok":true,"durationMs":26}]}
+test	Run npm run check	2026-10-07T08:41:12.2166353Z {"schemaVersion":1,"event":"task.accepted","timestamp":"2026-10-07T08:41:12.212Z","taskId":"4e5451e9-e2bf-4749-85bd-83ef76a55ebe","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"fix","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":0}
+test	Run npm run check	2026-10-07T08:41:12.5142545Z  ^[[32m✓^[[39m test/native-ecosystem.integration.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 4771^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:12.5144442Z      ^[[33m^[[2m✓^[[22m^[[39m discovers repository Skills and invokes native MCP, Bundle, Plugin, Subagent, and Workflow capabilities ^[[33m 4768^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:12.5620987Z  ^[[32m✓^[[39m test/agentarts-demo-export.test.ts ^[[2m(^[[22m^[[2m51 tests^[[22m^[[2m)^[[22m^[[33m 3610^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:13.2534211Z  ^[[32m✓^[[39m test/inputs.test.ts ^[[2m(^[[22m^[[2m68 tests^[[22m^[[2m)^[[22m^[[32m 169^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:13.5783270Z {"schemaVersion":1,"event":"task.completed","timestamp":"2026-10-07T08:41:13.576Z","taskId":"4e5451e9-e2bf-4749-85bd-83ef76a55ebe","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"fix","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":1364,"tools":[{"id":"workspace.read","ok":true,"durationMs":11},{"id":"workspace.edit","ok":true,"durationMs":25}]}
+test	Run npm run check	2026-10-07T08:41:13.5912758Z {"schemaVersion":1,"event":"task.accepted","timestamp":"2026-10-07T08:41:13.590Z","taskId":"338c6def-0232-49c9-8670-f66dcc42046e","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"implement","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":0}
+test	Run npm run check	2026-10-07T08:41:13.6722729Z  ^[[32m✓^[[39m test/github-data.test.ts ^[[2m(^[[22m^[[2m49 tests^[[22m^[[2m)^[[22m^[[32m 47^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:13.7274448Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:13.7353878Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:13.8959815Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:13.8961627Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:13.9356346Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:13.9362057Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:13.9707764Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:13.9712850Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.0769663Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.0772092Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.1228156Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.1271138Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.1551209Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.1571080Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.1888468Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.1921280Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.2261506Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.2291302Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.2590846Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.2603347Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.2870496Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.2877512Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.3180967Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.3186245Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.3575710Z  ^[[32m✓^[[39m test/review-publisher.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 47^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.3600928Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.3610925Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.3988588Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.3997727Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.5203844Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:14.5206897Z Task accepted: review; phase=context; trust=trusted-read; run=https://github.com/Lixiaoyiao/Huawei-AgentArts-action/pull/7
+test	Run npm run check	2026-10-07T08:41:14.6504963Z  ^[[32m✓^[[39m test/agentarts-local-github.test.ts ^[[2m(^[[22m^[[2m28 tests^[[22m^[[2m)^[[22m^[[33m 873^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.8560424Z {"schemaVersion":1,"event":"task.completed","timestamp":"2026-10-07T08:41:14.855Z","taskId":"338c6def-0232-49c9-8670-f66dcc42046e","repository":"offline/full-runtime","entity":{"kind":"pull_request","number":7},"operation":"implement","baseSha":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","headSha":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","durationMs":1265,"tools":[{"id":"workspace.read","ok":true,"durationMs":10},{"id":"workspace.edit","ok":true,"durationMs":25}]}
+test	Run npm run check	2026-10-07T08:41:14.9162116Z  ^[[32m✓^[[39m test/agentarts-runtime-task.test.ts ^[[2m(^[[22m^[[2m22 tests^[[22m^[[2m)^[[22m^[[33m 8669^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.9164353Z      ^[[33m^[[2m✓^[[22m^[[39m stops timed-out or cancelled processes before accepting a full result (cancel=false) ^[[33m 1512^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.9166075Z      ^[[33m^[[2m✓^[[22m^[[39m runs task, admits native filesystem tools and returns a bound actual delta ^[[33m 1461^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.9167737Z      ^[[33m^[[2m✓^[[22m^[[39m runs review, admits native filesystem tools and returns a bound actual delta ^[[33m 1244^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.9169559Z      ^[[33m^[[2m✓^[[22m^[[39m runs diagnose, admits native filesystem tools and returns a bound actual delta ^[[33m 1245^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.9171284Z      ^[[33m^[[2m✓^[[22m^[[39m runs fix, admits native filesystem tools and returns a bound actual delta ^[[33m 1378^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:14.9172825Z      ^[[33m^[[2m✓^[[22m^[[39m runs implement, admits native filesystem tools and returns a bound actual delta ^[[33m 1275^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:15.1815535Z  ^[[32m✓^[[39m test/dsh-schema-prompt.test.ts ^[[2m(^[[22m^[[2m29 tests^[[22m^[[2m)^[[22m^[[32m 146^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:15.4352045Z  ^[[32m✓^[[39m test/validation-command-dependencies.test.ts ^[[2m(^[[22m^[[2m31 tests^[[22m^[[2m)^[[22m^[[32m 26^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:15.6049716Z  ^[[32m✓^[[39m test/agentarts-session-transfer.test.ts ^[[2m(^[[22m^[[2m19 tests^[[22m^[[2m)^[[22m^[[33m 520^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:15.7438214Z  ^[[32m✓^[[39m test/agentarts-engine.test.ts ^[[2m(^[[22m^[[2m45 tests^[[22m^[[2m)^[[22m^[[32m 144^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:16.0525929Z  ^[[32m✓^[[39m test/dsh-action-policy.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 179^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:16.3611868Z  ^[[32m✓^[[39m test/agentarts-runtime-sandbox.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m | ^[[22m^[[33m4 skipped^[[39m^[[2m)^[[22m^[[32m 50^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:16.7033395Z  ^[[32m✓^[[39m test/text-files.test.ts ^[[2m(^[[22m^[[2m51 tests^[[22m^[[2m)^[[22m^[[32m 89^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:17.2902881Z  ^[[32m✓^[[39m test/session-e2e.test.ts ^[[2m(^[[22m^[[2m24 tests^[[22m^[[2m)^[[22m^[[32m 291^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:17.9187527Z  ^[[32m✓^[[39m test/agentarts-live-full.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[33m 1269^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:17.9220360Z      ^[[33m^[[2m✓^[[22m^[[39m round-trips real local file bytes through v3 HTTP/delta, original loop and simulated Docker acceptance for every case ^[[33m 901^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:17.9222376Z  ^[[32m✓^[[39m test/tools.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 31^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:17.9785999Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.0400629Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.0959163Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.0960940Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:18.1065116Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.1067425Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:18.1093008Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.1095145Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:18.1114183Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.1125020Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:18.1635027Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.1691451Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:18.2164613Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.2177699Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:18.2191708Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:18.2202492Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:18.2955934Z  ^[[32m✓^[[39m test/orchestrator-cancellation.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 253^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:18.2981351Z  ^[[32m✓^[[39m test/dsh-output-repair.test.ts ^[[2m(^[[22m^[[2m47 tests^[[22m^[[2m)^[[22m^[[32m 85^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:18.5723977Z  ^[[32m✓^[[39m test/write-identity.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 24^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:18.7892827Z  ^[[32m✓^[[39m test/dsh-proxy.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 209^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:19.5311566Z  ^[[32m✓^[[39m test/profile.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[33m 1316^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:19.5321387Z      ^[[33m^[[2m✓^[[22m^[[39m boots the controlled rc.2 headless Profile with its positive native-tool inventory ^[[33m 1141^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:21.6863143Z  ^[[32m✓^[[39m test/fixture-ref.test.ts ^[[2m(^[[22m^[[2m64 tests^[[22m^[[2m)^[[22m^[[33m 2686^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:22.3799144Z  ^[[32m✓^[[39m test/profile-bundle-boot.integration.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 2466^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:22.3801177Z      ^[[33m^[[2m✓^[[22m^[[39m loads a pinned allowed 'Bundle' into ToolRuntime and hides its unauthorized tool ^[[33m 1302^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:22.3803036Z      ^[[33m^[[2m✓^[[22m^[[39m loads a pinned allowed 'direct Cordis plugin' into ToolRuntime and hides its unauthorized tool ^[[33m 1161^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:22.8553800Z  ^[[32m✓^[[39m test/progress.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[32m 30^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:23.5006417Z  ^[[32m✓^[[39m test/extension-runtime-lock.test.ts ^[[2m(^[[22m^[[2m20 tests^[[22m^[[2m)^[[22m^[[32m 36^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:24.2041697Z  ^[[32m✓^[[39m test/session-controller.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 65^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:25.1891883Z  ^[[32m✓^[[39m test/integrity-fixture.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[33m 763^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:25.4860671Z  ^[[32m✓^[[39m test/commands.test.ts ^[[2m(^[[22m^[[2m29 tests^[[22m^[[2m)^[[22m^[[32m 16^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:26.4203522Z  ^[[32m✓^[[39m test/mcp-multiturn.integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 4206^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:26.4231452Z      ^[[33m^[[2m✓^[[22m^[[39m invokes streamable-http twice, then denies the third call before dispatch ^[[33m 4204^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:27.1957673Z  ^[[32m✓^[[39m test/review.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[32m 41^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:27.6652832Z  ^[[32m✓^[[39m test/configuration-check.test.ts ^[[2m(^[[22m^[[2m32 tests^[[22m^[[2m)^[[22m^[[33m 1587^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:27.6655076Z      ^[[33m^[[2m✓^[[22m^[[39m the actual CLI reads only its explicit JSON file and leaves repository code/remote state untouched ^[[33m 630^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:27.6681358Z      ^[[33m^[[2m✓^[[22m^[[39m the actual CLI returns JSON for an inherited credential environment property ^[[33m 631^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:27.7462250Z  ^[[32m✓^[[39m test/fix.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 20^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:27.9581401Z  ^[[32m✓^[[39m test/github-checks.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 74^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:28.5162703Z  ^[[32m✓^[[39m test/agentarts-client.test.ts ^[[2m(^[[22m^[[2m34 tests^[[22m^[[2m)^[[22m^[[32m 82^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:28.5432343Z  ^[[32m✓^[[39m test/implement.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 25^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:29.8323124Z  ^[[32m✓^[[39m test/upstream-canary.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[33m 1062^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:30.0664706Z  ^[[32m✓^[[39m test/diff.test.ts ^[[2m(^[[22m^[[2m18 tests^[[22m^[[2m)^[[22m^[[32m 30^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:30.5582410Z  ^[[32m✓^[[39m test/business-fixture.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[33m 1388^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:30.5584959Z      ^[[33m^[[2m✓^[[22m^[[39m requires a single fix Bash call for either provider protocol ^[[33m 472^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:30.5586911Z      ^[[33m^[[2m✓^[[22m^[[39m requires a single implement Bash call for either provider protocol ^[[33m 451^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:30.7078297Z  ^[[32m✓^[[39m test/task.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 26^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:31.5587572Z  ^[[32m✓^[[39m test/repository-payload.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[33m 586^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:31.5601670Z      ^[[33m^[[2m✓^[[22m^[[39m validates and materializes multi-megabyte base64 without recursive RegExp overflow ^[[33m 356^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:32.5108521Z  ^[[32m✓^[[39m test/web-search-evidence.test.ts ^[[2m(^[[22m^[[2m36 tests^[[22m^[[2m)^[[22m^[[33m 1663^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:32.6917303Z  ^[[32m✓^[[39m test/business-effects.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[33m 936^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:33.1841705Z  ^[[2m^[[90m↓^[[39m^[[22m test/agentarts-session-runtime.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[2m)^[[22m
+test	Run npm run check	2026-10-07T08:41:33.5500226Z  ^[[32m✓^[[39m test/orchestration-write.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 17^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:34.4341615Z  ^[[32m✓^[[39m test/agentarts-preflight.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[33m 1523^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:34.4343855Z      ^[[33m^[[2m✓^[[22m^[[39m rejects oversized files and malformed UTF-8 without printing their contents ^[[33m 424^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:35.1489906Z  ^[[32m✓^[[39m test/github-request-policy.test.ts ^[[2m(^[[22m^[[2m11 tests^[[22m^[[2m)^[[22m^[[32m 33^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:35.3625746Z  ^[[32m✓^[[39m test/dsh-runtime.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 25^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:35.6254503Z  ^[[32m✓^[[39m test/agentarts-model-policy.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[32m 49^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:36.3406987Z  ^[[32m✓^[[39m test/mcp-proof-fixture.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 2340^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:36.3408921Z      ^[[33m^[[2m✓^[[22m^[[39m returns a stable per-process proof only through actual echo calls ^[[33m 922^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:36.3410765Z      ^[[33m^[[2m✓^[[22m^[[39m records echo and hidden execution without exposing proof or arbitrary markers in the audit ^[[33m 1414^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:37.9171916Z  ^[[32m✓^[[39m test/controlled-editor.integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 1216^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:37.9176035Z    ^[[33m^[[2m✓^[[22m^[[39m inserts and executes the official editor, plus native Bash on POSIX, under the exact controlled inventory ^[[33m 1213^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:38.2310113Z  ^[[32m✓^[[39m test/native-extensions.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 39^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:38.3558111Z  ^[[32m✓^[[39m test/session-worker-admission.test.ts ^[[2m(^[[22m^[[2m22 tests^[[22m^[[2m)^[[22m^[[33m 19533^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:38.3562383Z      ^[[33m^[[2m✓^[[22m^[[39m uses actual fresh official workers to restore history, downgrade permission and avoid old tool replay in both modes ^[[33m 13877^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:38.3565506Z      ^[[33m^[[2m✓^[[22m^[[39m restores through the actual production Profile builders and original launchers without a new Session or old tool replay ^[[33m 5600^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:38.5921344Z  ^[[32m✓^[[39m test/policy.test.ts ^[[2m(^[[22m^[[2m12 tests^[[22m^[[2m)^[[22m^[[32m 13^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:38.7671587Z  ^[[2m^[[90m↓^[[39m^[[22m test/integrity-docker.integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[2m)^[[22m
+test	Run npm run check	2026-10-07T08:41:39.2931703Z  ^[[32m✓^[[39m test/authority.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 36^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:39.8877205Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:39.8935732Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:39.9053813Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:39.9058855Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:39.9121455Z DSH mode controlled; composition github-action-controlled
+test	Run npm run check	2026-10-07T08:41:39.9123128Z Task accepted: task; phase=context; trust=trusted-read; run=https://github.com/octo/repo/actions/runs/99
+test	Run npm run check	2026-10-07T08:41:39.9880239Z  ^[[32m✓^[[39m test/orchestrator-failure.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 37^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:40.0520919Z  ^[[32m✓^[[39m test/context-allocation.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[33m 4111^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:40.0543066Z      ^[[33m^[[2m✓^[[22m^[[39m keeps late source patches visible after large leading prose across the real worker prompt ^[[33m 1840^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:40.0545750Z      ^[[33m^[[2m✓^[[22m^[[39m charges UTF-8 and JSON escaping, preserves 100 file metadata and keeps prose behind patch evidence ^[[33m 2208^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:40.3791714Z  ^[[32m✓^[[39m test/orchestrator-utils.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:40.4251420Z  ^[[32m✓^[[39m test/dsh-task-output.test.ts ^[[2m(^[[22m^[[2m17 tests^[[22m^[[2m)^[[22m^[[32m 28^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:40.5977531Z  ^[[32m✓^[[39m test/agentarts-business-review.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m | ^[[22m^[[33m4 skipped^[[39m^[[2m)^[[22m^[[32m 16^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:40.8296026Z  ^[[32m✓^[[39m test/finalizers.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 13^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:41.1834575Z  ^[[32m✓^[[39m test/orchestration-workspace.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 58^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:41.3018139Z  ^[[32m✓^[[39m test/agentarts-engine-full.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 177^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:41.5495557Z  ^[[32m✓^[[39m test/session-runner.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 103^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:41.6791234Z  ^[[32m✓^[[39m test/security-utils.test.ts ^[[2m(^[[22m^[[2m26 tests^[[22m^[[2m)^[[22m^[[32m 135^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:41.8580058Z  ^[[32m✓^[[39m test/github-integration-fixture.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[33m 441^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:41.9507602Z  ^[[32m✓^[[39m test/permission-profile.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 18^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:41.9941662Z  ^[[32m✓^[[39m test/session-secrets.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 28^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:42.3494818Z  ^[[32m✓^[[39m test/agentarts-installer.test.ts ^[[2m(^[[22m^[[2m9 tests^[[22m^[[2m)^[[22m^[[32m 113^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:42.4401572Z  ^[[32m✓^[[39m test/e2e-rate-limit.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[33m 355^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:42.6708653Z  ^[[2m^[[90m↓^[[39m^[[22m test/agentarts-sandbox.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m | ^[[22m^[[33m2 skipped^[[39m^[[2m)^[[22m
+test	Run npm run check	2026-10-07T08:41:42.9851312Z Tool name validation warning for "emoji.💥":
+test	Run npm run check	2026-10-07T08:41:42.9880724Z   - Tool name contains invalid characters: "�", "�"
+test	Run npm run check	2026-10-07T08:41:42.9926968Z   - Allowed characters are: A-Z, a-z, 0-9, underscore (_), dash (-), and dot (.)
+test	Run npm run check	2026-10-07T08:41:42.9940629Z Tool registration will proceed, but this may cause compatibility issues.
+test	Run npm run check	2026-10-07T08:41:42.9942189Z Consider updating the tool name to conform to the MCP tool naming standard.
+test	Run npm run check	2026-10-07T08:41:42.9953765Z See SEP: Specify Format for Tool Names (https://github.com/modelcontextprotocol/modelcontextprotocol/issues/986) for more details.
+test	Run npm run check	2026-10-07T08:41:43.0562609Z  ^[[32m✓^[[39m test/release-canary.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[33m 466^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:43.2168627Z  ^[[32m✓^[[39m test/write-validate.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 25^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:43.3535960Z  ^[[32m✓^[[39m test/agentarts-host-diagnostics.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 130^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:43.6017502Z  ^[[32m✓^[[39m test/mcp-official.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[33m 1070^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:43.6281625Z  ^[[2m^[[90m↓^[[39m^[[22m test/agentarts-git-install.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m | ^[[22m^[[33m3 skipped^[[39m^[[2m)^[[22m
+test	Run npm run check	2026-10-07T08:41:43.6478751Z  ^[[32m✓^[[39m test/agentarts-egress.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m | ^[[22m^[[33m3 skipped^[[39m^[[2m)^[[22m^[[32m 18^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:43.8466919Z  ^[[32m✓^[[39m test/github-comments.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 17^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:44.0559962Z  ^[[32m✓^[[39m test/write-workspace-limits.test.ts ^[[2m(^[[22m^[[2m7 tests^[[22m^[[2m)^[[22m^[[32m 166^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:44.0968892Z  ^[[32m✓^[[39m test/mcp-proof-evidence.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[33m 306^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:44.2031155Z  ^[[32m✓^[[39m test/write-workspace.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 144^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:44.4951957Z  ^[[2m^[[90m↓^[[39m^[[22m test/agentarts-runtime-installer.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m | ^[[22m^[[33m1 skipped^[[39m^[[2m)^[[22m
+test	Run npm run check	2026-10-07T08:41:44.7433820Z  ^[[32m✓^[[39m test/agentarts-bundle-attribution.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 47^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:44.7981336Z  ^[[32m✓^[[39m test/index.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[33m 358^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:45.0911380Z  ^[[32m✓^[[39m test/permissions.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 19^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:45.4101454Z  ^[[32m✓^[[39m test/dsh-headless-output.test.ts ^[[2m(^[[22m^[[2m16 tests^[[22m^[[2m)^[[22m^[[32m 31^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:45.5481723Z  ^[[32m✓^[[39m test/agentarts-failure-format.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 38^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:45.6470460Z  ^[[32m✓^[[39m test/lifecycle.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:45.7411888Z  ^[[32m✓^[[39m test/github-client.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 13^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:45.9505787Z  ^[[32m✓^[[39m test/agentarts-supervisor-secrets.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m | ^[[22m^[[33m4 skipped^[[39m^[[2m)^[[22m^[[32m 12^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.0071269Z  ^[[32m✓^[[39m test/write-git.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 169^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.1971112Z  ^[[32m✓^[[39m test/write-github.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 28^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.5410671Z  ^[[32m✓^[[39m test/session-worker.test.ts ^[[2m(^[[22m^[[2m10 tests^[[22m^[[2m)^[[22m^[[32m 49^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.5871658Z  ^[[32m✓^[[39m test/error-identity.test.ts ^[[2m(^[[22m^[[2m19 tests^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.7361216Z  ^[[32m✓^[[39m test/action-contract.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.7362771Z  ^[[32m✓^[[39m test/ptc-runtime.integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 1871^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.7364151Z    ^[[33m^[[2m✓^[[22m^[[39m bounds real PTC output and drains its process on timeout, cancellation, and owner disposal ^[[33m 1868^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.8093700Z  ^[[32m✓^[[39m test/dsh-install-aliases.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 12^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:46.9796406Z  ^[[32m✓^[[39m test/agentarts-public-ca.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:47.0444741Z  ^[[32m✓^[[39m test/dsh-env.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 11^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:47.3017702Z  ^[[32m✓^[[39m test/github-context.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 20^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:47.5668514Z  ^[[2m^[[90m↓^[[39m^[[22m test/agentarts-private-permissions.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m | ^[[22m^[[33m3 skipped^[[39m^[[2m)^[[22m
+test	Run npm run check	2026-10-07T08:41:47.6090089Z  ^[[32m✓^[[39m test/agentarts-inputs.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 78^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:47.9216755Z  ^[[32m✓^[[39m test/utf8.test.ts ^[[2m(^[[22m^[[2m4 tests^[[22m^[[2m)^[[22m^[[32m 12^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:48.1596543Z  ^[[32m✓^[[39m test/session-inputs.test.ts ^[[2m(^[[22m^[[2m13 tests^[[22m^[[2m)^[[22m^[[32m 34^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:48.4017863Z  ^[[32m✓^[[39m test/github-mutation-quota.test.ts ^[[2m(^[[22m^[[2m3 tests^[[22m^[[2m)^[[22m^[[32m 14^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:48.6119789Z  ^[[32m✓^[[39m test/dsh-receipts.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 15^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:48.6950748Z  ^[[32m✓^[[39m test/agentarts-local-auth.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 71^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:48.9212403Z  ^[[32m✓^[[39m test/security-path-errors.test.ts ^[[2m(^[[22m^[[2m5 tests^[[22m^[[2m)^[[22m^[[32m 17^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:48.9336383Z  ^[[32m✓^[[39m test/execution-context.test.ts ^[[2m(^[[22m^[[2m8 tests^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:49.1353247Z  ^[[32m✓^[[39m test/dsh-runtime-rollback.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 6^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:49.3785031Z  ^[[32m✓^[[39m test/agentarts-apparmor.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 63^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:49.6109280Z  ^[[32m✓^[[39m test/agentarts-container-fixtures.test.ts ^[[2m(^[[22m^[[2m6 tests^[[22m^[[2m)^[[22m^[[32m 42^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:49.6138895Z  ^[[32m✓^[[39m test/architecture-invariants.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 10^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:49.8549165Z  ^[[32m✓^[[39m test/dsh-timeouts.test.ts ^[[2m(^[[22m^[[2m2 tests^[[22m^[[2m)^[[22m^[[32m 18^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:49.9271502Z  ^[[32m✓^[[39m test/agentarts-protocol.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 18^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:50.1282427Z  ^[[32m✓^[[39m test/agentarts-workflows.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[32m 83^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:54.3108099Z  ^[[32m✓^[[39m test/agentarts-workspace-capacity.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 6999^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:54.3110794Z    ^[[33m^[[2m✓^[[22m^[[39m packs the actual tracked derivative repository and faithfully restores large tracked bundles within the explicit envelope ^[[33m 6997^[[2mms^[[22m^[[39m
+test	Run npm run check	2026-10-07T08:41:55.5369229Z 
+test	Run npm run check	2026-10-07T08:41:55.5376147Z ^[[2m Test Files ^[[22m ^[[1m^[[32m133 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m6 skipped^[[39m^[[90m (139)^[[39m
+test	Run npm run check	2026-10-07T08:41:55.5386092Z ^[[2m      Tests ^[[22m ^[[1m^[[32m2090 passed^[[39m^[[22m^[[2m | ^[[22m^[[33m39 skipped^[[39m^[[90m (2129)^[[39m
+test	Run npm run check	2026-10-07T08:41:55.5386805Z ^[[2m   Start at ^[[22m 08:40:56
+test	Run npm run check	2026-10-07T08:41:55.5388910Z ^[[2m   Duration ^[[22m 59.15s^[[2m (transform 3.88s, setup 0ms, import 36.85s, tests 99.82s, environment 16ms)^[[22m
+test	Run npm run check	2026-10-07T08:41:55.5390484Z 
+test	Run npm run check	2026-10-07T08:41:55.5443497Z ^[[34m % ^[[39m^[[2mCoverage report from ^[[22m^[[33mv8^[[39m
+test	Run npm run check	2026-10-07T08:41:55.5652998Z -------------------|---------|----------|---------|---------|-------------------
+test	Run npm run check	2026-10-07T08:41:55.5654179Z File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+test	Run npm run check	2026-10-07T08:41:55.5655232Z -------------------|---------|----------|---------|---------|-------------------
+test	Run npm run check	2026-10-07T08:41:55.5665346Z All files          |   82.55 |    76.59 |   89.93 |   84.41 |                   
+test	Run npm run check	2026-10-07T08:41:55.5666420Z  .github/e2e       |   37.58 |    48.48 |   46.15 |   35.71 |                   
+test	Run npm run check	2026-10-07T08:41:55.5667282Z   ...e2e-proof.mjs |   37.58 |    48.48 |   46.15 |   35.71 | ...14-477,481-492 
+test	Run npm run check	2026-10-07T08:41:55.5668103Z  agentarts         |   89.83 |    83.33 |   88.88 |   89.47 |                   
+test	Run npm run check	2026-10-07T08:41:55.5669102Z   install.mjs      |   89.83 |    83.33 |   88.88 |   89.47 | 62,78,94,141-145  
+test	Run npm run check	2026-10-07T08:41:55.5669982Z  assets/dsh        |   83.74 |    79.56 |      94 |   86.46 |                   
+test	Run npm run check	2026-10-07T08:41:55.5670811Z   ...on-policy.mjs |   83.01 |    76.82 |   94.73 |    86.2 | ...13,344-354,368 
+test	Run npm run check	2026-10-07T08:41:55.5671647Z   ...n-session.mjs |   85.71 |    83.47 |   91.66 |   87.09 | ...90-208,238-249 
+test	Run npm run check	2026-10-07T08:41:55.5672475Z  ...ess-action/src |   86.55 |    81.32 |   95.65 |    87.5 |                   
+test	Run npm run check	2026-10-07T08:41:55.5673368Z   ...generated.mjs |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5674154Z   installer.mjs    |   86.49 |    81.32 |   95.65 |   87.44 | ...19,480-481,504 
+test	Run npm run check	2026-10-07T08:41:55.5675006Z  scripts           |   96.29 |    95.23 |     100 |   96.15 |                   
+test	Run npm run check	2026-10-07T08:41:55.5675782Z   ...tribution.mjs |   96.29 |    95.23 |     100 |   96.15 | 68,111            
+test	Run npm run check	2026-10-07T08:41:55.5676861Z  src               |   92.97 |    88.45 |     100 |   93.09 |                   
+test	Run npm run check	2026-10-07T08:41:55.5677655Z   ...n-contract.ts |    90.9 |       50 |     100 |     100 | 445               
+test	Run npm run check	2026-10-07T08:41:55.5678554Z   ...tion-check.ts |   94.82 |    89.47 |     100 |   94.44 | 187-192           
+test	Run npm run check	2026-10-07T08:41:55.5679451Z   errors.ts        |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5680303Z   index.ts         |     100 |    83.33 |     100 |     100 | 49                
+test	Run npm run check	2026-10-07T08:41:55.5681442Z   inputs.ts        |   89.83 |    84.96 |     100 |   89.34 | ...02-206,261-265 
+test	Run npm run check	2026-10-07T08:41:55.5682301Z   orchestrator.ts  |   93.61 |    86.53 |     100 |   97.67 | 175               
+test	Run npm run check	2026-10-07T08:41:55.5683084Z   release.ts       |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5683969Z   result.ts        |    89.4 |     86.9 |     100 |   88.73 | ...33,671-682,702 
+test	Run npm run check	2026-10-07T08:41:55.5684736Z   text-files.ts    |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5685544Z  src/agent         |   93.23 |     88.6 |   93.33 |    97.2 |                   
+test	Run npm run check	2026-10-07T08:41:55.5686495Z   contracts.ts     |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5687262Z   loop.ts          |    93.2 |     88.6 |   93.33 |   97.19 | ...32-233,236-237 
+test	Run npm run check	2026-10-07T08:41:55.5688096Z  src/agentarts     |    74.1 |    68.96 |    76.8 |   75.32 |                   
+test	Run npm run check	2026-10-07T08:41:55.5688919Z   client.ts        |   98.55 |    96.29 |   83.33 |   98.38 | 116               
+test	Run npm run check	2026-10-07T08:41:55.5689836Z   egress-proxy.ts  |   21.92 |    36.02 |   15.15 |   22.94 | 42,130-356        
+test	Run npm run check	2026-10-07T08:41:55.5690679Z   engine-full.ts   |   78.34 |    70.41 |    62.5 |   79.22 | ...19,436-438,441 
+test	Run npm run check	2026-10-07T08:41:55.5691505Z   engine-task.ts   |   93.58 |    86.41 |     100 |   94.73 | 87,115,157,215    
+test	Run npm run check	2026-10-07T08:41:55.5692308Z   engine.ts        |   98.24 |    88.13 |     100 |     100 | 98-123,155        
+test	Run npm run check	2026-10-07T08:41:55.5693056Z   ...iagnostics.ts |   94.44 |    94.44 |     100 |   94.44 | 13                
+test	Run npm run check	2026-10-07T08:41:55.5693928Z   ...ure-format.ts |     100 |    95.45 |     100 |     100 | 34                
+test	Run npm run check	2026-10-07T08:41:55.5694682Z   inputs.ts        |      80 |       70 |     100 |   78.57 | 42,47,49          
+test	Run npm run check	2026-10-07T08:41:55.5695884Z   installer.ts     |    6.89 |     1.44 |   14.28 |     7.5 | 27-68,97-239      
+test	Run npm run check	2026-10-07T08:41:55.5696690Z   live-full.ts     |   86.13 |    82.33 |   92.15 |   85.76 | ...,799,1018-1033 
+test	Run npm run check	2026-10-07T08:41:55.5697553Z   live-review.ts   |   90.23 |    83.38 |   95.45 |   90.61 | ...58-659,977-993 
+test	Run npm run check	2026-10-07T08:41:55.5698281Z   ...ithub-logs.ts |   85.36 |       65 |      80 |   94.11 | 41-42             
+test	Run npm run check	2026-10-07T08:41:55.5699291Z   ...hub-review.ts |   85.32 |    75.17 |   86.04 |   87.75 | ...1020,1045-1058 
+test	Run npm run check	2026-10-07T08:41:55.5700094Z   ...ial-bridge.ts |   16.31 |    14.41 |      24 |   14.98 | 169-195,198-622   
+test	Run npm run check	2026-10-07T08:41:55.5700919Z   model-policy.ts  |   92.15 |    93.22 |    87.5 |      94 | 35,86,143         
+test	Run npm run check	2026-10-07T08:41:55.5701776Z   ...ermissions.ts |       0 |        0 |       0 |       0 | 13-26             
+test	Run npm run check	2026-10-07T08:41:55.5702625Z   protocol.ts      |     100 |    95.83 |     100 |     100 | 105               
+test	Run npm run check	2026-10-07T08:41:55.5703434Z   ...k-protocol.ts |   94.11 |     92.1 |     100 |      94 | 93,114,168        
+test	Run npm run check	2026-10-07T08:41:55.5704262Z   ...k-protocol.ts |   84.55 |    82.14 |   91.66 |   83.96 | ...28,434,436,462 
+test	Run npm run check	2026-10-07T08:41:55.5705048Z   sandbox.ts       |   14.47 |    13.72 |   14.28 |   15.06 | 83-327            
+test	Run npm run check	2026-10-07T08:41:55.5705838Z   server.ts        |   86.53 |    87.69 |      85 |      88 | ...61,305-311,339 
+test	Run npm run check	2026-10-07T08:41:55.5706636Z   ...n-transfer.ts |   92.41 |    87.09 |     100 |   94.89 | ...94,359,363,379 
+test	Run npm run check	2026-10-07T08:41:55.5707485Z   ...or-secrets.ts |      50 |    46.15 |     100 |   52.38 | 32-48,53          
+test	Run npm run check	2026-10-07T08:41:55.5708208Z   worker.ts        |   85.51 |    71.52 |   88.57 |   86.25 | ...1119,1173,1190 
+test	Run npm run check	2026-10-07T08:41:55.5709272Z   ...e-transfer.ts |      90 |     83.4 |     100 |    94.2 | ...62,668,702,736 
+test	Run npm run check	2026-10-07T08:41:55.5710075Z  src/ci            |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5710879Z   diagnose.ts      |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5711634Z  src/commands      |   97.92 |    88.55 |     100 |   97.77 |                   
+test	Run npm run check	2026-10-07T08:41:55.5712695Z   diagnose.ts      |     100 |       75 |     100 |     100 | 15                
+test	Run npm run check	2026-10-07T08:41:55.5713459Z   fix.ts           |   93.75 |    85.71 |     100 |   93.75 | 70,160            
+test	Run npm run check	2026-10-07T08:41:55.5714472Z   implement.ts     |   97.22 |     87.5 |     100 |   97.05 | 149               
+test	Run npm run check	2026-10-07T08:41:55.5715346Z   parse.ts         |     100 |       96 |     100 |     100 | 24                
+test	Run npm run check	2026-10-07T08:41:55.5716051Z   review.ts        |   66.66 |     87.5 |     100 |   66.66 | 20                
+test	Run npm run check	2026-10-07T08:41:55.5716879Z   router.ts        |     100 |    92.13 |     100 |     100 | ...53-54,59-60,74 
+test	Run npm run check	2026-10-07T08:41:55.5719627Z   task.ts          |     100 |    66.66 |     100 |     100 | 86,97-101,202-218 
+test	Run npm run check	2026-10-07T08:41:55.5720472Z  src/diff          |   88.54 |    81.74 |     100 |   90.39 |                   
+test	Run npm run check	2026-10-07T08:41:55.5721173Z   map.ts           |   91.22 |    90.62 |     100 |   97.72 | 23                
+test	Run npm run check	2026-10-07T08:41:55.5722026Z   parse.ts         |    87.8 |    78.72 |     100 |   88.64 | ...03,305-306,356 
+test	Run npm run check	2026-10-07T08:41:55.5722767Z  src/dsh           |   81.89 |    78.88 |   89.33 |    83.8 |                   
+test	Run npm run check	2026-10-07T08:41:55.5723544Z   base-url.ts      |   88.88 |      100 |     100 |   88.88 | 9                 
+test	Run npm run check	2026-10-07T08:41:55.5724333Z   ...omposition.ts |   87.67 |    77.27 |     100 |   88.73 | ...97,229,250,333 
+test	Run npm run check	2026-10-07T08:41:55.5725224Z   docker-policy.ts |    96.1 |    89.47 |     100 |   95.83 | 162,216,233       
+test	Run npm run check	2026-10-07T08:41:55.5726037Z   errors.ts        |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5726829Z   ...ess-output.ts |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5727705Z   install.ts       |   45.05 |    32.09 |      50 |   43.67 | ...15,134,184-253 
+test	Run npm run check	2026-10-07T08:41:55.5728561Z   ...omposition.ts |   85.03 |    74.72 |     100 |   85.48 | ...47,356,377-383 
+test	Run npm run check	2026-10-07T08:41:55.5729543Z   network.ts       |   85.71 |       75 |     100 |   85.71 | 38                
+test	Run npm run check	2026-10-07T08:41:55.5730364Z   output-repair.ts |   95.34 |    95.94 |     100 |   97.46 | 68,205            
+test	Run npm run check	2026-10-07T08:41:55.5731163Z   process.ts       |   67.61 |    55.73 |   73.68 |   73.86 | ...44-145,198-199 
+test	Run npm run check	2026-10-07T08:41:55.5731957Z   prompt.ts        |   96.96 |    96.42 |     100 |   96.87 | 219,288           
+test	Run npm run check	2026-10-07T08:41:55.5732652Z   proxy.ts         |   72.39 |       70 |   72.41 |   77.27 | ...19,440-442,449 
+test	Run npm run check	2026-10-07T08:41:55.5733505Z   receipts.ts      |   82.45 |    81.98 |     100 |    81.3 | ...51,254,261,281 
+test	Run npm run check	2026-10-07T08:41:55.5734383Z   runner-policy.ts |   93.47 |    90.19 |   93.33 |      95 | 87,156            
+test	Run npm run check	2026-10-07T08:41:55.5735245Z   runner.ts        |   83.15 |    82.96 |   84.21 |   85.77 | ...78,810,817,827 
+test	Run npm run check	2026-10-07T08:41:55.5735989Z   runtime.ts       |   97.93 |     94.8 |   95.65 |    98.9 | 146               
+test	Run npm run check	2026-10-07T08:41:55.5736851Z   ...iagnostics.ts |   88.88 |    88.23 |     100 |   88.88 | 68-69             
+test	Run npm run check	2026-10-07T08:41:55.5737626Z   schema.ts        |     100 |    96.96 |     100 |     100 | 125               
+test	Run npm run check	2026-10-07T08:41:55.5738452Z   ...omposition.ts |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5739356Z   task-output.ts   |   73.68 |    71.98 |   91.66 |   76.13 | ...79,298,351,363 
+test	Run npm run check	2026-10-07T08:41:55.5740240Z   timeouts.ts      |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5741020Z   version.ts       |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5741823Z  src/extensions    |   87.71 |    78.76 |   97.33 |    88.6 |                   
+test	Run npm run check	2026-10-07T08:41:55.5742694Z   credentials.ts   |   93.65 |    94.17 |   94.33 |   94.39 | ...75,312-313,317 
+test	Run npm run check	2026-10-07T08:41:55.5743498Z   plan.ts          |   98.86 |    94.84 |     100 |    98.7 | 316,412           
+test	Run npm run check	2026-10-07T08:41:55.5744319Z   profile.ts       |   79.31 |    69.38 |   97.22 |   82.69 | ...31,440,447,479 
+test	Run npm run check	2026-10-07T08:41:55.5745333Z   runtime-lock.ts  |   76.74 |    70.41 |    93.1 |   79.24 | ...24,343,363,367 
+test	Run npm run check	2026-10-07T08:41:55.5746120Z   schema.ts        |   88.52 |    69.04 |     100 |   88.13 | ...19,638,645,719 
+test	Run npm run check	2026-10-07T08:41:55.5746917Z  src/github        |   86.71 |    74.55 |   90.36 |   90.21 |                   
+test	Run npm run check	2026-10-07T08:41:55.5747672Z   actors.ts        |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5748482Z   checks.ts        |   83.92 |    77.35 |   94.44 |   87.58 | ...27,166-168,214 
+test	Run npm run check	2026-10-07T08:41:55.5764313Z   client.ts        |   85.71 |    59.25 |     100 |     100 | 13-43,54,62,69-91 
+test	Run npm run check	2026-10-07T08:41:55.5765703Z   comments.ts      |   91.66 |    69.44 |     100 |     100 | 26,41-63,144-148  
+test	Run npm run check	2026-10-07T08:41:55.5766495Z   context.ts       |   84.31 |    77.41 |   85.71 |      86 | ...13,234,239,259 
+test	Run npm run check	2026-10-07T08:41:55.5767322Z   events.ts        |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5768084Z   ...on-context.ts |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5769274Z   fetch.ts         |   81.35 |    67.64 |   93.54 |   85.14 | ...00,513,710-718 
+test	Run npm run check	2026-10-07T08:41:55.5770003Z   ...e-identity.ts |     100 |       50 |     100 |     100 | 22-23             
+test	Run npm run check	2026-10-07T08:41:55.5770817Z   ...ol-backend.ts |   65.21 |    39.02 |   58.82 |   68.18 | 35,64-90,121,162  
+test	Run npm run check	2026-10-07T08:41:55.5771546Z   payload.ts       |   97.14 |    93.75 |     100 |   96.96 | 18                
+test	Run npm run check	2026-10-07T08:41:55.5772320Z   permissions.ts   |   96.55 |       80 |     100 |     100 | 32-50             
+test	Run npm run check	2026-10-07T08:41:55.5773097Z   progress.ts      |   90.67 |    75.82 |   95.83 |    96.9 | 222-223,261       
+test	Run npm run check	2026-10-07T08:41:55.5773895Z   repository.ts    |   92.07 |    86.66 |     100 |   91.39 | ...53,156,160,164 
+test	Run npm run check	2026-10-07T08:41:55.5774724Z   ...est-policy.ts |   87.87 |    88.65 |   69.23 |   88.88 | 58-69             
+test	Run npm run check	2026-10-07T08:41:55.5775532Z   status.ts        |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5776412Z  src/lifecycle     |   96.49 |    85.29 |     100 |   97.82 |                   
+test	Run npm run check	2026-10-07T08:41:55.5777192Z   cancellation.ts  |     100 |    91.66 |     100 |     100 | 48                
+test	Run npm run check	2026-10-07T08:41:55.5777969Z   deadline.ts      |   94.28 |    81.81 |     100 |   96.55 | 19                
+test	Run npm run check	2026-10-07T08:41:55.5778821Z  src/orchestration |   87.14 |    79.58 |   91.83 |   88.26 |                   
+test	Run npm run check	2026-10-07T08:41:55.5779895Z   agent-phase.ts   |   74.45 |    66.42 |   73.68 |   76.51 | ...78-379,416,498 
+test	Run npm run check	2026-10-07T08:41:55.5780876Z   context.ts       |   93.66 |    89.09 |   97.14 |   93.84 | ...56-260,349,358 
+test	Run npm run check	2026-10-07T08:41:55.5781714Z   execution.ts     |   87.23 |    82.53 |   85.71 |   88.63 | 70-73,121,126,144 
+test	Run npm run check	2026-10-07T08:41:55.5782583Z   ...-authority.ts |   93.33 |    79.16 |     100 |     100 | 40,115-135        
+test	Run npm run check	2026-10-07T08:41:55.5783409Z   ...validation.ts |   93.54 |     62.5 |     100 |   96.55 | 104               
+test	Run npm run check	2026-10-07T08:41:55.5784360Z   lifecycle.ts     |   82.25 |    77.77 |    92.3 |   82.69 | 125,176-187       
+test	Run npm run check	2026-10-07T08:41:55.5785197Z   prepare.ts       |   94.73 |       80 |     100 |   94.44 | 58,75,93          
+test	Run npm run check	2026-10-07T08:41:55.5786090Z   workspace.ts     |   91.17 |    83.33 |     100 |   90.62 | 34-38,75          
+test	Run npm run check	2026-10-07T08:41:55.5786919Z   write.ts         |      95 |    88.23 |     100 |      95 | 43                
+test	Run npm run check	2026-10-07T08:41:55.5787788Z  src/permissions   |   95.38 |    95.83 |    91.3 |   96.55 |                   
+test	Run npm run check	2026-10-07T08:41:55.5788717Z   profile.ts       |   95.38 |    95.83 |    91.3 |   96.55 | 223-227           
+test	Run npm run check	2026-10-07T08:41:55.5789738Z  src/review        |   91.86 |     78.6 |   94.73 |   93.36 |                   
+test	Run npm run check	2026-10-07T08:41:55.5790618Z   fingerprint.ts   |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5791472Z   precision.ts     |     100 |    93.93 |     100 |     100 | 57                
+test	Run npm run check	2026-10-07T08:41:55.5792522Z   publisher.ts     |   92.79 |    73.56 |     100 |   95.04 | 55,59-61,139,158  
+test	Run npm run check	2026-10-07T08:41:55.5793383Z   run.ts           |   84.21 |    64.15 |   71.42 |   88.57 | 89-91,94          
+test	Run npm run check	2026-10-07T08:41:55.5794125Z   schema.ts        |   92.68 |    83.87 |   91.66 |    92.3 | 109,120,180       
+test	Run npm run check	2026-10-07T08:41:55.5794992Z   tracking.ts      |   89.47 |    86.36 |     100 |   89.18 | 90-91,96-97       
+test	Run npm run check	2026-10-07T08:41:55.5795858Z  src/security      |   85.93 |    82.81 |   92.06 |   87.36 |                   
+test	Run npm run check	2026-10-07T08:41:55.5796719Z   argv.ts          |   74.07 |    66.66 |   77.77 |   76.59 | ...97-200,205-207 
+test	Run npm run check	2026-10-07T08:41:55.5797537Z   authority.ts     |   88.88 |       75 |     100 |     100 | 56-58             
+test	Run npm run check	2026-10-07T08:41:55.5798512Z   env.ts           |   93.02 |    88.88 |     100 |   94.87 | 60,77             
+test	Run npm run check	2026-10-07T08:41:55.5799432Z   paths.ts         |   88.46 |    88.88 |      75 |    90.9 | 21,35             
+test	Run npm run check	2026-10-07T08:41:55.5800294Z   policy.ts        |     100 |    98.18 |     100 |     100 | 69                
+test	Run npm run check	2026-10-07T08:41:55.5801129Z   redaction.ts     |   84.82 |    74.72 |     100 |   85.12 | ...42,153-156,195 
+test	Run npm run check	2026-10-07T08:41:55.5801879Z   refs.ts          |   87.09 |    85.71 |     100 |   90.47 | 12,18             
+test	Run npm run check	2026-10-07T08:41:55.5802623Z   utf8.ts          |   96.22 |      100 |     100 |   95.55 | 24,37             
+test	Run npm run check	2026-10-07T08:41:55.5803420Z  src/session       |   87.59 |    83.15 |   93.58 |   89.53 |                   
+test	Run npm run check	2026-10-07T08:41:55.5804220Z   ...fact-store.ts |   84.36 |    80.14 |    87.5 |   85.82 | ...24,680,685,704 
+test	Run npm run check	2026-10-07T08:41:55.5804978Z   checkpoint.ts    |   89.89 |    85.85 |   93.93 |   92.16 | ...59,782,793,832 
+test	Run npm run check	2026-10-07T08:41:55.5805761Z   contracts.ts     |    92.1 |    92.68 |     100 |   91.89 | 95,139,151        
+test	Run npm run check	2026-10-07T08:41:55.5806599Z   controller.ts    |   90.47 |    71.42 |     100 |   90.32 | ...09,218,237,245 
+test	Run npm run check	2026-10-07T08:41:55.5807328Z   errors.ts        |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5808150Z   worker.ts        |      84 |    82.14 |     100 |    90.9 | 59,67             
+test	Run npm run check	2026-10-07T08:41:55.5808901Z   ...low-policy.ts |    82.6 |    85.59 |     100 |   85.88 | ...01,206,216,227 
+test	Run npm run check	2026-10-07T08:41:55.5810045Z  src/tools         |   90.57 |    85.24 |   98.31 |   92.86 |                   
+test	Run npm run check	2026-10-07T08:41:55.5810862Z   capabilities.ts  |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5811724Z   executor.ts      |   82.35 |       72 |     100 |   81.25 | 36,101-102        
+test	Run npm run check	2026-10-07T08:41:55.5812504Z   ...ty-gateway.ts |    88.2 |    80.44 |   97.43 |    91.2 | ...40-547,563,566 
+test	Run npm run check	2026-10-07T08:41:55.5813355Z   ...ub-catalog.ts |    92.3 |    91.75 |     100 |   92.77 | ...82,114,121,310 
+test	Run npm run check	2026-10-07T08:41:55.5814186Z   ...y-deadline.ts |    87.5 |       50 |   85.71 |     100 | 11-21             
+test	Run npm run check	2026-10-07T08:41:55.5814952Z   ...y-mutation.ts |   93.33 |    87.87 |     100 |   95.23 | 48,88             
+test	Run npm run check	2026-10-07T08:41:55.5815773Z   ...y-receipts.ts |   94.44 |    84.61 |     100 |     100 | 11,32-40,48-57    
+test	Run npm run check	2026-10-07T08:41:55.5816604Z   ...validation.ts |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5817415Z   ...teway-text.ts |   81.25 |    83.33 |     100 |      80 | 27,31,34          
+test	Run npm run check	2026-10-07T08:41:55.5818234Z   github.ts        |       0 |        0 |       0 |       0 |                   
+test	Run npm run check	2026-10-07T08:41:55.5819179Z   registry.ts      |   94.82 |    86.76 |     100 |   96.29 | 214,218           
+test	Run npm run check	2026-10-07T08:41:55.5820001Z   router.ts        |   90.62 |       85 |     100 |   93.33 | 23,27             
+test	Run npm run check	2026-10-07T08:41:55.5820739Z   schema.ts        |   91.66 |    84.21 |     100 |   93.18 | 57,78,118         
+test	Run npm run check	2026-10-07T08:41:55.5821644Z  src/validation    |   79.39 |    72.89 |   97.56 |   83.95 |                   
+test	Run npm run check	2026-10-07T08:41:55.5822440Z   ...pendencies.ts |    88.7 |     90.9 |     100 |   89.83 | 85-89,105-109     
+test	Run npm run check	2026-10-07T08:41:55.5823312Z   ...terpreters.ts |   63.82 |    55.24 |     100 |    67.6 | ...42,445-449,458 
+test	Run npm run check	2026-10-07T08:41:55.5824335Z   command-paths.ts |   89.15 |    78.72 |     100 |   95.77 | 115,176,184       
+test	Run npm run check	2026-10-07T08:41:55.5825228Z   ...d-wrappers.ts |    74.4 |    68.85 |     100 |   81.39 | ...97-499,507-511 
+test	Run npm run check	2026-10-07T08:41:55.5826037Z   ...and-parser.ts |   82.14 |    83.92 |     100 |      84 | ...93,111-113,124 
+test	Run npm run check	2026-10-07T08:41:55.5826878Z   ...-integrity.ts |   86.47 |    76.92 |    91.3 |   90.19 | ...95,358,361,371 
+test	Run npm run check	2026-10-07T08:41:55.5827694Z   ...mand-graph.ts |   91.19 |    84.13 |     100 |   96.12 | ...24-125,149,167 
+test	Run npm run check	2026-10-07T08:41:55.5828473Z  src/write         |   80.52 |    72.31 |   93.87 |   83.67 |                   
+test	Run npm run check	2026-10-07T08:41:55.5829565Z   branch.ts        |   86.36 |    80.39 |     100 |   88.52 | ...8,63,71,81,132 
+test	Run npm run check	2026-10-07T08:41:55.5830318Z   git.ts           |   86.15 |       75 |     100 |   92.72 | 94-97             
+test	Run npm run check	2026-10-07T08:41:55.5831113Z   github.ts        |   75.94 |    65.95 |      90 |   80.28 | ...59,195-206,242 
+test	Run npm run check	2026-10-07T08:41:55.5831894Z   ...ementation.ts |      50 |    47.22 |   42.85 |      50 | 42,108-161        
+test	Run npm run check	2026-10-07T08:41:55.5832736Z   issue.ts         |     100 |      100 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5833489Z   pr.ts            |      60 |       48 |   85.71 |   61.66 | ...75-185,205-240 
+test	Run npm run check	2026-10-07T08:41:55.5834275Z   task.ts          |   94.11 |    95.45 |     100 |   93.93 | 45,118            
+test	Run npm run check	2026-10-07T08:41:55.5835235Z   validate.ts      |   65.82 |    66.66 |   83.33 |   67.14 | ...84-185,252-253 
+test	Run npm run check	2026-10-07T08:41:55.5836096Z   ...n-deadline.ts |   83.33 |    71.42 |     100 |     100 | 28,41             
+test	Run npm run check	2026-10-07T08:41:55.5836926Z   ...-integrity.ts |   83.29 |    72.45 |   98.27 |   86.39 | ...63-864,873-874 
+test	Run npm run check	2026-10-07T08:41:55.5837733Z   workspace.ts     |   89.93 |    81.48 |     100 |   94.73 | ...65,190,252-253 
+test	Run npm run check	2026-10-07T08:41:55.5838468Z  test              |     100 |    88.88 |     100 |     100 |                   
+test	Run npm run check	2026-10-07T08:41:55.5839487Z   helpers.ts       |     100 |    88.88 |     100 |     100 | 66-67,77          
+test	Run npm run check	2026-10-07T08:41:55.5840356Z  test/fixtures     |   91.02 |    80.28 |      95 |   95.71 |                   
+test	Run npm run check	2026-10-07T08:41:55.5841154Z   ...ll-sandbox.ts |   88.37 |       80 |     100 |   97.43 | 58                
+test	Run npm run check	2026-10-07T08:41:55.5841971Z   ...e-packets.mjs |    87.5 |    83.33 |      80 |   84.61 | 70-90             
+test	Run npm run check	2026-10-07T08:41:55.5842804Z   messages-sse.mjs |     100 |       75 |     100 |     100 | 37,50-51          
+test	Run npm run check	2026-10-07T08:41:55.5843761Z -------------------|---------|----------|---------|---------|-------------------
+test	Run npm run check	2026-10-07T08:41:55.7329880Z 
+test	Run npm run check	2026-10-07T08:41:55.7331047Z > huawei-agentarts-action@0.9.3 test:release-contract
+test	Run npm run check	2026-10-07T08:41:55.7331943Z > node scripts/verify-release-contract.mjs
+test	Run npm run check	2026-10-07T08:41:55.7332406Z 
+test	Run npm run check	2026-10-07T08:41:55.8456707Z release contract ok: v0.9.3, installer create-deepseek-harness-action@0.4.1, DSH 0.2.0-rc.2, 278 locked DSH packages
+test	Run npm run check	2026-10-07T08:41:55.9468458Z 
+test	Run npm run check	2026-10-07T08:41:55.9469968Z > huawei-agentarts-action@0.9.3 test:dsh-config
+test	Run npm run check	2026-10-07T08:41:55.9470638Z > node scripts/verify-dsh-config.mjs
+test	Run npm run check	2026-10-07T08:41:55.9470944Z 
+test	Run npm run check	2026-10-07T08:41:56.4052918Z 
+test	Run npm run check	2026-10-07T08:41:56.4055416Z > huawei-agentarts-action@0.9.3 build:check
+test	Run npm run check	2026-10-07T08:41:56.4056615Z > npm run build && git diff --exit-code -- dist/ && git diff --cached --exit-code -- dist/
+test	Run npm run check	2026-10-07T08:41:56.4057239Z 
+test	Run npm run check	2026-10-07T08:41:56.4953969Z 
+test	Run npm run check	2026-10-07T08:41:56.4955034Z > huawei-agentarts-action@0.9.3 prebuild
+test	Run npm run check	2026-10-07T08:41:56.4955542Z > node scripts/clean-dist.mjs
+test	Run npm run check	2026-10-07T08:41:56.4955822Z 
+test	Run npm run check	2026-10-07T08:41:56.5312710Z 
+test	Run npm run check	2026-10-07T08:41:56.5313964Z > huawei-agentarts-action@0.9.3 build
+test	Run npm run check	2026-10-07T08:41:56.5314649Z > ncc build src/index.ts -o dist --minify --source-map --no-cache
+test	Run npm run check	2026-10-07T08:41:56.5315031Z 
+test	Run npm run check	2026-10-07T08:41:56.7464174Z ncc: Version 0.45.0
+test	Run npm run check	2026-10-07T08:41:56.7465387Z ncc: Compiling file index.js into ESM
+test	Run npm run check	2026-10-07T08:41:57.3410551Z ncc: Using typescript@6.0.3 (local user-provided)
+test	Run npm run check	2026-10-07T08:42:18.6136897Z     0kB  dist/package.json
+test	Run npm run check	2026-10-07T08:42:18.6137507Z     5kB  dist/327.index.js.map
+test	Run npm run check	2026-10-07T08:42:18.6137930Z     6kB  dist/327.index.js
+test	Run npm run check	2026-10-07T08:42:18.6138405Z    40kB  dist/sourcemap-register.cjs
+test	Run npm run check	2026-10-07T08:42:18.6138864Z   107kB  dist/895.index.js
+test	Run npm run check	2026-10-07T08:42:18.6139813Z   125kB  dist/895.index.js.map
+test	Run npm run check	2026-10-07T08:42:18.6140177Z   281kB  dist/146.index.js
+test	Run npm run check	2026-10-07T08:42:18.6140588Z   320kB  dist/146.index.js.map
+test	Run npm run check	2026-10-07T08:42:18.6140992Z   667kB  dist/835.index.js
+test	Run npm run check	2026-10-07T08:42:18.6141358Z   790kB  dist/835.index.js.map
+test	Run npm run check	2026-10-07T08:42:18.6141719Z  3180kB  dist/index.js
+test	Run npm run check	2026-10-07T08:42:18.6142421Z 10796kB  dist/index.js.map
+test	Run npm run check	2026-10-07T08:42:18.6142809Z 10796kB  dist/index.js.map
+test	Run npm run check	2026-10-07T08:42:18.6143212Z 16317kB  [22008ms] - ncc 0.45.0
+test	Run npm run check	2026-10-07T08:42:18.7829472Z warning: in the working copy of 'dist/835.index.js', CRLF will be replaced by LF the next time Git touches it
+test	Run npm run check	2026-10-07T08:42:19.2180902Z 
+test	Run npm run check	2026-10-07T08:42:19.2181991Z > huawei-agentarts-action@0.9.3 build:agentarts:check
+test	Run npm run check	2026-10-07T08:42:19.2183484Z > npm run build:agentarts && node scripts/verify-agentarts-bundles.mjs && git diff --exit-code -- dist-agentarts/controller/ && git diff --cached --exit-code -- dist-agentarts/controller/
+test	Run npm run check	2026-10-07T08:42:19.2184267Z 
+test	Run npm run check	2026-10-07T08:42:19.3078055Z 
+test	Run npm run check	2026-10-07T08:42:19.3079531Z > huawei-agentarts-action@0.9.3 build:agentarts
+test	Run npm run check	2026-10-07T08:42:19.3080332Z > node scripts/build-agentarts.mjs
+test	Run npm run check	2026-10-07T08:42:19.3080638Z 
+test	Run npm run check	2026-10-07T08:42:19.6612534Z ncc: Version 0.45.0
+test	Run npm run check	2026-10-07T08:42:19.6613729Z ncc: Compiling file index.js into ESM
+test	Run npm run check	2026-10-07T08:42:19.9177797Z ncc: Using typescript@6.0.3 (local user-provided)
+test	Run npm run check	2026-10-07T08:42:38.7420943Z     0kB  dist-agentarts/controller/package.json
+test	Run npm run check	2026-10-07T08:42:38.7424307Z     5kB  dist-agentarts/controller/327.index.js.map
+test	Run npm run check	2026-10-07T08:42:38.7425151Z     6kB  dist-agentarts/controller/327.index.js
+test	Run npm run check	2026-10-07T08:42:38.7425930Z    40kB  dist-agentarts/controller/sourcemap-register.cjs
+test	Run npm run check	2026-10-07T08:42:38.7426871Z   107kB  dist-agentarts/controller/895.index.js
+test	Run npm run check	2026-10-07T08:42:38.7427558Z   125kB  dist-agentarts/controller/895.index.js.map
+test	Run npm run check	2026-10-07T08:42:38.7428220Z   281kB  dist-agentarts/controller/146.index.js
+test	Run npm run check	2026-10-07T08:42:38.7429099Z   320kB  dist-agentarts/controller/146.index.js.map
+test	Run npm run check	2026-10-07T08:42:38.7429948Z   667kB  dist-agentarts/controller/835.index.js
+test	Run npm run check	2026-10-07T08:42:38.7430626Z   790kB  dist-agentarts/controller/835.index.js.map
+test	Run npm run check	2026-10-07T08:42:38.7431292Z  7460kB  dist-agentarts/controller/index.js
+test	Run npm run check	2026-10-07T08:42:38.7431891Z  8640kB  dist-agentarts/controller/index.js.map
+test	Run npm run check	2026-10-07T08:42:38.7432378Z  8640kB  dist-agentarts/controller/index.js.map
+test	Run npm run check	2026-10-07T08:42:38.7432810Z 18441kB  [19094ms] - ncc 0.45.0
+test	Run npm run check	2026-10-07T08:42:39.2595050Z ncc: Version 0.45.0
+test	Run npm run check	2026-10-07T08:42:39.2597090Z ncc: Compiling file index.js into ESM
+test	Run npm run check	2026-10-07T08:42:39.5087987Z ncc: Using typescript@6.0.3 (local user-provided)
+test	Run npm run check	2026-10-07T08:42:53.3069890Z    0kB  dist-agentarts/runtime/package.json
+test	Run npm run check	2026-10-07T08:42:53.3070998Z   40kB  dist-agentarts/runtime/sourcemap-register.cjs
+test	Run npm run check	2026-10-07T08:42:53.3071557Z  107kB  dist-agentarts/runtime/895.index.js
+test	Run npm run check	2026-10-07T08:42:53.3072068Z  125kB  dist-agentarts/runtime/895.index.js.map
+test	Run npm run check	2026-10-07T08:42:53.3072631Z  281kB  dist-agentarts/runtime/146.index.js
+test	Run npm run check	2026-10-07T08:42:53.3073052Z  320kB  dist-agentarts/runtime/146.index.js.map
+test	Run npm run check	2026-10-07T08:42:53.3073559Z 2998kB  dist-agentarts/runtime/index.js
+test	Run npm run check	2026-10-07T08:42:53.3073989Z 3527kB  dist-agentarts/runtime/index.js.map
+test	Run npm run check	2026-10-07T08:42:53.3074462Z 3527kB  dist-agentarts/runtime/index.js.map
+test	Run npm run check	2026-10-07T08:42:53.3074870Z 7398kB  [14096ms] - ncc 0.45.0
+test	Run npm run check	2026-10-07T08:42:53.6214637Z ncc: Version 0.45.0
+test	Run npm run check	2026-10-07T08:42:53.6216232Z ncc: Compiling file index.js into ESM
+test	Run npm run check	2026-10-07T08:42:53.8787680Z ncc: Using typescript@6.0.3 (local user-provided)
+test	Run npm run check	2026-10-07T08:43:07.5489413Z    0kB  dist-agentarts/local-proof/package.json
+test	Run npm run check	2026-10-07T08:43:07.5490510Z   40kB  dist-agentarts/local-proof/sourcemap-register.cjs
+test	Run npm run check	2026-10-07T08:43:07.5492022Z  107kB  dist-agentarts/local-proof/895.index.js
+test	Run npm run check	2026-10-07T08:43:07.5492829Z  125kB  dist-agentarts/local-proof/895.index.js.map
+test	Run npm run check	2026-10-07T08:43:07.5493662Z  281kB  dist-agentarts/local-proof/146.index.js
+test	Run npm run check	2026-10-07T08:43:07.5494427Z  320kB  dist-agentarts/local-proof/146.index.js.map
+test	Run npm run check	2026-10-07T08:43:07.5495285Z 3098kB  dist-agentarts/local-proof/index.js
+test	Run npm run check	2026-10-07T08:43:07.5496117Z 3586kB  dist-agentarts/local-proof/index.js.map
+test	Run npm run check	2026-10-07T08:43:07.5496804Z 3586kB  dist-agentarts/local-proof/index.js.map
+test	Run npm run check	2026-10-07T08:43:07.5497520Z 7557kB  [13978ms] - ncc 0.45.0
+test	Run npm run check	2026-10-07T08:43:07.8619645Z ncc: Version 0.45.0
+test	Run npm run check	2026-10-07T08:43:07.8620987Z ncc: Compiling file index.js into ESM
+test	Run npm run check	2026-10-07T08:43:08.1230207Z ncc: Using typescript@6.0.3 (local user-provided)
+test	Run npm run check	2026-10-07T08:43:20.4336843Z    0kB  dist-agentarts/live-review/package.json
+test	Run npm run check	2026-10-07T08:43:20.4338181Z   40kB  dist-agentarts/live-review/sourcemap-register.cjs
+test	Run npm run check	2026-10-07T08:43:20.4339350Z 2581kB  dist-agentarts/live-review/index.js
+test	Run npm run check	2026-10-07T08:43:20.4340305Z 2985kB  dist-agentarts/live-review/index.js.map
+test	Run npm run check	2026-10-07T08:43:20.4341129Z 2985kB  dist-agentarts/live-review/index.js.map
+test	Run npm run check	2026-10-07T08:43:20.4341854Z 5606kB  [12624ms] - ncc 0.45.0
+test	Run npm run check	2026-10-07T08:43:20.7325553Z ncc: Version 0.45.0
+test	Run npm run check	2026-10-07T08:43:20.7327092Z ncc: Compiling file index.js into ESM
+test	Run npm run check	2026-10-07T08:43:20.9953342Z ncc: Using typescript@6.0.3 (local user-provided)
+test	Run npm run check	2026-10-07T08:43:34.3065978Z    0kB  dist-agentarts/live-full/package.json
+test	Run npm run check	2026-10-07T08:43:34.3090567Z   40kB  dist-agentarts/live-full/sourcemap-register.cjs
+test	Run npm run check	2026-10-07T08:43:34.3120132Z  107kB  dist-agentarts/live-full/895.index.js
+test	Run npm run check	2026-10-07T08:43:34.3150857Z  125kB  dist-agentarts/live-full/895.index.js.map
+test	Run npm run check	2026-10-07T08:43:34.3152880Z  281kB  dist-agentarts/live-full/146.index.js
+test	Run npm run check	2026-10-07T08:43:34.3176841Z  320kB  dist-agentarts/live-full/146.index.js.map
+test	Run npm run check	2026-10-07T08:43:34.3200398Z 3216kB  dist-agentarts/live-full/index.js
+test	Run npm run check	2026-10-07T08:43:34.3230025Z 3721kB  dist-agentarts/live-full/index.js.map
+test	Run npm run check	2026-10-07T08:43:34.3260151Z 3721kB  dist-agentarts/live-full/index.js.map
+test	Run npm run check	2026-10-07T08:43:34.3276862Z 7810kB  [13605ms] - ncc 0.45.0
+test	Run npm run check	2026-10-07T08:43:34.7992130Z ncc: Version 0.45.0
+test	Run npm run check	2026-10-07T08:43:34.7993737Z ncc: Compiling file index.js into ESM
+test	Run npm run check	2026-10-07T08:43:35.0480608Z ncc: Using typescript@6.0.3 (local user-provided)
+test	Run npm run check	2026-10-07T08:43:52.7860907Z     0kB  dist-agentarts/local-github/package.json
+test	Run npm run check	2026-10-07T08:43:52.7890325Z     5kB  dist-agentarts/local-github/327.index.js.map
+test	Run npm run check	2026-10-07T08:43:52.7950421Z     6kB  dist-agentarts/local-github/327.index.js
+test	Run npm run check	2026-10-07T08:43:52.7980399Z    40kB  dist-agentarts/local-github/sourcemap-register.cjs
+test	Run npm run check	2026-10-07T08:43:52.8010269Z   107kB  dist-agentarts/local-github/895.index.js
+test	Run npm run check	2026-10-07T08:43:52.8040147Z   125kB  dist-agentarts/local-github/895.index.js.map
+test	Run npm run check	2026-10-07T08:43:52.8070738Z   281kB  dist-agentarts/local-github/146.index.js
+test	Run npm run check	2026-10-07T08:43:52.8100065Z   320kB  dist-agentarts/local-github/146.index.js.map
+test	Run npm run check	2026-10-07T08:43:52.8130033Z   667kB  dist-agentarts/local-github/835.index.js
+test	Run npm run check	2026-10-07T08:43:52.8160060Z   790kB  dist-agentarts/local-github/835.index.js.map
+test	Run npm run check	2026-10-07T08:43:52.8189890Z  7494kB  dist-agentarts/local-github/index.js
+test	Run npm run check	2026-10-07T08:43:52.8219878Z  8724kB  dist-agentarts/local-github/index.js.map
+test	Run npm run check	2026-10-07T08:43:52.8249877Z  8724kB  dist-agentarts/local-github/index.js.map
+test	Run npm run check	2026-10-07T08:43:52.8279740Z 18559kB  [17977ms] - ncc 0.45.0
+test	Run npm run check	2026-10-07T08:43:55.7222707Z {
+test	Run npm run check	2026-10-07T08:43:55.7223867Z   "schemaVersion": 1,
+test	Run npm run check	2026-10-07T08:43:55.7224629Z   "checks": [
+test	Run npm run check	2026-10-07T08:43:55.7225294Z     {
+test	Run npm run check	2026-10-07T08:43:55.7226109Z       "bundle": "controller",
+test	Run npm run check	2026-10-07T08:43:55.7227163Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7228125Z       "exitCode": 1,
+test	Run npm run check	2026-10-07T08:43:55.7229432Z       "scope": "module-load-and-expected-configuration-refusal",
+test	Run npm run check	2026-10-07T08:43:55.7230699Z       "hostNodeModulesAvailable": false,
+test	Run npm run check	2026-10-07T08:43:55.7231842Z       "adaptation": {
+test	Run npm run check	2026-10-07T08:43:55.7232755Z         "package": "@deepseek-ai/dsh-llm",
+test	Run npm run check	2026-10-07T08:43:55.7233967Z         "version": "0.2.0-rc.2",
+test	Run npm run check	2026-10-07T08:43:55.7234813Z         "source": "@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7237294Z         "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+test	Run npm run check	2026-10-07T08:43:55.7238276Z         "replacements": 1,
+test	Run npm run check	2026-10-07T08:43:55.7239297Z         "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7240306Z         "reason": "inline-locked-upstream-package-version",
+test	Run npm run check	2026-10-07T08:43:55.7241220Z         "sourceMapOffsetsPreserved": true
+test	Run npm run check	2026-10-07T08:43:55.7241878Z       }
+test	Run npm run check	2026-10-07T08:43:55.7242653Z     },
+test	Run npm run check	2026-10-07T08:43:55.7243185Z     {
+test	Run npm run check	2026-10-07T08:43:55.7243742Z       "bundle": "runtime",
+test	Run npm run check	2026-10-07T08:43:55.7244937Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7245621Z       "exitCode": 1,
+test	Run npm run check	2026-10-07T08:43:55.7246511Z       "scope": "module-load-and-expected-configuration-refusal",
+test	Run npm run check	2026-10-07T08:43:55.7247417Z       "hostNodeModulesAvailable": false,
+test	Run npm run check	2026-10-07T08:43:55.7248230Z       "adaptation": {
+test	Run npm run check	2026-10-07T08:43:55.7248901Z         "package": "@deepseek-ai/dsh-llm",
+test	Run npm run check	2026-10-07T08:43:55.7250900Z         "version": "0.2.0-rc.2",
+test	Run npm run check	2026-10-07T08:43:55.7258286Z         "source": "@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7259621Z         "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+test	Run npm run check	2026-10-07T08:43:55.7260460Z         "replacements": 1,
+test	Run npm run check	2026-10-07T08:43:55.7261361Z         "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7262370Z         "reason": "inline-locked-upstream-package-version",
+test	Run npm run check	2026-10-07T08:43:55.7263208Z         "sourceMapOffsetsPreserved": true
+test	Run npm run check	2026-10-07T08:43:55.7263858Z       }
+test	Run npm run check	2026-10-07T08:43:55.7264311Z     },
+test	Run npm run check	2026-10-07T08:43:55.7264794Z     {
+test	Run npm run check	2026-10-07T08:43:55.7265206Z       "bundle": "local-proof",
+test	Run npm run check	2026-10-07T08:43:55.7265780Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7266268Z       "exitCode": 1,
+test	Run npm run check	2026-10-07T08:43:55.7266947Z       "scope": "module-load-and-expected-configuration-refusal",
+test	Run npm run check	2026-10-07T08:43:55.7267679Z       "hostNodeModulesAvailable": false,
+test	Run npm run check	2026-10-07T08:43:55.7268180Z       "adaptation": {
+test	Run npm run check	2026-10-07T08:43:55.7268725Z         "package": "@deepseek-ai/dsh-llm",
+test	Run npm run check	2026-10-07T08:43:55.7269418Z         "version": "0.2.0-rc.2",
+test	Run npm run check	2026-10-07T08:43:55.7270117Z         "source": "@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7270952Z         "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+test	Run npm run check	2026-10-07T08:43:55.7271769Z         "replacements": 1,
+test	Run npm run check	2026-10-07T08:43:55.7272424Z         "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7273262Z         "reason": "inline-locked-upstream-package-version",
+test	Run npm run check	2026-10-07T08:43:55.7273948Z         "sourceMapOffsetsPreserved": true
+test	Run npm run check	2026-10-07T08:43:55.7274497Z       }
+test	Run npm run check	2026-10-07T08:43:55.7274880Z     },
+test	Run npm run check	2026-10-07T08:43:55.7275243Z     {
+test	Run npm run check	2026-10-07T08:43:55.7275753Z       "bundle": "live-review",
+test	Run npm run check	2026-10-07T08:43:55.7276227Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7276717Z       "exitCode": 1,
+test	Run npm run check	2026-10-07T08:43:55.7277328Z       "scope": "module-load-and-expected-configuration-refusal",
+test	Run npm run check	2026-10-07T08:43:55.7278065Z       "hostNodeModulesAvailable": false,
+test	Run npm run check	2026-10-07T08:43:55.7278613Z       "adaptation": {
+test	Run npm run check	2026-10-07T08:43:55.7279241Z         "package": "@deepseek-ai/dsh-llm",
+test	Run npm run check	2026-10-07T08:43:55.7279900Z         "version": "0.2.0-rc.2",
+test	Run npm run check	2026-10-07T08:43:55.7280479Z         "source": "@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7281454Z         "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+test	Run npm run check	2026-10-07T08:43:55.7282235Z         "replacements": 1,
+test	Run npm run check	2026-10-07T08:43:55.7282982Z         "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7283837Z         "reason": "inline-locked-upstream-package-version",
+test	Run npm run check	2026-10-07T08:43:55.7284914Z         "sourceMapOffsetsPreserved": true
+test	Run npm run check	2026-10-07T08:43:55.7285804Z       }
+test	Run npm run check	2026-10-07T08:43:55.7286275Z     },
+test	Run npm run check	2026-10-07T08:43:55.7286714Z     {
+test	Run npm run check	2026-10-07T08:43:55.7287192Z       "bundle": "live-review",
+test	Run npm run check	2026-10-07T08:43:55.7287806Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7288423Z       "scope": "single-cli-dry-run-no-side-effects",
+test	Run npm run check	2026-10-07T08:43:55.7289379Z       "caseCount": 4,
+test	Run npm run check	2026-10-07T08:43:55.7289906Z       "exitCode": 0
+test	Run npm run check	2026-10-07T08:43:55.7290425Z     },
+test	Run npm run check	2026-10-07T08:43:55.7290835Z     {
+test	Run npm run check	2026-10-07T08:43:55.7291310Z       "bundle": "live-full",
+test	Run npm run check	2026-10-07T08:43:55.7291821Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7292311Z       "exitCode": 1,
+test	Run npm run check	2026-10-07T08:43:55.7293028Z       "scope": "module-load-and-expected-configuration-refusal",
+test	Run npm run check	2026-10-07T08:43:55.7294002Z       "hostNodeModulesAvailable": false,
+test	Run npm run check	2026-10-07T08:43:55.7294598Z       "adaptation": {
+test	Run npm run check	2026-10-07T08:43:55.7295168Z         "package": "@deepseek-ai/dsh-llm",
+test	Run npm run check	2026-10-07T08:43:55.7295863Z         "version": "0.2.0-rc.2",
+test	Run npm run check	2026-10-07T08:43:55.7296491Z         "source": "@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7297469Z         "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+test	Run npm run check	2026-10-07T08:43:55.7298199Z         "replacements": 1,
+test	Run npm run check	2026-10-07T08:43:55.7299056Z         "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7299996Z         "reason": "inline-locked-upstream-package-version",
+test	Run npm run check	2026-10-07T08:43:55.7300773Z         "sourceMapOffsetsPreserved": true
+test	Run npm run check	2026-10-07T08:43:55.7301328Z       }
+test	Run npm run check	2026-10-07T08:43:55.7301729Z     },
+test	Run npm run check	2026-10-07T08:43:55.7302207Z     {
+test	Run npm run check	2026-10-07T08:43:55.7302610Z       "bundle": "live-full",
+test	Run npm run check	2026-10-07T08:43:55.7303192Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7303800Z       "scope": "single-cli-dry-run-no-side-effects",
+test	Run npm run check	2026-10-07T08:43:55.7304476Z       "caseCount": 2,
+test	Run npm run check	2026-10-07T08:43:55.7304966Z       "exitCode": 0
+test	Run npm run check	2026-10-07T08:43:55.7305454Z     },
+test	Run npm run check	2026-10-07T08:43:55.7305838Z     {
+test	Run npm run check	2026-10-07T08:43:55.7306244Z       "bundle": "live-full",
+test	Run npm run check	2026-10-07T08:43:55.7306859Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7307435Z       "scope": "single-cli-dry-run-no-side-effects",
+test	Run npm run check	2026-10-07T08:43:55.7308079Z       "caseCount": 7,
+test	Run npm run check	2026-10-07T08:43:55.7308521Z       "exitCode": 0
+test	Run npm run check	2026-10-07T08:43:55.7309083Z     },
+test	Run npm run check	2026-10-07T08:43:55.7309566Z     {
+test	Run npm run check	2026-10-07T08:43:55.7310065Z       "bundle": "local-github",
+test	Run npm run check	2026-10-07T08:43:55.7310664Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7311160Z       "exitCode": 1,
+test	Run npm run check	2026-10-07T08:43:55.7311882Z       "scope": "module-load-and-expected-configuration-refusal",
+test	Run npm run check	2026-10-07T08:43:55.7312572Z       "hostNodeModulesAvailable": false,
+test	Run npm run check	2026-10-07T08:43:55.7313280Z       "adaptation": {
+test	Run npm run check	2026-10-07T08:43:55.7313783Z         "package": "@deepseek-ai/dsh-llm",
+test	Run npm run check	2026-10-07T08:43:55.7314408Z         "version": "0.2.0-rc.2",
+test	Run npm run check	2026-10-07T08:43:55.7315022Z         "source": "@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7315900Z         "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+test	Run npm run check	2026-10-07T08:43:55.7316708Z         "replacements": 1,
+test	Run npm run check	2026-10-07T08:43:55.7317419Z         "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+test	Run npm run check	2026-10-07T08:43:55.7318269Z         "reason": "inline-locked-upstream-package-version",
+test	Run npm run check	2026-10-07T08:43:55.7319205Z         "sourceMapOffsetsPreserved": true
+test	Run npm run check	2026-10-07T08:43:55.7319796Z       }
+test	Run npm run check	2026-10-07T08:43:55.7320198Z     },
+test	Run npm run check	2026-10-07T08:43:55.7320613Z     {
+test	Run npm run check	2026-10-07T08:43:55.7321142Z       "bundle": "local-github",
+test	Run npm run check	2026-10-07T08:43:55.7321697Z       "status": "passed",
+test	Run npm run check	2026-10-07T08:43:55.7322318Z       "scope": "single-cli-dry-run-no-side-effects",
+test	Run npm run check	2026-10-07T08:43:55.7322955Z       "exitCode": 0
+test	Run npm run check	2026-10-07T08:43:55.7323419Z     }
+test	Run npm run check	2026-10-07T08:43:55.7323816Z   ],
+test	Run npm run check	2026-10-07T08:43:55.7324307Z   "cloudVerification": "not-performed",
+test	Run npm run check	2026-10-07T08:43:55.7324959Z   "githubPublication": "not-attempted",
+test	Run npm run check	2026-10-07T08:43:55.7325542Z   "modelCalls": 0
+test	Run npm run check	2026-10-07T08:43:55.7326015Z }
+test	Run npm run check	2026-10-07T08:43:55.7378572Z warning: in the working copy of 'dist-agentarts/controller/835.index.js', CRLF will be replaced by LF the next time Git touches it
+test	Linux Docker frozen-SHA Validation Integrity regression	﻿2026-10-07T08:43:56.0113804Z ##[group]Run set -euo pipefail
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0114304Z ^[[36;1mset -euo pipefail^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0114782Z ^[[36;1m[[ "$CANDIDATE_SHA" =~ ^[a-f0-9]{40}$ ]]^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0115230Z ^[[36;1m[[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0115724Z ^[[36;1mgit diff --exit-code "$CANDIDATE_SHA" -- \^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0116249Z ^[[36;1m  .github/workflows/ci.yml .github/e2e/integrity-llm.mjs \^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0116789Z ^[[36;1m  .github/e2e/messages-fixture.mjs \^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0117370Z ^[[36;1m  test/integrity-docker.integration.test.ts scripts/verify-dsh-config.mjs \^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0118089Z ^[[36;1m  src assets/dsh package.json package-lock.json^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0118654Z ^[[36;1m./node_modules/.bin/vitest run test/integrity-docker.integration.test.ts^[[0m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0160069Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0160526Z env:
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0160981Z   CANDIDATE_SHA: 4da864c2e6b11575ffc72216a92f59aa2a63a52a
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0161530Z   DSH_E2E_INTEGRITY_DOCKER: 1
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.0161901Z ##[endgroup]
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.2948909Z 
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.2953100Z ^[[1m^[[30m^[[46m RUN ^[[49m^[[39m^[[22m ^[[36mv4.1.11 ^[[39m^[[90m/home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action^[[39m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:43:56.2953880Z 
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2773985Z  ^[[32m✓^[[39m test/integrity-docker.integration.test.ts ^[[2m(^[[22m^[[2m1 test^[[22m^[[2m)^[[22m^[[33m 39277^[[2mms^[[22m^[[39m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2776247Z      ^[[33m^[[2m✓^[[22m^[[39m rejects a real DSH Bash write that weakens the disposable validation entrypoint ^[[33m 39275^[[2mms^[[22m^[[39m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2795038Z 
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2800401Z ^[[2m Test Files ^[[22m ^[[1m^[[32m1 passed^[[39m^[[22m^[[90m (1)^[[39m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2801654Z ^[[2m      Tests ^[[22m ^[[1m^[[32m1 passed^[[39m^[[22m^[[90m (1)^[[39m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2802429Z ^[[2m   Start at ^[[22m 08:43:56
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2803669Z ^[[2m   Duration ^[[22m 39.96s^[[2m (transform 338ms, setup 0ms, import 559ms, tests 39.28s, environment 0ms)^[[22m
+test	Linux Docker frozen-SHA Validation Integrity regression	2026-10-07T08:44:36.2804327Z 
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	﻿2026-10-07T08:44:36.3134897Z ##[group]Run set -euo pipefail
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3136235Z ^[[36;1mset -euo pipefail^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3136611Z ^[[36;1m[[ "$CANDIDATE_SHA" =~ ^[a-f0-9]{40}$ ]]^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3137092Z ^[[36;1m[[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3137566Z ^[[36;1mgit diff --exit-code "$CANDIDATE_SHA" -- \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3138119Z ^[[36;1m  .github/workflows/ci.yml assets/dsh package.json package-lock.json test/fixtures^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3138710Z ^[[36;1mruntime_dir="$(mktemp -d)"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3139464Z ^[[36;1msmoke_dir="$(mktemp -d)"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3140030Z ^[[36;1msmoke_network="dsh-native-smoke-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3140506Z ^[[36;1mserver_pid=""^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3140860Z ^[[36;1mrun_as="$(id -u):$(id -g)"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3141243Z ^[[36;1mcleanup() {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3141604Z ^[[36;1m  if [[ "$server_pid" =~ ^[1-9][0-9]*$ ]]; then^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3142114Z ^[[36;1m    kill -TERM "$server_pid" 2>/dev/null || true^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3142677Z ^[[36;1m    wait "$server_pid" 2>/dev/null || true^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3143048Z ^[[36;1m  fi^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3143467Z ^[[36;1m  docker network rm "$smoke_network" >/dev/null 2>&1 || true^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3143942Z ^[[36;1m  docker run --rm \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3144366Z ^[[36;1m    --mount "type=bind,source=$runtime_dir,target=/runtime" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3144917Z ^[[36;1m    --mount "type=bind,source=$smoke_dir,target=/smoke" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3145596Z ^[[36;1m    docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3146259Z ^[[36;1m    rm -rf -- \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3146717Z ^[[36;1m      /runtime/node_modules /runtime/package.json /runtime/package-lock.json \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3147288Z ^[[36;1m      /runtime/action-launcher.mjs /runtime/native-launcher.mjs \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3147897Z ^[[36;1m      /runtime/native-mcp-server.mjs /runtime/native-mcp-fixture \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3148380Z ^[[36;1m      /runtime/cordis.patch.yml \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3148917Z ^[[36;1m      /runtime/action-native-root.yml /runtime/pnpm-workspace.yaml \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3149610Z ^[[36;1m      /smoke/home /smoke/workspace /smoke/native.stdout \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3150174Z ^[[36;1m      /smoke/native.stderr /smoke/endpoint.json /smoke/server.log \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3150645Z ^[[36;1m      /smoke/native-requests.jsonl || true^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3151187Z ^[[36;1m  rmdir "$runtime_dir" "$smoke_dir" || true^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3151680Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3151987Z ^[[36;1mtrap cleanup EXIT^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3152621Z ^[[36;1mcp package.json package-lock.json assets/dsh/action-launcher.mjs assets/dsh/native-launcher.mjs "$runtime_dir/"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3153356Z ^[[36;1mdocker run --rm --read-only --cap-drop ALL --security-opt no-new-privileges \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3153890Z ^[[36;1m  --user "$run_as" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3154284Z ^[[36;1m  --memory 4g --cpus 2 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3154665Z ^[[36;1m  --tmpfs /tmp:rw,nosuid,nodev,size=536870912 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3155234Z ^[[36;1m  --mount "type=bind,source=$runtime_dir,target=/opt/dsh-action/package" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3155757Z ^[[36;1m  --workdir /opt/dsh-action/package \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3156217Z ^[[36;1m  --env HOME=/tmp --env npm_config_cache=/tmp/npm-cache \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3156727Z ^[[36;1m  --env NODE_OPTIONS=--max-old-space-size=3072 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3157368Z ^[[36;1m  docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3158162Z ^[[36;1m  npm ci --strict-peer-deps --no-fund --omit=dev --ignore-scripts --loglevel=error^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3158812Z ^[[36;1mdocker run --rm -i --read-only --cap-drop ALL --security-opt no-new-privileges \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3159572Z ^[[36;1m  --user "$run_as" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3160034Z ^[[36;1m  --network none \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3160459Z ^[[36;1m  --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3161076Z ^[[36;1m  --mount "type=bind,source=$runtime_dir,target=/opt/dsh-action/package,readonly" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3161748Z ^[[36;1m  --mount "type=bind,source=$runtime_dir,target=/dsh-home/profiles/github-action,readonly" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3162506Z ^[[36;1m  --mount "type=bind,source=$GITHUB_WORKSPACE/assets/dsh,target=/opt/dsh-action/assets,readonly" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3163095Z ^[[36;1m  --workdir /dsh-home/profiles/github-action \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3164079Z ^[[36;1m  docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3164766Z ^[[36;1m  node --input-type=module <<'NODE'^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3165207Z ^[[36;1mimport { spawnSync } from "node:child_process";^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3165684Z ^[[36;1mimport { readFile } from "node:fs/promises";^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3166065Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3166495Z ^[[36;1m// Reuse this exact installation and hardened container. The default^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3167060Z ^[[36;1m// cache probe is diagnostic; direct loading from the immutable^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3167638Z ^[[36;1m// package is a required compatibility gate, with no credentials.^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3168126Z ^[[36;1mconst nativeProbe = `^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3168526Z ^[[36;1m  import { createRequire } from "node:module";^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3169296Z ^[[36;1m  const require = createRequire(import.meta.url);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3169755Z ^[[36;1m  const attempts = (error, depth = 0) => ({^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3170287Z ^[[36;1m    message: String(error?.message ?? "unknown native load failure").slice(0, 2048),^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3170855Z ^[[36;1m    ...(depth < 3 && Array.isArray(error?.attempts) ? {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3171392Z ^[[36;1m      attempts: error.attempts.slice(0, 8).map((attempt) => ({^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3171996Z ^[[36;1m        source: attempt.source, path: attempt.path, loadPath: attempt.loadPath,^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3172635Z ^[[36;1m        backend: attempt.backend, abi: attempt.abi, ...attempts(attempt, depth + 1),^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3173121Z ^[[36;1m      })),^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3173458Z ^[[36;1m    } : {}),^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3173792Z ^[[36;1m  });^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3174101Z ^[[36;1m  try {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3174502Z ^[[36;1m    const addon = require("node-addon-require-builtin");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3175056Z ^[[36;1m    const info = addon.getBindingInfo();^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3175635Z ^[[36;1m    const internals = addon.requireBuiltin("internal/modules/esm/loader");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3176376Z ^[[36;1m    if (typeof internals.getOrInitializeCascadedLoader !== "function") throw new Error("Node ESM internals unavailable");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3177094Z ^[[36;1m    console.log(JSON.stringify({ ok: true, ...info }));^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3177514Z ^[[36;1m  } catch (error) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3177949Z ^[[36;1m    console.log(JSON.stringify({ ok: false, ...attempts(error) }));^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3178479Z ^[[36;1m    process.exitCode = 1;^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3178821Z ^[[36;1m  }^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3179406Z ^[[36;1m`;^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3179731Z ^[[36;1mconst probe = (disableCache) => {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3180316Z ^[[36;1m  const child = spawnSync(process.execPath, ["--expose-internals", "--input-type=module", "-e", nativeProbe], {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3181105Z ^[[36;1m    cwd: process.cwd(), encoding: "utf8", timeout: 10000, maxBuffer: 65536,^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3181765Z ^[[36;1m    env: { PATH: process.env.PATH, HOME: "/tmp", ...(disableCache ? { NARB_DISABLE_NATIVE_CACHE: "1" } : {}) },^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3182370Z ^[[36;1m  });^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3183041Z ^[[36;1m  if (child.error || child.signal !== null || ![0, 1].includes(child.status)) throw new Error("Native binding probe did not complete");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3184341Z ^[[36;1m  return { exitCode: child.status, ...JSON.parse(child.stdout) };^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3185002Z ^[[36;1m};^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3185372Z ^[[36;1mconst defaultCache = probe(false);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3185930Z ^[[36;1mconst immutablePackage = probe(true);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3186774Z ^[[36;1mconst nativeAddonVersion = JSON.parse(await readFile("node_modules/node-addon-require-builtin/package.json", "utf8")).version;^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3187648Z ^[[36;1mconst defaultEvidence = JSON.stringify(defaultCache);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3188434Z ^[[36;1mconst tmpMount = (await readFile("/proc/mounts", "utf8")).split("\n").find((line) => line.split(" ")[1] === "/tmp");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3189480Z ^[[36;1mif (!tmpMount?.split(" ")[3]?.split(",").includes("noexec")) throw new Error("Worker temporary filesystem must remain noexec");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3190112Z ^[[36;1mconsole.log(JSON.stringify({^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3190655Z ^[[36;1m  node: process.version, nodeAbi: process.versions.modules, nativeAddonVersion, tmpMount,^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3191350Z ^[[36;1m  defaultCacheFailureObserved: defaultCache.ok === false,^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3192273Z ^[[36;1m  cacheNoexecFailureObserved: defaultCache.ok === false && defaultEvidence.includes('"loadPath":"/tmp/') && /failed to map segment|permission denied|operation not permitted/iu.test(defaultEvidence),^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3193190Z ^[[36;1m  defaultCache, immutablePackage,^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3193575Z ^[[36;1m}));^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3194018Z ^[[36;1mif (!immutablePackage.ok || immutablePackage.exitCode !== 0 ||^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3194557Z ^[[36;1m    immutablePackage.bindingSource !== "optional-package" ||^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3195141Z ^[[36;1m    !immutablePackage.bindingPath.startsWith(process.cwd() + "/node_modules/")) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3195866Z ^[[36;1m  throw new Error("Pinned native binding must load directly from the read-only package");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3196399Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3196727Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3197048Z ^[[36;1mconst expectedVersion = "0.2.0-rc.2";^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3197541Z ^[[36;1mconst manifest = JSON.parse(await readFile("package.json", "utf8"));^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3198176Z ^[[36;1mconst lock = JSON.parse(await readFile("package-lock.json", "utf8"));^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3198722Z ^[[36;1mconst expectedPackages = Object.keys(manifest.dependencies ?? {})^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3199441Z ^[[36;1m  .filter(^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3199862Z ^[[36;1m    (packageName) =>^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3200374Z ^[[36;1m      packageName === "@deepseek-ai/dsh" || packageName.startsWith("@deepseek-ai/dsh-"),^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3200932Z ^[[36;1m  )^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3201233Z ^[[36;1m  .sort();^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3201614Z ^[[36;1mif (expectedPackages.length === 0) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3202071Z ^[[36;1m  throw new Error("No direct DSH runtime packages were declared");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3202555Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3202927Z ^[[36;1mfor (const packageName of expectedPackages) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3203438Z ^[[36;1m  if (manifest.dependencies?.[packageName] !== expectedVersion) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3204052Z ^[[36;1m    throw new Error(`${packageName} is not exactly pinned to ${expectedVersion}`);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3204527Z ^[[36;1m  }^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3204869Z ^[[36;1m  const installed = JSON.parse(^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3205362Z ^[[36;1m    await readFile(`node_modules/${packageName}/package.json`, "utf8"),^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3205844Z ^[[36;1m  );^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3206223Z ^[[36;1m  if (installed.version !== expectedVersion) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3206750Z ^[[36;1m    throw new Error(`${packageName} installed ${installed.version}`);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3207187Z ^[[36;1m  }^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3207496Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3207908Z ^[[36;1mfor (const [packagePath, entry] of Object.entries(lock.packages ?? {})) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3208392Z ^[[36;1m  if (^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3208852Z ^[[36;1m    /(?:^|\/)node_modules\/@deepseek-ai\/dsh(?:-[^/]+)?$/.test(packagePath) &&^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3209708Z ^[[36;1m    entry.version !== expectedVersion^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3210118Z ^[[36;1m  ) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3210505Z ^[[36;1m    throw new Error(`${packagePath} is locked to ${entry.version}`);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3210990Z ^[[36;1m  }^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3211279Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3211555Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3211978Z ^[[36;1mconst appBoot = await import("@deepseek-ai/dsh-app-boot");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3212419Z ^[[36;1mif (^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3212764Z ^[[36;1m  typeof appBoot.boot !== "function" ||^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3213234Z ^[[36;1m  typeof appBoot.loadProfile !== "function" ||^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3213696Z ^[[36;1m  typeof appBoot.createRuntimeResolution !== "function" ||^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3214254Z ^[[36;1m  typeof appBoot.PluginPackages !== "function" ||^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3214731Z ^[[36;1m  typeof appBoot.installFailLoud !== "function"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3215171Z ^[[36;1m) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3215599Z ^[[36;1m  throw new Error("official dsh-app-boot exports are unavailable");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3216054Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3216461Z ^[[36;1mconst mcp = await import("@deepseek-ai/dsh-mcp-client");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3216991Z ^[[36;1mif (mcp.name !== "mcp-client" || typeof mcp.apply !== "function") {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3217573Z ^[[36;1m  throw new Error("official dsh-mcp-client exports are unavailable");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3218064Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3218356Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3218702Z ^[[36;1mfor (const asset of [^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3219250Z ^[[36;1m  "action-launcher.mjs",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3219634Z ^[[36;1m  "action-policy.mjs",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3220015Z ^[[36;1m  "action-workspace.mjs",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3220400Z ^[[36;1m  "native-launcher.mjs",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3220754Z ^[[36;1m]) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3221161Z ^[[36;1m  const assetPath = `/opt/dsh-action/assets/${asset}`;^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3221699Z ^[[36;1m  const syntax = spawnSync(process.execPath, ["--check", assetPath], {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3222217Z ^[[36;1m    encoding: "utf8",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3222575Z ^[[36;1m  });^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3222883Z ^[[36;1m  if (syntax.status !== 0) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3223392Z ^[[36;1m    throw new Error(`${asset} failed syntax validation: ${syntax.stderr}`);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3223841Z ^[[36;1m  }^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3224255Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3224582Z ^[[36;1mconst launcher = await readFile(^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3224982Z ^[[36;1m  "/opt/dsh-action/assets/action-launcher.mjs",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3225435Z ^[[36;1m  "utf8",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3225729Z ^[[36;1m);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3226101Z ^[[36;1mconst packagedLauncher = await readFile(^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3226574Z ^[[36;1m  "/opt/dsh-action/package/action-launcher.mjs",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3226970Z ^[[36;1m  "utf8",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3227306Z ^[[36;1m);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3227615Z ^[[36;1mif (packagedLauncher !== launcher) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3228187Z ^[[36;1m  throw new Error("controlled launcher was not copied into the locked package root");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3228719Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3229216Z ^[[36;1mfor (const packageName of [^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3229646Z ^[[36;1m  "@deepseek-ai/dsh-app-boot",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3230026Z ^[[36;1m  "@deepseek-ai/dsh-cmdline",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3230494Z ^[[36;1m  "@deepseek-ai/dsh-launch-environment",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3230973Z ^[[36;1m]) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3231505Z ^[[36;1m  if (!launcher.includes(packageName)) {^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3232067Z ^[[36;1m    throw new Error(`controlled launcher does not use ${packageName}`);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3232589Z ^[[36;1m  }^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3232955Z ^[[36;1m}^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3233410Z ^[[36;1mprocess.stdout.write("locked DSH rc.2 app-boot/MCP runtime ok\n");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3233972Z ^[[36;1mNODE^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3234372Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3234720Z ^[[36;1mSMOKE_ROOT="$smoke_dir" RUNTIME_ROOT="$runtime_dir" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3235289Z ^[[36;1m  node test/fixtures/prepare-native-ecosystem-profile.mjs^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3235904Z ^[[36;1m[[ ! -e "$smoke_dir/workspace/.git" ]]^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3236328Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3236762Z ^[[36;1mendpoint="$smoke_dir/endpoint.json"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3237219Z ^[[36;1mrequest_log="$smoke_dir/native-requests.jsonl"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3237763Z ^[[36;1mDSH_FIXTURE_HOST=0.0.0.0 DSH_NATIVE_REQUEST_LOG="$request_log" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3238289Z ^[[36;1m  node test/fixtures/native-ecosystem-llm-server.mjs \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3238809Z ^[[36;1m  >"$endpoint" 2>"$smoke_dir/server.log" &^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3239527Z ^[[36;1mserver_pid=$!^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3239860Z ^[[36;1mfor _ in {1..60}; do^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3240249Z ^[[36;1m  [[ -s "$endpoint" ]] && break^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3240743Z ^[[36;1m  kill -0 "$server_pid" 2>/dev/null || { cat "$smoke_dir/server.log" >&2; exit 1; }^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3241257Z ^[[36;1m  sleep 1^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3241587Z ^[[36;1mdone^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3241899Z ^[[36;1m[[ -s "$endpoint" ]]^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3242362Z ^[[36;1mfixture_port="$(jq -r '.baseUrl | capture(":(?<port>[0-9]+)$").port' "$endpoint")"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3242919Z ^[[36;1m[[ "$fixture_port" =~ ^[1-9][0-9]*$ ]]^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3243282Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3243677Z ^[[36;1mdocker network create --internal "$smoke_network" >/dev/null^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3244343Z ^[[36;1msmoke_gateway="$(docker network inspect "$smoke_network" --format '{{(index .IPAM.Config 0).Gateway}}')"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3244963Z ^[[36;1m[[ -n "$smoke_gateway" ]]^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3245482Z ^[[36;1mdocker run --rm --init --read-only --cap-drop ALL --security-opt no-new-privileges \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3246057Z ^[[36;1m  --pids-limit 256 --memory 2g --cpus 2 --user "$run_as" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3246652Z ^[[36;1m  --network "$smoke_network" --add-host "host.docker.internal:$smoke_gateway" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3247212Z ^[[36;1m  --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3247798Z ^[[36;1m  --mount "type=bind,source=$smoke_dir/workspace,target=/workspace,readonly" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3248424Z ^[[36;1m  --mount "type=bind,source=$smoke_dir/home,target=/dsh-home,readonly" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3249245Z ^[[36;1m  --mount "type=bind,source=$smoke_dir/home/action-state,target=/dsh-home/action-state" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3250046Z ^[[36;1m  --mount "type=bind,source=$smoke_dir/home/sessions,target=/dsh-home/sessions" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3250698Z ^[[36;1m  --mount "type=bind,source=$smoke_dir/home/attachments,target=/dsh-home/attachments" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3251378Z ^[[36;1m  --mount "type=bind,source=$smoke_dir/home/storages,target=/dsh-home/storages" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3252037Z ^[[36;1m  --mount "type=bind,source=$runtime_dir,target=/dsh-home/profiles/github-action,readonly" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3252718Z ^[[36;1m  --mount "type=bind,source=$runtime_dir,target=/opt/dsh-action/package,readonly" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3253257Z ^[[36;1m  --workdir /workspace \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3253743Z ^[[36;1m  --env CI=true --env HOME=/dsh-home --env DSH_HOME=/dsh-home \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3254306Z ^[[36;1m  --env DSH_PERMISSION_MODE=read-only --env DSH_TELEMETRY_DISABLED=1 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3254884Z ^[[36;1m  --env DSH_TOOLS_MODE=native --env DEEPSEEK_API_KEY=fixture-worker-token \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3255426Z ^[[36;1m  --env NARB_DISABLE_NATIVE_CACHE=1 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3255974Z ^[[36;1m  --env "DEEPSEEK_BASE_URL=http://host.docker.internal:$fixture_port" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3256588Z ^[[36;1m  --env "DEEPSEEK_SEARCH_BASE_URL=http://host.docker.internal:$fixture_port" \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3257353Z ^[[36;1m  docker.io/library/node:24.18.0-bookworm@sha256:5711a0d445a1af54af9589066c646df387d1831a608226f4cd694fc59e745059 \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3258219Z ^[[36;1m  node --expose-internals /dsh-home/profiles/github-action/native-launcher.mjs \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3384637Z ^[[36;1m  'Use the requested native ecosystem capabilities and return review JSON.' \^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3385590Z ^[[36;1m  >"$smoke_dir/native.stdout" 2>"$smoke_dir/native.stderr"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3386052Z ^[[36;1m^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3386476Z ^[[36;1mnode --input-type=module - "$smoke_dir/native.stderr" <<'NODE'^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3387087Z ^[[36;1mimport { readFile } from "node:fs/promises";^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3387599Z ^[[36;1mconst stderr = await readFile(process.argv[2], "utf8");^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3388148Z ^[[36;1mconst diagnostics = stderr.replace(^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3389514Z ^[[36;1m  /\(node:\d+\) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time\r?\n\(Use `node --trace-warnings \.\.\.` to show where the warning was created\)\r?\n/gu,^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3390500Z ^[[36;1m  "",^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3390815Z ^[[36;1m);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3391306Z ^[[36;1mif (diagnostics !== "") throw new Error(`Unexpected native runtime diagnostic: ${diagnostics}`);^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3391870Z ^[[36;1mNODE^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3392120Z ^[[36;1mjq -s -e '^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3392400Z ^[[36;1m  .[0].type == "session" and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3392861Z ^[[36;1m  ([.[] | select(.type == "session")] | length) == 1 and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3393492Z ^[[36;1m  ([.[] | select(.type == "final")] | length) == 1 and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3393941Z ^[[36;1m  all(.[]; .type != "error") and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3394532Z ^[[36;1m  any(.[]; .type == "status" and .phase == "turn_end" and .reason.kind == "completed") and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3395183Z ^[[36;1m  .[-1].type == "final" and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3395575Z ^[[36;1m  (.[-1].text | fromjson |^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3396045Z ^[[36;1m    .protocolVersion == 1 and .operation == "review" and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3396666Z ^[[36;1m    .state == "final" and .summary == "native ecosystem booted")^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3397233Z ^[[36;1m' "$smoke_dir/native.stdout" >/dev/null^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3397668Z ^[[36;1mjq -s -e '^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3398079Z ^[[36;1m  length == 1 and .[0].schemaVersion == 1 and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3398603Z ^[[36;1m  .[0].source == "ctx.tools.schemas(agent)" and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3399288Z ^[[36;1m  (.[0] | has("effectiveTools") | not) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3400151Z ^[[36;1m  (.[0].observedTools | index("skill") != null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3400708Z ^[[36;1m  (.[0].observedTools | index("subagent") != null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3401292Z ^[[36;1m  (.[0].observedTools | index("workflow") != null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3401861Z ^[[36;1m  (.[0].observedTools | index("mcp__fixture__add") != null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3402540Z ^[[36;1m  (.[0].observedTools | index("native_bundle_echo") != null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3403233Z ^[[36;1m  (.[0].observedTools | index("native_plugin_echo") != null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3403898Z ^[[36;1m  (.[0].observedTools | index("web_fetch") == null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3404559Z ^[[36;1m  (.[0].observedTools | index("list_mcp_resources") == null) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3405167Z ^[[36;1m  (.[0].observedTools | index("workspace.read") == null)^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3405850Z ^[[36;1m' "$smoke_dir/home/action-state/native-observed-tools.jsonl" >/dev/null^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3406480Z ^[[36;1mjq -s -e '^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3406903Z ^[[36;1m  map(tostring) | join("\n") as $transcript |^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3407452Z ^[[36;1m  ($transcript | contains("native-dsh")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3407992Z ^[[36;1m  ($transcript | contains("native-agents")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3408587Z ^[[36;1m  ($transcript | contains("NATIVE_DSH_SKILL_BODY_MARKER")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3409510Z ^[[36;1m  ($transcript | contains("NATIVE_AGENTS_SKILL_BODY_MARKER")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3410194Z ^[[36;1m  ($transcript | contains("mcp__fixture__add")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3411101Z ^[[36;1m  ($transcript | contains("42")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3411646Z ^[[36;1m  ($transcript | contains("NATIVE_BUNDLE_MARKER")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3412338Z ^[[36;1m  ($transcript | contains("NATIVE_PLUGIN_MARKER:CORDIS_NATIVE_CI")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3413035Z ^[[36;1m  ($transcript | contains("CHILD_NATIVE_MARKER_OK")) and^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3413606Z ^[[36;1m  ($transcript | contains("NATIVE_WORKFLOW_MARKER"))^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3414130Z ^[[36;1m' "$request_log" >/dev/null^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3414615Z ^[[36;1mecho "native frozen-SHA ecosystem Docker smoke ok"^[[0m
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3456140Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3456504Z env:
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3456775Z   CANDIDATE_SHA: 4da864c2e6b11575ffc72216a92f59aa2a63a52a
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:36.3457091Z ##[endgroup]
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9191496Z 
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9192255Z added 761 packages, and audited 762 packages in 13s
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9229412Z 
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9230223Z 15 vulnerabilities (7 moderate, 7 high, 1 critical)
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9230608Z 
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9230943Z To address issues that do not require attention, run:
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9231601Z   npm audit fix
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9231890Z 
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9232576Z To address all issues (including breaking changes), run:
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9233075Z   npm audit fix --force
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9233291Z 
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9233511Z Run `npm audit` for details.
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9247692Z npm notice
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9248394Z npm notice New major version of npm available! 11.16.0 -> 12.2.0
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9249341Z npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.0
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9249940Z npm notice To update run: npm install -g npm@12.2.0
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:49.9250286Z npm notice
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:51.5751901Z {"node":"v24.18.0","nodeAbi":"137","nativeAddonVersion":"0.1.6","tmpMount":"tmpfs /tmp tmpfs rw,nosuid,nodev,noexec,relatime,size=524288k,inode64 0 0","defaultCacheFailureObserved":true,"cacheNoexecFailureObserved":true,"defaultCache":{"exitCode":1,"ok":false,"message":"No usable native binding found for node-addon-require-builtin-linux-x64-gnu (auto)","attempts":[{"source":"optional-package","message":"No usable prebuilt binary found in linux-x64-gnu","attempts":[{"path":"/dsh-home/profiles/github-action/node_modules/node-addon-require-builtin-linux-x64-gnu/prebuilt/linux-x64-gnu-napi-v9.node","loadPath":"/tmp/node-addon-native-custom-loader-1001/native-cache/node-addon-require-builtin-linux-x64-gnu/0.1.6/linux-x64-gnu/linux-x64-gnu-napi-v9.node","backend":"napi","abi":"napi-v9","message":"/tmp/node-addon-native-custom-loader-1001/native-cache/node-addon-require-builtin-linux-x64-gnu/0.1.6/linux-x64-gnu/linux-x64-gnu-napi-v9.node: failed to map segment from shared object"}]},{"source":"local-build","path":"/dsh-home/profiles/github-action/node_modules/node-addon-require-builtin/build/nodeabi/node-v137-linux-x64-gnu/require_builtin.node","backend":"nodeabi","abi":"node-v137","message":"Cannot find module '/dsh-home/profiles/github-action/node_modules/node-addon-require-builtin/build/nodeabi/node-v137-linux-x64-gnu/require_builtin.node'\nRequire stack:\n- /dsh-home/profiles/github-action/node_modules/node-addon-native-custom-loader/lib/index.js\n- /dsh-home/profiles/github-action/node_modules/node-addon-require-builtin/lib/index.js\n- /dsh-home/profiles/github-action/[eval1]"},{"source":"local-build","path":"/dsh-home/profiles/github-action/node_modules/node-addon-require-builtin/build/napi/napi-v9-linux-x64-gnu/require_builtin.node","backend":"napi","abi":"napi-v9","message":"Cannot find module '/dsh-home/profiles/github-action/node_modules/node-addon-require-builtin/build/napi/napi-v9-linux-x64-gnu/require_builtin.node'\nRequire stack:\n- /dsh-home/profiles/github-action/node_modules/node-addon-native-custom-loader/lib/index.js\n- /dsh-home/profiles/github-action/node_modules/node-addon-require-builtin/lib/index.js\n- /dsh-home/profiles/github-action/[eval1]"}]},"immutablePackage":{"exitCode":0,"ok":true,"mode":"napi","product":"require-builtin","backend":"napi","abi":"napi-v9","bindingPath":"/dsh-home/profiles/github-action/node_modules/node-addon-require-builtin-linux-x64-gnu/prebuilt/linux-x64-gnu-napi-v9.node","bindingSource":"optional-package","localBindingPath":"/dsh-home/profiles/github-action/node_modules/node-addon-require-builtin/build/napi/napi-v9-linux-x64-gnu/require_builtin.node","optionalPackageName":"node-addon-require-builtin-linux-x64-gnu","optionalBinaryRelativePath":"prebuilt/linux-x64-gnu-napi-v9.node","platformPackageSuffix":"linux-x64-gnu"}}
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:51.8320182Z locked DSH rc.2 app-boot/MCP runtime ok
+test	Linux Docker frozen-SHA DSH rc.2 native ecosystem smoke	2026-10-07T08:44:54.9086382Z native frozen-SHA ecosystem Docker smoke ok
+test	Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	﻿2026-10-07T08:45:01.3960588Z Post job cleanup.
+test	Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:45:01.5165203Z (node:9013) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+test	Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:45:01.5165983Z (Use `node --trace-deprecation ...` to show where the warning was created)
+test	Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-07T08:45:01.5169283Z Cache hit occurred on the primary key node-cache-Linux-x64-npm-40fb1d2282e35d70ece7de0c177d9943ac177f21ec1d49c2bf5090f03b2fe8bd, not saving cache.
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	﻿2026-10-07T08:45:01.5305983Z Post job cleanup.
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6121663Z [command]/usr/bin/git version
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6158928Z git version 2.55.0
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6190850Z Temporarily overriding HOME='/home/runner/work/_temp/819b0445-d3fb-44bb-a790-c34250cbfbe3' before making global git config changes
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6192476Z Adding repository directory to the temporary git global config as a safe directory
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6196112Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/Huawei-AgentArts-action/Huawei-AgentArts-action
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6233472Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6264545Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6469395Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6499757Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6707532Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+test	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-07T08:45:01.6741837Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+test	Complete job	﻿2026-10-07T08:45:01.7207144Z Cleaning up orphan processes
+test	Complete job	2026-10-07T08:45:01.8076423Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

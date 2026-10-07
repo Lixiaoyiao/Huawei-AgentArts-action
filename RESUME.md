@@ -1,5 +1,7 @@
 # 当前开发交接：2026-10-07 本地收尾完成
 
+**最新检查点**：[capacity-finish](docs/agentarts/capacity-finish.md)取代下方25b作为最终镜像。CI发现新增记录导致16MiB超限后，14bd277配套编码修复保全部files/原限制，Controller4da864c、新image6a5b892...；982files实测12,992,284bytes。新7模型32请求/四修复3852隐藏合同；真实PR #2全983files/4模型请求/正确finding/跨进程0调用复用已通过并关闭未合并。源码CI37595273406成功2090pass39skip；新记录2截图通过，key/capability/专用容器与分支清理已验证。旧25b与新Controller不能混用。模型clean有“求值顺序相同”的事实错误已记录，人工仍未验收；云端与宿主限制未解决。下方25b段落是独立历史，不重跑、不改写其原证据。
+
 先检查`git status`、`git log`和远程main；不reset/clean。本节为当前交接，下方旧记录/旧下一步仅作历史，不重复执行。
 
 - 本地四项已收尾，结果入口为[local-finish](docs/agentarts/local-finish.md)。Runtime clean源码`25b207246e37f282b51bad12ea0e88d7775ab888`，本地AMD64 image`sha256:029bd4854f2c6aca3f33cad7d2536aa9537dfb4d33584a2e3b3a8095f8b04412`，DSH0.2.0-rc.2。后来Controller/诊断/文档提交不当作新镜像验收。

@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "runId": "275254cb-06c4-4076-96fc-90f33958a2c4",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "diagnose-bounds",
+  "caseVersion": 1,
+  "operation": "diagnose",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+  "acceptanceDigest": "c7ae2a37654eee2a2bb910f6c6a0ccefd47f6578bf0557ec4221bfbda82b9c1f",
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Diagnosis identifies the exclusive upper bound and a concrete equality/empty counterexample",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [],
+  "taskDigest": "65ea5e4607a0bd153e32035b52a94d7268afceac989b2033dbc5af3a6563fa04",
+  "workspaceDigest": "0139af407fc46bfab525340648501208bb08b08e7007087b47128fa64dd418d4",
+  "delta": null,
+  "output": {
+    "protocolVersion": 1,
+    "operation": "diagnose",
+    "state": "final",
+    "summary": "The public inBounds function has an off-by-one error in its upper-bound check: it accepts index === length as valid, violating the contract that valid integer indices for a nonnegative length are 0 through length-1 and that empty collections have no valid index.",
+    "findings": [
+      {
+        "title": "inBounds accepts index === length (off-by-one upper bound)",
+        "body": "src/bounds.ts implements inBounds as `index >= 0 && index <= length`. The `<=` admits an index equal to length, but valid indices are only 0..length-1. This also admits index 0 when length is 0, even though empty collections have no valid index. Concrete counterexamples: inBounds(3, 3) evaluates `3 >= 0 && 3 <= 3` => true (expected false); inBounds(0, 0) evaluates `0 >= 0 && 0 <= 0` => true (expected false).",
+        "severity": "high",
+        "category": "correctness",
+        "confidence": 1,
+        "path": "src/bounds.ts",
+        "line": 2,
+        "evidence": "Line 2: `return index >= 0 && index <= length;`. Frozen counterexamples: {index:3,length:3} expected false observed true; {index:0,length:0} expected false observed true.",
+        "suggestion": "Use a strict upper-bound comparison: `return index >= 0 && index < length;`"
+      }
+    ],
+    "diagnosis": "The upper-bound comparison uses <= instead of <, so index === length is treated as in-bounds. For length 3 the only valid indices are 0,1,2 (so 3 must be false), and for length 0 no index is valid (so 0 must be false)."
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 5,
+    "requestLimit": 8,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-only"
+  },
+  "durationMs": 32593,
+  "startedAt": "2026-10-07T08:39:25.271Z",
+  "completedAt": "2026-10-07T08:39:57.864Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 8,
+    "actualRequestCount": 5,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:6a5b8920363586a3a59a68ed33cdab09d9f2d04854312b51d17882ae3538006e",
+    "sourceCommit": "4da864c2e6b11575ffc72216a92f59aa2a63a52a",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

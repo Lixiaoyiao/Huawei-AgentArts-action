@@ -7,5 +7,6 @@ package-lock.json
 agentarts/evidence/current/
 agentarts/evidence/full-v3/
 agentarts/evidence/local-finish/
+agentarts/evidence/capacity-finish/
 agentarts/evidence/host-diagnostics/
 .dsh-*-test-*/

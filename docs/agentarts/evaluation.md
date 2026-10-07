@@ -1,6 +1,6 @@
 # 业务评测与真实运行验收
 
-最新固定25b镜像七例真实模型、3852隐藏合同与本仓库真实PR验收已单独记录于[本地收尾](local-finish.md)和[最终镜像AI复核](final-image-review.md)。下方旧09e记录保留原始结果与错误，不继承为新镜像证据。AI复核不改人工`not-reviewed`，真实GitHub人工触发不等于Actions或AgentArts执行。
+最新固定14bd镜像七例真实模型、3852隐藏合同与本仓库完整真实PR链路已单独记录于[配套收尾](capacity-finish.md)和[本轮AI复核](capacity-image-review.md)。前轮25b/旧09e记录保留原始结果与错误，不继承为新镜像证据。AI复核不改人工`not-reviewed`，真实GitHub人工触发不等于Actions或AgentArts执行。
 
 当前v3本地模型套件为 `full-runtime-contracts-v1`，另保留历史只读 `pr-review-boundaries-v1`（源码在 [cases.json](../../agentarts/fixtures/pr-review/cases.json)）和未运行的 `cloud-github-review-candidates-v1` 真实GitHub首轮候选，各自保存版本与范围。当前v3已接原五种operation与文件/Session传输，状态见 [能力表](capability-matrix.md)；旧四例真实模型与v1/v2容器仅证明旧只读版本。测试数量不是审查成功率，夹具响应不算模型发现缺陷，平台分数不替代业务判定。
 

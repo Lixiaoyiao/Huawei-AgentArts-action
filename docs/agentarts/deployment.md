@@ -268,6 +268,8 @@ unset AGENTARTS_LOCAL_API_KEY
 
 ## 5. 审批后按顺序验收
 
+**部署配套版本**：最新完整仓库编码规则为14bd镜像对应实现，Controller也须采用同一规则；旧25b Runtime不能与新Controller混用，canonical工作区复查会拒绝。固定Action SHA与Runtime镜像/版本时，按[最新配套绑定及实测](capacity-finish.md)核对，不能仅凭DSH版本相同或`/ping`成功推断兼容。
+
 本地最终镜像/模型与真实GitHub已按[收尾记录](local-finish.md)完成；可复用[本地GitHub CLI](local-github-review.md)检查原控制端发布。目标平台宿主能力以[最小诊断和放行门槛](host-requirements.md)为准：原生Ubuntu两架构现仍拒proc，不能因账号审批通过就视为可部署。
 
 先核对目标租户可提供等价namespace/privateproc/seccomp/LSM/五cap；能力未确认或无法满足时暂停该路线，不新建资源硬试。通过能力核对后，再得到账号、资源创建/费用与私有部署的明确授权，执行最小固定候选的实际probe和验收。备选架构须另行评估并取得用户同意，不能冒充当前已兼容。命令与各环境证据由 [验证记录](verification.md) 分别保存。

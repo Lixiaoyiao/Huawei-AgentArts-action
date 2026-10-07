@@ -4,7 +4,7 @@
 
 ## 最新本地收尾
 
-最新25b2072最终镜像七例真实模型、四份实际修复及3852隐藏合同、固定Git安装三例、真实GitHub PR defect/clean、重复执行与stale拒绝见[完整收尾记录](local-finish.md)。完整源码回归2082通过/42跳过，后续测试小改另有定向与远程CI记录；编译入口扩为6bundle+4dry-run。原始证据在[local-finish](../../agentarts/evidence/local-finish/)，不覆盖下方旧结果。
+最新14bd277最终镜像七例真实模型、四份实际修复及3852隐藏合同、完整983文件真实GitHub链路见[最新配套收尾](capacity-finish.md)；源码CI2090通过/39跳过。前轮25b固定Git安装、PR clean/stale及2082本地回归仍见[前轮记录](local-finish.md)，不继承到新镜像。编译入口为6bundle+4dry-run；原始证据分别在capacity-finish/local-finish，不覆盖下方旧结果。
 
 两次原生AMD64/ARM64宿主诊断仍拒proc；WSL通过，内核精确拒绝分支unknown。[宿主调查](host-requirements.md)记录实际版本、无凭据最小复现与清理；没有放宽隔离策略或声称AgentArts兼容。临时凭据/容器已清理，真实测试PR关闭且未合并。
 

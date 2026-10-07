@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "runId": "275254cb-06c4-4076-96fc-90f33958a2c4",
+  "caseId": "implement-roles",
+  "taskId": "9aef9672-7191-4466-932e-1d49a14af10d",
+  "taskDigest": "b73cfef488ab0635bcdcdc7c066268ce58fb6dc4b0dee9dbd5367be733d107cf",
+  "binding": {
+    "taskId": "9aef9672-7191-4466-932e-1d49a14af10d",
+    "operation": "implement",
+    "operationIdentity": "live-full:275254cb-06c4-4076-96fc-90f33958a2c4:implement-roles",
+    "repository": "agentarts-fixtures/full-v1",
+    "entity": {
+      "kind": "issue",
+      "number": 6
+    },
+    "ref": "main",
+    "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+    "headSha": "24d15b46c22a27133c6f3e69cdc58038c85322a9",
+    "revision": 0,
+    "grantDigest": "c984d1180cb47f97e0cf7d3c2b7b0119dd086a51df2568163414871182acb211"
+  },
+  "original": {
+    "path": "src/access.ts",
+    "sha256": "93180753bf8e5ae5bfb784ea630666f80dcb507da186963bc452c641a0f8c212",
+    "mode": 420,
+    "encoding": "utf8",
+    "content": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  throw new Error(\"Not implemented\");\n}\n"
+  },
+  "candidate": {
+    "path": "src/access.ts",
+    "sha256": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+    "mode": 420,
+    "encoding": "utf8",
+    "content": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.every(role => userRoles.includes(role));\n}\n"
+  },
+  "delta": {
+    "schemaVersion": 1,
+    "binding": {
+      "repository": "agentarts-fixtures/full-v1",
+      "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+      "headSha": "24d15b46c22a27133c6f3e69cdc58038c85322a9",
+      "revision": 0,
+      "taskId": "9aef9672-7191-4466-932e-1d49a14af10d",
+      "operation": "implement",
+      "entity": {
+        "kind": "issue",
+        "number": 6
+      },
+      "ref": "main",
+      "grantDigest": "c984d1180cb47f97e0cf7d3c2b7b0119dd086a51df2568163414871182acb211",
+      "operationIdentity": "live-full:275254cb-06c4-4076-96fc-90f33958a2c4:implement-roles"
+    },
+    "inputDigest": "f75ac1db4b39a2991716f997300d11dd713f03577d9dd38885a400530131f65f",
+    "resultDigest": "c92563030600dc81b9eeab455d780b88fdc2cbda9fb1fbb08ea8212cfe3657ae",
+    "changes": [
+      {
+        "kind": "modified",
+        "original": {
+          "path": "src/access.ts",
+          "sha256": "93180753bf8e5ae5bfb784ea630666f80dcb507da186963bc452c641a0f8c212",
+          "mode": 420
+        },
+        "file": {
+          "path": "src/access.ts",
+          "sha256": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+          "mode": 420,
+          "encoding": "utf8",
+          "content": "export function hasRequiredRoles(userRoles: readonly string[], requiredRoles: readonly string[]): boolean {\n  return requiredRoles.every(role => userRoles.includes(role));\n}\n"
+        }
+      }
+    ]
+  },
+  "notice": "Untrusted candidate source for human inspection only; no publication or execution is performed by this JSON artifact."
+}
