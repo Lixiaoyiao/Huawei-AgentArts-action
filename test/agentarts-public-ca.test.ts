@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type * as Fs from "node:fs/promises";
 const mocks = vi.hoisted(() => ({ stat: vi.fn() }));
 vi.mock("node:fs/promises", async (original) => ({
-  ...(await original<typeof import("node:fs/promises")>()),
+  ...(await original<typeof Fs>()),
   lstat: mocks.stat,
 }));
 import { AGENTARTS_PUBLIC_CA, agentArtsPublicCertificateArgs } from "../src/agentarts/sandbox.js";
@@ -35,7 +36,7 @@ describe("fixed public CA file for Git TLS in namespaces", () => {
       AGENTARTS_PUBLIC_CA,
     ]);
     expect(args).not.toContain("GIT_SSL_NO_VERIFY");
-    expect(mocks.stat.mock.calls.map(([path]) => path)).toEqual([
+    expect(mocks.stat.mock.calls.map((args: unknown[]) => args[0])).toEqual([
       "/etc",
       "/etc/ssl",
       "/etc/ssl/certs",

@@ -12,6 +12,7 @@ import {
 } from "../src/agentarts/workspace-transfer.js";
 import {
   runtimeTaskDigest,
+  runtimeTaskReplySchema,
   type RuntimeTask,
   type RuntimeTaskReply,
 } from "../src/agentarts/runtime-task-protocol.js";
@@ -113,6 +114,54 @@ async function setup(change: boolean, productionEvidence = false) {
   return { engine, request, source, worker, runtime, invoke };
 }
 describe("FullEngine effective workspace grants (simulated Runtime)", () => {
+  it("rejects concurrent turns while the admitted first turn can still finish", async () => {
+    const test = await setup(false);
+    const original = test.invoke.getMockImplementation();
+    if (original === undefined) throw new Error("Missing simulated Runtime");
+    let release!: () => void;
+    let admitted!: () => void;
+    const entered = new Promise<void>((resolve) => {
+      admitted = resolve;
+    });
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    test.invoke.mockImplementation(async (task) => {
+      admitted();
+      await gate;
+      return original(task);
+    });
+    try {
+      const first = test.engine.runTurn(test.request);
+      await entered;
+      await expect(test.engine.runTurn(test.request)).rejects.toThrow("concurrent");
+      release();
+      await expect(first).resolves.toMatchObject({ output: { state: "final" } });
+      expect(test.invoke).toHaveBeenCalledTimes(1);
+      expect(await readFile(join(test.worker, "answer.ts"), "utf8")).toContain("= 0");
+    } finally {
+      release();
+      await disposeDshRuntime(test.runtime);
+    }
+  });
+  it("rejects a previous engine's valid reply after a fresh Controller instance issues a new task UUID", async () => {
+    const old = await setup(false);
+    const fresh = await setup(false);
+    try {
+      await old.engine.runTurn(old.request);
+      const pending: unknown = old.invoke.mock.results[0]?.value;
+      const previous = runtimeTaskReplySchema.parse(await pending);
+      fresh.invoke.mockResolvedValue(previous);
+      await expect(fresh.engine.runTurn(fresh.request)).rejects.toThrow("binding mismatch");
+      expect(fresh.invoke.mock.calls[0]?.[0].taskId).not.toBe(previous.taskId);
+      expect(await readFile(join(fresh.worker, "answer.ts"), "utf8")).toContain("= 0");
+      await expect(fresh.engine.runTurn(fresh.request)).rejects.toThrow("reuse");
+      expect(fresh.invoke).toHaveBeenCalledTimes(1);
+    } finally {
+      await disposeDshRuntime(old.runtime);
+      await disposeDshRuntime(fresh.runtime);
+    }
+  });
   it("rejects production evidence with a network namespace boundary missing", async () => {
     const test = await setup(false, true);
     try {

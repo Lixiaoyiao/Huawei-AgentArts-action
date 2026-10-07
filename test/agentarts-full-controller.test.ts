@@ -39,7 +39,7 @@ const mocks = vi.hoisted(() => ({
   snapshot: vi.fn(),
   permissions: vi.fn(),
   materialize: vi.fn(),
-  command: vi.fn(),
+  command: vi.fn<typeof Commands.runCommand>(),
   checks: vi.fn(),
 }));
 vi.mock("../src/github/payload.js", async (original) => ({
@@ -605,6 +605,68 @@ describe("Full Action write chain (simulated DSH/Docker/GitHub; actual HTTP and 
     const outcome = await runAction({ ...options("fix"), signal: cancellation.signal });
     expect(outcome.conclusion).toBe("failure");
     expect(processCall).toBe(1);
+    expect(github.createCommit).not.toHaveBeenCalled();
+    expect(github.updateRef).not.toHaveBeenCalled();
+  });
+
+  it("reconciles an acknowledged-lost ref update without rerunning DSH or submitting a second commit", async () => {
+    github.updateRef.mockImplementationOnce((input: { ref: string; sha: string }) => {
+      state.refs.set(input.ref.replace(/^heads\//u, ""), input.sha);
+      state.head = input.sha;
+      return Promise.reject(new Error("Synthetic response lost after the exact ref was installed"));
+    });
+    const outcome = await runAction(options("fix"));
+    expect(outcome.conclusion, outcome.error?.message).toBe("success");
+    expect(state.head).toBe(COMMIT);
+    expect(processCall).toBe(1);
+    expect(github.createCommit).toHaveBeenCalledOnce();
+    expect(github.updateRef).toHaveBeenCalledOnce();
+  });
+
+  it("does not retry an ambiguous ref update when reconciliation observes another commit", async () => {
+    github.updateRef.mockImplementationOnce(() => {
+      state.head = "f".repeat(40);
+      state.refs.set("feature", state.head);
+      return Promise.reject(new Error("Synthetic concurrent branch advance"));
+    });
+    const outcome = await runAction(options("fix"));
+    expect(outcome.conclusion).toBe("failure");
+    expect(state.head).toBe("f".repeat(40));
+    expect(processCall).toBe(1);
+    expect(github.createCommit).toHaveBeenCalledOnce();
+    expect(github.updateRef).toHaveBeenCalledOnce();
+  });
+
+  it("cancels after successful independent validation before both a deferred label and commit can publish", async () => {
+    const cancellation = new AbortController();
+    baselineContent = REPAIRED;
+    nextContent = () => ANNOTATED;
+    configuredOutput = (task, turn) => ({
+      protocolVersion: 1,
+      operation: task.operation,
+      state: turn === 1 ? "needs_tool" : "final",
+      summary: "Synthetic cancellation with queued mutation",
+      findings: [],
+      ...(turn !== 1
+        ? {}
+        : { toolRequest: { id: "github.issue.labels.set", input: { labels: ["accepted"] } } }),
+    });
+    const validate = mocks.command.getMockImplementation();
+    if (validate === undefined) throw new Error("Missing explicit validation fixture");
+    mocks.command.mockImplementation(async (input: Parameters<typeof Commands.runCommand>[0]) => {
+      const result = await validate(input);
+      if (input.args[0] === "run" && result.exitCode === 0) cancellation.abort();
+      return result;
+    });
+    const outcome = await runAction({
+      ...options("task", 3, {
+        allowedTools: ["workspace.read", "workspace.edit", "github.issue.labels.set"],
+      }),
+      signal: cancellation.signal,
+    });
+    expect(outcome.conclusion).toBe("failure");
+    expect(cancellation.signal.aborted).toBe(true);
+    expect(github.setLabels).not.toHaveBeenCalled();
     expect(github.createCommit).not.toHaveBeenCalled();
     expect(github.updateRef).not.toHaveBeenCalled();
   });

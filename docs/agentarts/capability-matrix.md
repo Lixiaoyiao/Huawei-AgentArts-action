@@ -79,8 +79,8 @@ Controller原restore后才导出安全metadata与原sessions/plan：repository/w
 
 仍待真实租户：自定义seccomp/namespace/caps、模型及registry出站、元数据凭据不可达、32MiB任务body和实际HTTP总时限/断开传播、SWR拉取与固定alias、LTS查询、Session stop和真实GitHub结果。SWR基础版当前文档不支持OCI规格，使用单架构Docker Schema2构建格式仍须真实registry检查。[SWR](https://support.huaweicloud.com/usermanual-swr/swr_01_0011.html)、[部署](deployment.md)。
 
-华为Gateway/MCP服务、平台观测Trace和平台评估属于新增云能力，尚未接入；原MCP的监督进程只读凭据代理已接主worker，见 [部署示例](deployment.md#31-可选的只读-mcp-凭据代理)。当前真实采集的是任务生命周期、DSH/tool/file/session结果及Controller检查。旧项目未实现的多模态/任意credentialed扩展路径不会因迁移凭空完成。
+华为Gateway/MCP服务、平台观测Trace和平台评估属于新增云能力，尚未接入；原MCP的监督进程只读凭据代理已接主worker，见 [部署示例](deployment.md#31-可选的只读-mcp-凭据代理)。当前真实采集的是任务生命周期、DSH/tool/file/session结果及Controller检查。OAuth、长订阅与多模态没有上游完整实现，不属于迁移丢失；上游native MCP的显式credentialEnv/credentialHeaders和Plugin credentialConfig确有实现，本迁移拒绝任务传明文，任意stdio/Plugin凭据尚无等价接入。具体差异与固定Git包源适配见 [兼容审计](compatibility-audit.md)。
 
 ## 验收顺序
 
-先在同一固定候选源码运行通用回归及Linux/生产镜像v3场景，区分真实DSH、fixture transport/provider与模拟GitHub。然后真实AgentArts小PR Review验证安全/日志/评论/清理；其他原operation、native/extensions/跨runSession逐项验收。首次write要覆盖真正edit→delta→导入→独立测试→原finalizer及权限拒绝、保护路径、测试失败、过期实体、取消/超时、重复与不确定GitHub写入。自动rubric、通过测试与人工需求正确性分别记录，不能编云成功率。
+先在同一固定候选源码运行通用回归及Linux/生产镜像v3场景，区分真实DSH、fixture transport/provider与模拟GitHub。然后真实AgentArts小PR Review验证安全/日志/评论/清理；其他原operation、native/extensions/跨runSession逐项验收。首次write要覆盖真正edit→delta→导入→独立测试→原finalizer及权限拒绝、保护路径、测试失败、过期实体、取消/超时、重复与不确定GitHub写入。自动rubric、通过测试与人工需求正确性分别记录，不能编云成功率。本轮 [独立AI业务复核](business-review.md) 对四候选执行了3852个隐藏合同，同时发现diagnose解释中的一处过度断言；原manualVerdict仍未改成人工通过。
