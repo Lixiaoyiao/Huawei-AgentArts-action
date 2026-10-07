@@ -40,6 +40,12 @@ probe_args=(--platform "$platform" --rm --init --read-only --network none
   --mount "type=bind,source=$repo_root/agentarts/namespace-probe.mjs,target=/probe/namespace-probe.mjs,readonly"
   --entrypoint node)
 started="$(date --iso-8601=seconds)"
+capture_denials() {
+  if ! sudo --non-interactive journalctl -k --since "$started" --no-pager -o short-iso | \
+    awk '/apparmor="DENIED"/ && /comm="bwrap"/ { if (++n <= 80) print }' > "$1"; then
+    printf 'Kernel journal unavailable; use the fixed probe stderr for diagnosis.\n' > "$1"
+  fi
+}
 set +e
 timeout --signal=TERM --kill-after=2s 15s docker run "${probe_args[@]}" \
   --security-opt apparmor=docker-default "$image_id" /probe/namespace-probe.mjs | tee "$output/namespace-default.jsonl"
@@ -47,10 +53,9 @@ default_status=${PIPESTATUS[0]}
 set -e
 printf 'Default-profile fixed namespace probe exit: %s\n' "$default_status" | tee "$output/namespace-default-status.txt"
 # This fixed probe ran no repository/model code. Preserve only its kernel AppArmor denial lines.
-sudo --non-interactive journalctl --kernel --since "$started" --no-pager -o short-iso | \
-  awk '/apparmor="DENIED"/ && /comm="bwrap"/ { if (++n <= 80) print }' > "$output/apparmor-default-denials.txt"
+capture_denials "$output/apparmor-default-denials.txt"
 sudo --non-interactive apparmor_parser -r -K "$repo_root/agentarts/apparmor-runtime.profile"
 printf '%s\n' "$profile" > "$marker"
-trap 'sudo --non-interactive journalctl --kernel --since "$started" --no-pager -o short-iso | awk '\''/apparmor="DENIED"/ && /comm="bwrap"/ { if (++n <= 80) print }'\'' > "$output/apparmor-project-denials.txt"' EXIT
+trap 'capture_denials "$output/apparmor-project-denials.txt"' EXIT
 timeout --signal=TERM --kill-after=2s 15s docker run "${probe_args[@]}" \
   --security-opt "apparmor=$profile" "$image_id" /probe/namespace-probe.mjs | tee "$output/namespace-project.jsonl"
