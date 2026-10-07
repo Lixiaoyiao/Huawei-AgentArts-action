@@ -46,6 +46,8 @@ export {
 
 export interface RunActionOptions {
   readonly signal?: AbortSignal;
+  /** Trusted local Controller context; bound to the current GitHub entity, never an Action input. */
+  readonly executionContextUrl?: string;
   /** Trusted entrypoint injection; never selected by repository/model data. */
   readonly inputs?: ActionInputs;
   readonly assertAuthorizedRun?: (run: AuthorizedRun) => void;
@@ -65,7 +67,15 @@ async function runActionInternal(
   deadlineMs: number,
   options: RunActionOptions,
 ): Promise<RunOutcome> {
-  const preparation = await prepareAuthorizedRun({ state, startedAt, inputs, signal });
+  const preparation = await prepareAuthorizedRun({
+    state,
+    startedAt,
+    inputs,
+    signal,
+    ...(options.executionContextUrl === undefined
+      ? {}
+      : { executionContextUrl: options.executionContextUrl }),
+  });
   if (preparation.kind === "complete") return preparation.outcome;
   options.assertAuthorizedRun?.(preparation.run);
 

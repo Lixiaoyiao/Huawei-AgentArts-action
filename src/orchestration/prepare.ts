@@ -47,6 +47,7 @@ export async function prepareAuthorizedRun(options: {
   readonly startedAt: number;
   readonly inputs: ActionInputs;
   readonly signal: AbortSignal;
+  readonly executionContextUrl?: string;
 }): Promise<PrepareRunResult> {
   const { state, startedAt, inputs, signal } = options;
   throwIfCancelled(signal);
@@ -61,7 +62,7 @@ export async function prepareAuthorizedRun(options: {
   const payload = await readEventPayload(process.env.GITHUB_EVENT_PATH);
   const context = parseGitHubContext(process.env, payload);
   const baseBranch = resolveBaseBranch(context, inputs.baseBranch);
-  const currentRunUrl = runUrl(context);
+  const currentRunUrl = runUrl(context, options.executionContextUrl);
   state.runUrl = currentRunUrl;
   let command = routeCommand(context, inputs);
   if (command !== null) state.operation = command.operation;

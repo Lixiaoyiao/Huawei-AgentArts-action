@@ -92262,6 +92262,20 @@ async function upsertTrackingComment(client, target, expectedAuthorId, kind, bod
 
 /***/ }),
 
+/***/ 40759:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   _: () => (/* binding */ executionContextLinkLabel)
+/* harmony export */ });
+/** Preserve normal Actions labels while accurately describing an approved local Controller. */
+function executionContextLinkLabel(url) {
+    return /\/actions\/runs\/[^/?#]+(?:[?#].*)?$/u.test(url) ? "Workflow run" : "Execution context";
+}
+
+
+/***/ }),
+
 /***/ 70889:
 /***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
 
@@ -94647,7 +94661,10 @@ function filterHighPrecisionFindings(findings, options = {}) {
 }
 const selectHighPrecisionFindings = (/* unused pure expression or super */ null && (filterHighPrecisionFindings));
 
+// EXTERNAL MODULE: ./src/github/execution-context.ts
+var execution_context = __nccwpck_require__(40759);
 ;// CONCATENATED MODULE: ./src/review/publisher.ts
+
 
 
 
@@ -94778,7 +94795,7 @@ function formatSummary(result, findings, outcome, target) {
         lines.push("", "### Publication warnings", ...outcome.failures.map((failure) => `- ${safeBody(failure)}`));
     }
     void findings;
-    lines.push("", `<sub>[Workflow run](${target.runUrl}) · dsh-action</sub>`);
+    lines.push("", `<sub>[${(0,execution_context/* executionContextLinkLabel */._)(target.runUrl)}](${target.runUrl}) · dsh-action</sub>`);
     return lines.join("\n").slice(0, GITHUB_BODY_LIMIT);
 }
 function formatSummaryWithDiff(result, findings, outcome, target, diff, fallbackFindings) {
@@ -100812,8 +100829,23 @@ var text_files = __nccwpck_require__(84738);
 
 
 
-function runUrl(context) {
+function runUrl(context, executionContextUrl) {
     const server = process.env.GITHUB_SERVER_URL ?? "https://github.com";
+    if (executionContextUrl !== undefined) {
+        if (context.kind !== "entity")
+            throw new errors/* ActionConfigurationError */.h5("Local execution context must identify a GitHub entity");
+        const origin = new URL(server);
+        const expected = `${origin.origin}/${context.repository.fullName}/${context.isPullRequest ? "pull" : "issues"}/${String(context.entityNumber)}`;
+        if (origin.protocol !== "https:" ||
+            origin.username ||
+            origin.password ||
+            origin.pathname !== "/" ||
+            origin.search ||
+            origin.hash ||
+            executionContextUrl !== expected)
+            throw new errors/* ActionConfigurationError */.h5("Local execution context must match the bound GitHub entity");
+        return expected;
+    }
     return `${server}/${context.repository.fullName}/actions/runs/${context.runId}`;
 }
 function deferProgressUntilWriteValidation(command) {
@@ -157921,6 +157953,7 @@ function isFailedWorkflowRun(payload) {
 
 
 
+
 const stages = [
     { key: "context", label: "Route, authorize, and build immutable context" },
     { key: "agent", label: "Run DeepSeek Harness and validate its structured output" },
@@ -158009,7 +158042,7 @@ function renderProgressComment(view) {
     if (view.failure !== undefined) {
         body.push("", `**Failure code:** \`${view.failure.code}\` · **Phase:** \`${view.failure.phase}\``, "", safeText(view.failure.message), "", `**Next step:** ${safeText(view.failure.guidance)}`);
     }
-    body.push("", `<sub>[Workflow run](${view.runUrl}) · this comment updates in place</sub>`);
+    body.push("", `<sub>[${(0,execution_context/* executionContextLinkLabel */._)(view.runUrl)}](${view.runUrl}) · this comment updates in place</sub>`);
     return body.join("\n").slice(0, 65_000);
 }
 class StickyProgressReporter {
@@ -158181,7 +158214,7 @@ async function prepareAuthorizedRun(options) {
     const payload = await readEventPayload(process.env.GITHUB_EVENT_PATH);
     const context = parseGitHubContext(process.env, payload);
     const baseBranch = resolveBaseBranch(context, inputs.baseBranch);
-    const currentRunUrl = runUrl(context);
+    const currentRunUrl = runUrl(context, options.executionContextUrl);
     state.runUrl = currentRunUrl;
     let command = routeCommand(context, inputs);
     if (command !== null)
@@ -158550,7 +158583,15 @@ async function disposeWorkspace(workspace) {
 
 /** Prepare -> authorize/context -> capabilities -> Agent -> validate/finalize -> result. */
 async function runActionInternal(state, startedAt, inputs, signal, deadlineMs, options) {
-    const preparation = await prepareAuthorizedRun({ state, startedAt, inputs, signal });
+    const preparation = await prepareAuthorizedRun({
+        state,
+        startedAt,
+        inputs,
+        signal,
+        ...(options.executionContextUrl === undefined
+            ? {}
+            : { executionContextUrl: options.executionContextUrl }),
+    });
     if (preparation.kind === "complete")
         return preparation.outcome;
     options.assertAuthorizedRun?.(preparation.run);
@@ -158934,6 +158975,7 @@ const DIRECT_DSH_PACKAGES = [...DSH_RUNTIME_PACKAGES, ...DSH_TEST_PACKAGES];
 /* harmony export */   rJ: () => (/* binding */ buildActionOutputs)
 /* harmony export */ });
 /* unused harmony export actionStatus */
+/* harmony import */ var _github_execution_context_js__WEBPACK_IMPORTED_MODULE_9__ = __nccwpck_require__(40759);
 /* harmony import */ var _agent_loop_js__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(30462);
 /* harmony import */ var _dsh_errors_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(87156);
 /* harmony import */ var _errors_js__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(83916);
@@ -158943,6 +158985,7 @@ const DIRECT_DSH_PACKAGES = [...DSH_RUNTIME_PACKAGES, ...DSH_TEST_PACKAGES];
 /* harmony import */ var _write_validate_js__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(56713);
 /* harmony import */ var _github_request_policy_js__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(70889);
 /* harmony import */ var _session_errors_js__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(52289);
+
 
 
 
@@ -159445,7 +159488,7 @@ function formatStepSummary(outcome) {
         lines.push("", `**Commit:** \`${outcome.commitSha}\``);
     }
     if (outcome.runUrl !== undefined)
-        lines.push("", `[Workflow run](${outcome.runUrl})`);
+        lines.push("", `[${(0,_github_execution_context_js__WEBPACK_IMPORTED_MODULE_9__/* .executionContextLinkLabel */ ._)(outcome.runUrl)}](${outcome.runUrl})`);
     return lines.join("\n");
 }
 

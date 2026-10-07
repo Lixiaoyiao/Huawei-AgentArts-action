@@ -1,4 +1,5 @@
 import type { Operation } from "./commands/parse.js";
+import { executionContextLinkLabel } from "./github/execution-context.js";
 import {
   AgentDeadlineError,
   AgentLoopLimitError,
@@ -700,6 +701,7 @@ export function formatStepSummary(outcome: RunOutcome): string {
   if (outcome.commitSha !== undefined) {
     lines.push("", `**Commit:** \`${outcome.commitSha}\``);
   }
-  if (outcome.runUrl !== undefined) lines.push("", `[Workflow run](${outcome.runUrl})`);
+  if (outcome.runUrl !== undefined)
+    lines.push("", `[${executionContextLinkLabel(outcome.runUrl)}](${outcome.runUrl})`);
   return lines.join("\n");
 }

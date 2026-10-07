@@ -25,8 +25,27 @@ import {
 } from "../text-files.js";
 import { getBranchHead } from "../write/github.js";
 
-export function runUrl(context: GitHubContext): string {
+export function runUrl(context: GitHubContext, executionContextUrl?: string): string {
   const server = process.env.GITHUB_SERVER_URL ?? "https://github.com";
+  if (executionContextUrl !== undefined) {
+    if (context.kind !== "entity")
+      throw new ActionConfigurationError("Local execution context must identify a GitHub entity");
+    const origin = new URL(server);
+    const expected = `${origin.origin}/${context.repository.fullName}/${context.isPullRequest ? "pull" : "issues"}/${String(context.entityNumber)}`;
+    if (
+      origin.protocol !== "https:" ||
+      origin.username ||
+      origin.password ||
+      origin.pathname !== "/" ||
+      origin.search ||
+      origin.hash ||
+      executionContextUrl !== expected
+    )
+      throw new ActionConfigurationError(
+        "Local execution context must match the bound GitHub entity",
+      );
+    return expected;
+  }
   return `${server}/${context.repository.fullName}/actions/runs/${context.runId}`;
 }
 

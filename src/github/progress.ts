@@ -1,4 +1,5 @@
 import * as core from "@actions/core";
+import { executionContextLinkLabel } from "./execution-context.js";
 
 import type { Operation } from "../commands/parse.js";
 import { PHASE_TIMEOUTS } from "../lifecycle/deadline.js";
@@ -140,7 +141,10 @@ export function renderProgressComment(view: ProgressView): string {
       `**Next step:** ${safeText(view.failure.guidance)}`,
     );
   }
-  body.push("", `<sub>[Workflow run](${view.runUrl}) · this comment updates in place</sub>`);
+  body.push(
+    "",
+    `<sub>[${executionContextLinkLabel(view.runUrl)}](${view.runUrl}) · this comment updates in place</sub>`,
+  );
   return body.join("\n").slice(0, 65_000);
 }
 

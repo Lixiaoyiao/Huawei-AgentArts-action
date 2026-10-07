@@ -10,6 +10,7 @@ import type { ReviewFinding, ReviewResult } from "./schema.js";
 import { createTrackingMarker, indexTrackingComments, stripTrackingMarkers } from "./tracking.js";
 import { upsertTrackingComment } from "../github/comments.js";
 import { GitHubQuotaError } from "../github/request-policy.js";
+import { executionContextLinkLabel } from "../github/execution-context.js";
 
 const GITHUB_BODY_LIMIT = 65_000;
 
@@ -180,7 +181,10 @@ function formatSummary(
     );
   }
   void findings;
-  lines.push("", `<sub>[Workflow run](${target.runUrl}) · dsh-action</sub>`);
+  lines.push(
+    "",
+    `<sub>[${executionContextLinkLabel(target.runUrl)}](${target.runUrl}) · dsh-action</sub>`,
+  );
   return lines.join("\n").slice(0, GITHUB_BODY_LIMIT);
 }
 
