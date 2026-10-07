@@ -48,6 +48,15 @@ adaptation does not change model selection, provider behavior or DSH permissions
 
 ## Moby seccomp profile
 
+The separately loaded `agentarts/apparmor-runtime.profile` also derives from the
+Moby Docker default AppArmor template, pinned at
+[`6430e49a55babd9b8f4d08e70ecb2b68900770fe`](https://github.com/moby/moby/blob/6430e49a55babd9b8f4d08e70ecb2b68900770fe/profiles/apparmor/template.go).
+The original template is retained in `agentarts/apparmor-template.moby.txt`.
+The independent profile permits namespace creation, sandbox mounting and two
+fixed bubblewrap root pivots while preserving the other default rules.
+Source and modifications are recorded in `agentarts/apparmor-source.json`;
+the Apache 2.0 license is retained in `agentarts/LICENSE.moby-seccomp`.
+
 The AgentArts container seccomp profile in
 [`agentarts/seccomp-bwrap.json`](agentarts/seccomp-bwrap.json) is derived from
 [`moby/profiles` default.json](https://github.com/moby/profiles/blob/6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef/seccomp/default.json)

@@ -19,6 +19,9 @@ on:
       - agentarts/local-container.sh
       - agentarts/startup-negative.sh
       - agentarts/seccomp-*.json
+      - agentarts/apparmor-*
+      - agentarts/ci-apparmor.sh
+      - agentarts/namespace-probe.mjs
       - test/fixtures/full-runtime-packets.mjs
       - test/fixtures/messages-sse.*
   pull_request:
@@ -37,6 +40,9 @@ on:
       - agentarts/local-container.sh
       - agentarts/startup-negative.sh
       - agentarts/seccomp-*.json
+      - agentarts/apparmor-*
+      - agentarts/ci-apparmor.sh
+      - agentarts/namespace-probe.mjs
       - test/fixtures/full-runtime-packets.mjs
       - test/fixtures/messages-sse.*
 
@@ -82,7 +88,15 @@ jobs:
         env:
           AGENTARTS_TEST_PLATFORM: ${{ matrix.platform }}
           AGENTARTS_EVIDENCE_DIR: ${{ runner.temp }}/agentarts-container
+          AGENTARTS_CI_APPARMOR_SETUP: "true"
+          AGENTARTS_APPARMOR_PROFILE: agentarts-runtime-bwrap-v1
         run: bash agentarts/local-container.sh
+      - name: Remove only the project namespace profile
+        if: always()
+        shell: bash
+        env:
+          AGENTARTS_EVIDENCE_DIR: ${{ runner.temp }}/agentarts-container
+        run: bash agentarts/ci-apparmor.sh cleanup
       - name: Preserve measured container evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
