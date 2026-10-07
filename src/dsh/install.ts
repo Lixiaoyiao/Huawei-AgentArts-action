@@ -124,7 +124,7 @@ export async function installedTopLevelPackageInventory(
     if (entry.isDirectory() || entry.isSymbolicLink()) packagePaths.push(entryPath);
   }
 
-  const inventory: Record<string, string> = {};
+  const inventory: [string, string][] = [];
   for (const packagePath of packagePaths) {
     const manifest = JSON.parse(await readFile(join(packagePath, "package.json"), "utf8")) as {
       readonly name?: unknown;
@@ -133,12 +133,15 @@ export async function installedTopLevelPackageInventory(
     if (typeof manifest.name !== "string" || typeof manifest.version !== "string") {
       throw new DshConfigurationError(`Installed package has invalid identity: ${packagePath}`);
     }
-    if (inventory[manifest.name] !== undefined) {
-      throw new DshConfigurationError(`Duplicate top-level package identity: ${manifest.name}`);
-    }
-    inventory[manifest.name] = manifest.version;
+    // npm aliases occupy distinct installation slots while preserving the real package name.
+    // Both slot and identity must survive extension installation, including aliases at other versions.
+    const slot = relative(modulesRoot, packagePath).split(sep).join("/");
+    inventory.push([
+      slot,
+      manifest.name === slot ? manifest.version : `npm:${manifest.name}@${manifest.version}`,
+    ]);
   }
-  return Object.freeze(inventory);
+  return Object.freeze(Object.fromEntries(inventory));
 }
 
 /** @internal Reject direct extension identities that collide with the locked runtime. */
@@ -147,7 +150,9 @@ export function assertExtensionPackagesDoNotShadowRuntime(
   inventory: Readonly<Record<string, string>>,
 ): void {
   const collision = Object.keys(plan.packageDependencies).find(
-    (packageName) => inventory[packageName] !== undefined,
+    (packageName) =>
+      Object.hasOwn(inventory, packageName) ||
+      Object.values(inventory).some((identity) => identity.startsWith(`npm:${packageName}@`)),
   );
   if (collision !== undefined) {
     throw new DshConfigurationError(
