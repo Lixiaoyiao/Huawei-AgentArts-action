@@ -76418,13 +76418,18 @@ async function capture(root, binding, options) {
                 content = data.toString("base64");
                 encoding = "base64";
             }
-            // Large tracked bundles remain part of the complete workspace. Explicit
-            // compression changes wire representation only, never the original hash.
-            if (data.byteLength > 256 * 1024) {
+            // Use one deterministic per-file encoding in both Controller and Runtime.
+            // Medium source/evidence files also matter to the complete repository
+            // envelope; compare actual JSON wire cost, including text escaping.
+            // Never switch policy based on the total manifest size: an edit must not
+            // change the encoding of unrelated files used by delta reconstruction.
+            if (data.byteLength > 4 * 1024) {
                 const compressed = (0,node_zlib__WEBPACK_IMPORTED_MODULE_4__.gzipSync)(data, { level: 6 });
-                if ((compressed.byteLength * 4) / 3 < Buffer.byteLength(content) * 0.8) {
+                const compressedContent = compressed.toString("base64");
+                if (Buffer.byteLength(JSON.stringify(compressedContent)) <
+                    Buffer.byteLength(JSON.stringify(content)) * 0.8) {
                     encoding = "gzip-base64";
-                    content = compressed.toString("base64");
+                    content = compressedContent;
                 }
             }
             files.push({ path, encoding, content, sha256: hash(data), mode });
