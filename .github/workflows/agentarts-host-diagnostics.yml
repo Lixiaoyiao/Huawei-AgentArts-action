@@ -1,0 +1,113 @@
+name: AgentArts fixed host diagnostics
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Exact reviewed 40-character source commit (no model or cloud calls)
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    name: Host diagnosis (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+            architecture: x64
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+            architecture: arm64
+    steps:
+      - name: Check explicit source identity
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        shell: bash
+        run: |
+          [[ "$CANDIDATE_SHA" =~ ^[a-f0-9]{40}$ ]]
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          persist-credentials: false
+      - name: Build fixed image without publishing
+        id: image
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          PLATFORM: ${{ matrix.platform }}
+          OUTPUT: ${{ runner.temp }}/agentarts-host-diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
+          [[ -z "$(git status --porcelain --untracked-files=normal)" ]]
+          case "$(uname -m):$PLATFORM" in
+            x86_64:linux/amd64|aarch64:linux/arm64) ;;
+            *) printf 'This workflow requires a native architecture runner.\n' >&2; exit 1 ;;
+          esac
+          ! git config --local --get-regexp '^(http\..*\.extraheader|credential\.)' >/dev/null 2>&1
+          mkdir -p -- "$OUTPUT"
+          docker build --platform "$PLATFORM" --file agentarts/Dockerfile --tag agentarts-host-diagnostic:fixed .
+          image_id="$(docker image inspect agentarts-host-diagnostic:fixed --format '{{.Id}}')"
+          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
+          docker image inspect "$image_id" --format '{{json .Descriptor}}' > "$OUTPUT/image-descriptor.json"
+          printf '{"schemaVersion":1,"sourceCommit":"%s","sourceDirty":false,"imageId":"%s","platform":"%s","emulated":false,"mode":"fixed-no-credential-diagnostic"}\n' "$CANDIDATE_SHA" "$image_id" "$PLATFORM" > "$OUTPUT/source-bindings.json"
+          printf 'image_id=%s\n' "$image_id" >> "$GITHUB_OUTPUT"
+      - name: Diagnose default profile with fixed no-key code
+        continue-on-error: true
+        env:
+          IMAGE_ID: ${{ steps.image.outputs.image_id }}
+          OUTPUT: ${{ runner.temp }}/agentarts-host-diagnostics/default
+        shell: bash
+        run: bash agentarts/diagnose-host.sh "$IMAGE_ID" "$OUTPUT" --kernel-trace
+      - name: Load only the project profile and retain its original probes
+        continue-on-error: true
+        env:
+          IMAGE_ID: ${{ steps.image.outputs.image_id }}
+          AGENTARTS_TEST_PLATFORM: ${{ matrix.platform }}
+          AGENTARTS_EVIDENCE_DIR: ${{ runner.temp }}/agentarts-host-diagnostics/profile
+        shell: bash
+        run: bash agentarts/ci-apparmor.sh setup "$IMAGE_ID"
+      - name: Diagnose project profile with fixed no-key code
+        if: always() && steps.image.outputs.image_id != ''
+        continue-on-error: true
+        env:
+          IMAGE_ID: ${{ steps.image.outputs.image_id }}
+          AGENTARTS_APPARMOR_PROFILE: agentarts-runtime-bwrap-v1
+          OUTPUT: ${{ runner.temp }}/agentarts-host-diagnostics/project
+        shell: bash
+        run: bash agentarts/diagnose-host.sh "$IMAGE_ID" "$OUTPUT" --kernel-trace
+      - name: Remove only the project profile
+        if: always()
+        env:
+          AGENTARTS_EVIDENCE_DIR: ${{ runner.temp }}/agentarts-host-diagnostics/profile
+        shell: bash
+        run: bash agentarts/ci-apparmor.sh cleanup
+      - name: Check diagnostic completion, not Runtime compatibility
+        if: always() && steps.image.outputs.image_id != ''
+        env:
+          OUTPUT: ${{ runner.temp }}/agentarts-host-diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          for profile in default project; do
+            jq -e '.schemaVersion == 1 and (.exitCode == 0 or .exitCode == 1)' "$OUTPUT/$profile/outcome.json"
+            jq -e '.status == "passed"' "$OUTPUT/$profile/cleanup.json"
+            jq -e '.kind == "fixed-host-namespace-diagnostic" and .realModelCalled == false' "$OUTPUT/$profile/probe.jsonl"
+          done
+          printf 'Artifacts describe acceptance or rejection. This workflow does not certify host compatibility.\n'
+      - name: Preserve fixed diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agentarts-host-diagnostic-${{ matrix.architecture }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/agentarts-host-diagnostics
+          retention-days: 14
+          if-no-files-found: warn
