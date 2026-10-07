@@ -4,6 +4,8 @@
 
 本手册以PR Review为第一条真实云验收；当前代码的完整任务迁移见 [能力迁移表](capability-matrix.md)。事件、授权、独立Docker验证、GitHub写凭据与finalizer留在Controller；Runtime托管固定DSH、受检工作区、原工具/扩展和DSH Session传输。它必须通过强制namespace安全检查，不能仅有HTTP200就开放写任务。首次平台验收仍从只读Review开始，不启用共享持久存储、低代码Agent或未经验证的Gateway/MCP服务。
 
+**审批后的第一步是核对目标租户可否提供所需sandbox。** 先通过现有租户配置与官方支持确认namespace/private procfs、自定义seccomp/LSM和五cap可用；原生Ubuntu24镜像CI已实际遭proc挂载拒绝，本地WSL通过不能代替它。能力未确认时不创建资源硬试；若平台确实不能提供等价隔离，暂停本部署路线，另行评估架构备选并取得用户同意。只有条件确认并获资源/费用授权后，才部署最小固定候选、运行真实probe及PR Review；配置允许也不等于实际probe通过。
+
 ## 1. 准备账号、区域与受信配置
 
 服务准入通过后，确认目标区域的高代码 Runtime、SWR 和日志入口实际可用。在 AgentArts 的授权管理里核对已开通的服务与授权；IAM 子用户只授本次部署所需权限。管理人员权限、Runtime 委托权限和调用端 API Key 是三件事，不能互相替代。官方给出完整 Runtime 身份策略及自定义权限列表，应按实际资源采用最小授权。[开通服务](https://support.huaweicloud.com/qs-agentarts/agentarts_04_0000.html)、[控制台部署](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_031.html)。
@@ -57,7 +59,13 @@ SDK 支持区域页当前只列西南-贵阳一 `cn-southwest-2`；这不是其�
 
 当前v3必须给worker创建独立user/PID/network等namespace，固定`/workspace`和`/dsh-home`只挂当前任务获准目录。worker为UID/GID10001、清空groups/capabilities，父进程环境、host文件、云网络不可直接访问；受信Unix socket桥只提供模型和批准出站入口。实际启动probe检查UID/cap/只有loopback，未通过即拒绝，无fallback。原只读v1/v2记录中的`networkIsolated:false`是历史实现，不能用来代表当前v3。
 
+当前镜像从固定Debian `bubblewrap 0.8.0-2+deb12u1` 源码构建，保留四项Debian补丁，仅把新PID namespace的procfs mount选项改为 `subset=pid`。三份source输入逐SHA验证、无fuzz应用本地dated patch，再核对完整patched C SHA；`--with-priv-mode=none`、0755无setuid，使用Debian `dpkg-buildflags hardening=+all`。完整orig/Debian源码archive、descriptor、本地补丁、许可/copyright与构建脚本/flags随镜像 `/usr/share/doc/bubblewrap/agentarts-source` 提供，编译器不进入Runtime。[来源](../../agentarts/bubblewrap-source.json)、[补丁](../../agentarts/bubblewrap-proc-subset.patch)、[LGPL-2.0-or-later](../../agentarts/LICENSE.bubblewrap)。
+
+`subset=pid`自Linux5.8提供，隐藏非任务相关的系统proc条目；worker没有 `/proc/sys`、`/proc/meminfo` 等文件，依赖它们的工具须另验。版本号不是足够条件，目标内核/LSM/父proc挂载仍须实际probe通过；保留Docker masked paths，不挂宿主proc，也无完整proc回退。**a3e原生Ubuntu24双架构CI在专用AppArmor enforce下仍报proc mount EPERM**，不能承诺此补丁解决masked-parent限制；本地WSL固定模型通过不能替代该宿主或云验收。[proc mount选项](https://man7.org/linux/man-pages/man5/proc.5.html)、[实际记录](verification.md)。
+
 Docker外层需使用固定 [seccomp-bwrap.json](../../agentarts/seccomp-bwrap.json)：它基于固定Moby Apache-2.0默认profile，仅新增`clone/unshare/mount/umount2/pivot_root/setns`的namespace setup能力；worker启动后追加项目BPF拒绝新的namespace创建并保留普通Node线程。无需CAP_SYS_ADMIN、privileged或开放Docker socket。目标AgentArts租户是否允许这些syscalls、unprivileged user namespace和自定义seccomp仍待验收，标准HTTP容器支持不保证满足该要求。来源/许可证见 [第三方声明](../../THIRD_PARTY_NOTICES.md)。
+
+启用AppArmor的Docker宿主还需允许bwrap的user namespace、挂载与root pivot；仅seccomp允许syscall不代表宿主LSM允许。Ubuntu24.04默认限制非特权user namespace；Docker默认profile还有mount拒绝。项目提供独立固定profile，详见 [3.2](#32-apparmor宿主策略)，不修改宿主docker-default或关闭AppArmor。[Ubuntu发布说明](https://discourse.ubuntu.com/t/ubuntu-24-04-lts-noble-numbat-release-notes/39890)、[Docker AppArmor](https://docs.docker.com/engine/security/apparmor/)。
 
 网络扩展/包安装由监督进程`AGENTARTS_EGRESS_ALLOWED_ORIGINS`精确origin JSON白名单控制，默认空列表，默认拒绝私网、loopback、link-local/metadata等地址，DNS解析后再次核对。批准registry仅在确有安装需要时配置，例如`["https://registry.npmjs.org"]`；额外tarball/MCP origins需独立确认，不使用通配域名，不把URL内凭据带入请求。代理不能让不遵循代理的任意子进程自动联网；扩展需逐项验证。明文env/header secret不能放extension plan，credentialed扩展须受信Controller回调或监督进程专属代理，当前直接定义会拒绝。
 
@@ -89,6 +97,29 @@ Controller的`mcp-config`使用上述无secret定义，controlled的`allowed-too
 
 本地测试使用隔离namespace、确定性模型和MCP测试服务；HTTP豁免只存在受信test API seam，不能由环境/task启用。Linux实际DSH/MCP测试及后续拒绝负例按 [验证记录](verification.md) 保存各自范围；不能写成华为Gateway/MCP已接入。第一条云Review仍先验收Runtime安全，工具服务与凭据权限独立确认。
 
+### 3.2 AppArmor宿主策略
+
+[apparmor-runtime.profile](../../agentarts/apparmor-runtime.profile) 名为 `agentarts-runtime-bwrap-v1`，固定来源/修改见 [apparmor-source.json](../../agentarts/apparmor-source.json)。它保留固定Moby默认规则的其它部分，使用AppArmor4 ABI，增加 `userns create`，将原 `deny mount` 替换为 `mount`，并只允许bwrap0.8的两处固定root pivot。**mount规则本身没有按路径收窄**；它必须与外层五cap/no-new-privileges、bwrap固定输入、worker清空capabilities和阻断新namespace的BPF一起使用，不能把该profile当作独立沙箱。[AppArmor规则](https://manpages.ubuntu.com/manpages/noble/man5/apparmor.d.5.html)。
+
+这是宿主操作者权限，不能由task要求或在不可信worker里加载。确认本机支持ABI4、同名策略未被其它部署使用后，操作者可在仓库根目录加载并运行无真实凭据的本地smoke：
+
+```bash
+node scripts/generate-agentarts-apparmor.mjs
+sudo apparmor_parser -a -K "$PWD/agentarts/apparmor-runtime.profile"
+AGENTARTS_APPARMOR_PROFILE=agentarts-runtime-bwrap-v1 \
+  AGENTARTS_TEST_PLATFORM=linux/amd64 bash agentarts/local-container.sh
+```
+
+`-a`在同名策略已存在时拒绝，避免覆盖其它部署。单独启动本手册的 `docker run` 时，在同样确认策略已加载的宿主追加 `--security-opt apparmor=agentarts-runtime-bwrap-v1`；环境变量只由local-container脚本解释，不会自动改变任意Docker命令。所有使用该profile的专用容器停止后，只有本次确实创建且不共享的策略才可清理：
+
+```bash
+sudo apparmor_parser -R "$PWD/agentarts/apparmor-runtime.profile"
+```
+
+GitHub-hosted CI的 [ci-apparmor.sh](../../agentarts/ci-apparmor.sh) 先用同image运行封闭环境、无key/模型/网络的固定probe，保存有限stderr和内核bwrap拒绝；再加载独立profile、复probe和完整smoke，always仅卸载本次自建策略。它拒绝覆盖已有同名profile，不改docker-default、daemon或sysctl。无AppArmor执行的WSL通过与parser语法通过均不证明策略enforcement；原生CI实际结果见 [验证记录](verification.md)。
+
+AgentArts是否允许指定/加载宿主profile、相应namespace/mount/pivot策略仍未确认。不要求租户关闭AppArmor，不用unconfined、SYS_ADMIN、privileged或全局sysctl豁免；平台不能满足时停止部署验收，先讨论保留边界的替代部署方式。
+
 ## 4. 本地预检与复现
 
 MCP配置与模型预算、入站认证分别管理；先检查下面配置和第3节namespace/网络边界，再执行任何任务。
@@ -102,7 +133,7 @@ node agentarts/preflight.mjs --config /absolute/path/to/deployment-config.json -
 
 第一条只读本地 JSON；第二条可选查询本地 Docker 镜像的 Linux/架构/image ID/USER/RepoDigests 元数据，不读取镜像 ENV，不 pull、不 run。Linux 默认固定本地 `unix:///var/run/docker.sock`，Windows 固定本地 pipe；rootless 可显式传 `--docker-host unix:///run/user/1000/docker.sock`。拒绝 TCP/SSH 等远程 daemon。检查 Docker 时使用私有临时空配置和封闭环境，不加载操作者 registry 登录凭据，随后清理该临时目录。
 
-脚本不读取key值，只按名称报告当前进程是否存在`AGENTARTS_RUNTIME_API_KEY`、`DEEPSEEK_API_KEY`、`GITHUB_TOKEN`；存在不代表正确，也不检查FILE注入或远程Secret。不要把分属Controller/supervisor的key集中复制。输出始终为`cloudAcceptance: unverified`，不创建资源或调用服务。该示例/preflight仍以首轮Review为范围，不自动验证新增v3 namespace/seccomp、extension egress、完整body/Session或写场景，必须另按本节检查。
+脚本不读取key值，只按名称报告当前进程是否存在`AGENTARTS_RUNTIME_API_KEY`、`DEEPSEEK_API_KEY`、`GITHUB_TOKEN`；存在不代表正确，也不检查FILE注入或远程Secret。不要把分属Controller/supervisor的key集中复制。输出始终为`cloudAcceptance: unverified`，不创建资源或调用服务。86da6b0起 `readiness.namespaceAndSeccompVerified` 与 `privateProcfsVerified` 均必填，示例为false；相关12项测试通过。它们是操作者需有证据支持的声明，不是脚本自动探测，不得由ping、普通CI或WSL通过推断目标租户已就绪。实际namespace/privateproc、extension egress、完整body/Session与写场景另验。
 
 ### 4.1 最终镜像与确定性模型 smoke
 
@@ -129,6 +160,21 @@ docker build --platform linux/amd64 --file agentarts/Dockerfile \
 ```
 
 仍须检查实际 `image-descriptor.json`/registry manifest，而不只相信flag；构建工具/镜像存储方式可能改变结果。Docker官方将 `oci-mediatypes` 作为export格式参数；此处格式选择不保证目标SWR接受，真实上传/拉取尚未验证。[Docker image exporter](https://docs.docker.com/build/exporters/image-registry/)。
+
+#### 额外扩展安装与Session复验
+
+[check-image-extensions-session.sh](../../agentarts/check-image-extensions-session.sh) 接收四个参数：本地固定image ID、干净源码checkout绝对路径、已安装dev dependencies的目录、全新输出目录。dependency目录的package-lock须与源码一致，可先单独 `npm ci --ignore-scripts` 准备；它不是模型/GitHub凭据目录。示例中的镜像必须已在本机构建并独立核对，不表示镜像已公开或SWR可拉取：
+
+```bash
+bash agentarts/check-image-extensions-session.sh \
+  sha256:469ce7fb699c031cc012b94a20f04e7dbca687d527824ce554600f76f459f217 \
+  /absolute/path/to/clean-source /absolute/path/to/dev-dependencies \
+  /absolute/path/to/new-evidence
+```
+
+脚本先读真实bwrap ELF与BUILD flags检查加固，再用五cap/no-new-privileges/只读source与dev-dependencies，在镜像真实Node/npm/bwrap下跑private-permissions、默认安装器和Session测试。需要明确允许公共npm registry下载固定包，模型仍为本地夹具，无真实key/云/GitHub调用。它是 **container-source-harness**，与部署bundle HTTP smoke分别记录；新脚本完整自验以自己的binding/outcome/log为准，不能把先前单独harness的2passed/84.06s写成此脚本的全部用例通过。已有输出拒绝覆盖，失败保留原因；启用AppArmor宿主可沿用3.2的已加载profile选择，仍须实际probe通过。
+
+Docker客户端使用空临时配置及固定本地 `/var/run/docker.sock`，忽略继承的远程context/凭据；缺少本地镜像时拒绝隐式拉取。每次仅清理随机命名且带本次label的两个容器，实际清理状态另写 `cleanup.json`。默认总时限240秒；可用 `AGENTARTS_IMAGE_PROOF_TIMEOUT_SECONDS=1` 和全新输出目录复现限时拒绝。最终脚本完整5项通过、正常清理及1秒超时清理分别留有 [独立记录](verification.md#最终本地610f685镜像与五cap额外验证)，不把超时退出124写成任务成功。
 
 ### 4.2 v3固定任务计划与历史Review benchmark
 
@@ -222,7 +268,7 @@ unset AGENTARTS_LOCAL_API_KEY
 
 ## 5. 审批后按顺序验收
 
-先得到账号、资源创建/费用与私有部署的明确授权，随后执行本轮已经核对的构建、容器和 live 命令。当前命令入口和本轮证据由 [验证记录](verification.md) 单独记录；不要替换成历史 CI 的 image ID 或 Session。
+先核对目标租户可提供等价namespace/privateproc/seccomp/LSM/五cap；能力未确认或无法满足时暂停该路线，不新建资源硬试。通过能力核对后，再得到账号、资源创建/费用与私有部署的明确授权，执行最小固定候选的实际probe和验收。备选架构须另行评估并取得用户同意，不能冒充当前已兼容。命令与各环境证据由 [验证记录](verification.md) 分别保存。
 
 1. **基础部署**：确认实际目标架构、固定镜像/版本/alias、API_KEY、日志和网络。核对 `/ping`、原 DSH 启动、UID/caps 与凭据边界；尚未安全通过前不安装可发布的 GitHub workflow。
 2. **无发布调用**：用维护者控制的 PR 上下文检查真实 Runtime → DSH → read 回执 → 独立结果验证，保存 taskId、Session、真实 request ID、平台日志和清理状态。没有日志/UID/工具证据的 HTTP 200 不能代替验收。

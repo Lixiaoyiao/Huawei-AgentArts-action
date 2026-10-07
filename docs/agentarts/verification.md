@@ -4,7 +4,7 @@
 
 ## 当前完整任务迁移：本地回归与待完成验收
 
-主Action已选择v3 FullEngine，五种operation、受检完整workspace/delta、原Controller验证/finalizer、controlled/native、扩展和原DSH Session均有主链路代码。代码接入与真实环境验收分别见 [能力表](capability-matrix.md)。以下结果对应本轮工作树；通用npm alias修复已独立提交为 `8f9dd60d1b654a57d8b54e79d53676dfbd7fa693`，完整迁移尚待提交，不能把这些测试声明为最终clean提交或镜像的证明。下方1890项与旧9场景镜像不能代替本轮验证。
+主Action已选择v3 FullEngine，五种operation、受检完整workspace/delta、原Controller验证/finalizer、controlled/native、扩展和原DSH Session均有主链路代码。代码接入与真实环境验收分别见 [能力表](capability-matrix.md)。完整迁移源码 `09e41d9a14542be47afaaee334210101142f0e4c` 已推新仓库main，通用npm alias修复独立提交为 `8f9dd60d1b654a57d8b54e79d53676dfbd7fa693`。下列源码回归在提交前工作树执行；最终clean镜像另记录准确源码与构建摘要，不把两者写成同一次验证。下方1890项与旧镜像不能代替本轮验证。
 
 | 项目                         | 本次实际结果                                                   | 范围                                                                                                                                                                                                                                                                       |
 | ---------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -20,9 +20,60 @@
 
 Windows初轮在并发负载下实际为2022通过、32跳过、2失败，402.59s：大Buffer深比较超时，以及Session probe在既有总预算内未完成。前者改为等价的 `Buffer.equals` 字节检查，未削弱断言；后者未放宽deadline。随后两文件定向复测77通过、1跳过，37.33s，再完整idle重跑才得到上表2025/32；初轮失败保留在 `work/coverage-final-20261007.log`，不转写为通过。两组Linux回归各有Session覆盖，不相加成唯一用例数。
 
-最终clean生产容器、当前v3真实模型套件与原生ARM64仍待独立新证据。当前dirty候选和历史镜像不替代最终构建；原生ARM CI须推送本次候选后在匹配架构内核验证，旧QEMU记录不证明当前ARM BPF隔离。AgentArts与真实GitHub闭环仍未验收。
+09e clean AMD64镜像与七例真实模型已分别实际通过下节限定检查。最终本地610f685镜像修复五cap所有权交接，WSL固定模型smoke与另行installer/Session源码测试通过；Runtime/预检代码基于86da6b0，验证工具和文档另行提交，普通CI通过，原生Ubuntu24双架构镜像CI仍失败。各来源分开，不继承09e真实模型或旧QEMU证明。AgentArts与真实GitHub闭环仍未验收。
 
 Demo浏览器复现另用独立fresh-profile headless Edge，模拟写状态均明确标记simulation/历史回放，不调用Runtime、模型或GitHub；最终截图与浏览器元数据以本地 `outputs/pr-review-demo-qa/full-migration-20261007-final2/` 为准。内置Browser连接实际失败后采用独立Edge，不冒称内置浏览器通过。UI和源码测试不能代表华为云验收。
+
+### 最终本地610f685镜像与五cap额外验证
+
+固定源码 `610f68572f384d481b6f98e4dac39ee173d91c06`、clean构建输入摘要 `c38d7d80d39457308df480273c3ea9ec9114021fe285a1853c450699ad82fa47`、实际本地image ID `sha256:469ce7fb699c031cc012b94a20f04e7dbca687d527824ce554600f76f459f217`，见 [source binding](../../agentarts/evidence/full-v3/fivecap-container-amd64/source-bindings.json)。WSL中 [legacy9](../../agentarts/evidence/full-v3/fivecap-container-amd64/smoke.jsonl) 12664ms、[startup2](../../agentarts/evidence/full-v3/fivecap-container-amd64/startup-negative.json)、[默认v3十四](../../agentarts/evidence/full-v3/fivecap-container-amd64/full-smoke.jsonl) 12987ms与 [namespace-negative](../../agentarts/evidence/full-v3/fivecap-container-amd64/namespace-negative.jsonl) 320ms均通过；真实DSH、确定性模型，无真实模型/云/GitHub。
+
+同一image另以CHOWN/SETUID/SETGID/DAC_OVERRIDE/KILL五cap、no-new-privileges、只读source/dev-dependencies执行源码harness：真正默认npm运行时及扩展安装、原lock audit通过（80.597s），真实DSH Session save→fresh namespace恢复通过（2.319s），两例总84.06s。[binding](../../agentarts/evidence/full-v3/fivecap-image-source-harness/binding.json)、[实际log](../../agentarts/evidence/full-v3/fivecap-image-source-harness/image-installer-session-610f685-fivecap-passed.log)、[binary hardening](../../agentarts/evidence/full-v3/fivecap-image-source-harness/image-binary-610f685.log)。这补证了先前a3e chmod EPERM的所有权修复，不增加FOWNER；它是使用镜像真实Node/npm/bwrap的**container-source-harness**，不能写成部署bundle HTTP、AppArmor、真实模型或云端通过。
+
+交付的 [复验脚本](../../agentarts/check-image-extensions-session.sh) 另包含private-permissions定向测试；上述2passed记录来自之前单独harness，不改写为新脚本完整通过。新脚本完整自验状态由其独立输出记录确认，准确参数见 [部署手册](deployment.md#41-最终镜像与确定性模型-smoke)。
+
+最终交付脚本随后独立完整执行：3文件、5通过，100.82s；Session 2.239s、真正默认安装器97.263s、私有FD权限3项通过。固定610源码/同469镜像、实际ELF加固、五cap、空Docker配置/固定本地socket与清理均通过，原始 [binding](../../agentarts/evidence/full-v3/fivecap-script-final/binding.json)、[fixtures](../../agentarts/evidence/full-v3/fivecap-script-final/fixtures.log)、[outcome](../../agentarts/evidence/full-v3/fivecap-script-final/outcome.json) 和 [cleanup](../../agentarts/evidence/full-v3/fivecap-script-final/cleanup.json) 分开保存。它仍是source-harness、确定性模型，不是新真实模型或云验收。
+
+同一最终脚本另做1秒限时负例，实际退出124且 [两个自有容器清理通过](../../agentarts/evidence/full-v3/attempts/fivecap-script-timeout/cleanup.json)，不将预期超时写成任务成功。增加清理前的 [中间版本](../../agentarts/evidence/full-v3/fivecap-script-intermediate/provenance.json) 五项69.24s也保留；当时未采集shell脚本hash，如实记null，不补造运行时绑定。
+
+[86da6b0普通CI 37581841571](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37581841571) success：2031通过、32跳过，63.56s；coverage82.43/76.5/89.93/84.26；Docker Integrity1通过/38.93s、native e2e、五bundle构建、八compiled probes及diff检查通过。32skip包含需Linux root/cap的private FD三例；另有Linux root定向3+22 Runtime五操作+1 Session共26通过/6.26s，以及上述实际五cap两例补证。平台/权限条件不同的运行不合并为唯一通过数。
+
+[86原生镜像CI 37581841343](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37581841343) 两架构仍proc mount EPERM；source86 clean、构建输入摘要与610相同，原始source/arch/image绑定保存在 `agentarts/evidence/full-v3/attempts/image-ci-86da6b0/`。不能用普通CI或WSL通过替代它；审批后须先确认目标租户可提供等价namespace/privateproc/seccomp/LSM/五cap，否则暂停该部署路线，经用户同意另评架构备选。
+
+### 本轮09e clean AMD64生产容器
+
+固定源码 `09e41d9a14542be47afaaee334210101142f0e4c`，记录 `sourceDirty: false`，buildInputDigest `0acfe2dc5d055a05185b7046e6381500177fcfe9860b30e21ab94cd50c39ccfe`；本地部署image ID `sha256:2d3e340d4f6682deace5ccbcca90db173422a08d89ab521798af4ccc4a60c56a`。这是本地image/manifest事实，未上传SWR或部署AgentArts。
+
+| 实际检查              | 结果                    | 原始证据                                                                                                                                                           |
+| --------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 显式legacy兼容性      | 9场景通过，12718ms      | [smoke](../../agentarts/evidence/full-v3/container-amd64/smoke.jsonl)，仅该进程开启旧协议，不改变生产默认v3                                                        |
+| 默认v3主链路/失败停止 | 14项通过，13067ms       | [full-smoke](../../agentarts/evidence/full-v3/container-amd64/full-smoke.jsonl)：7种operation/mode/读写组合、入站认证、legacy拒绝、重复、权限、非法输出、超时/取消 |
+| namespace配置缺失     | 在模型请求前拒绝，317ms | [namespace negative](../../agentarts/evidence/full-v3/container-amd64/namespace-negative.jsonl)                                                                    |
+| 启动安全配置缺失      | 2项拒绝通过             | [startup negative](../../agentarts/evidence/full-v3/container-amd64/startup-negative.json)，缺cap或可被他人读取的模型key文件在health前拒绝                         |
+
+上表使用真实固定DSH和实际生产bundle/UID/bwrap，模型为确定性夹具；未调用真实模型、云或GitHub。耗时含失败/超时案例，不当作正常云任务延迟。[descriptor](../../agentarts/evidence/full-v3/container-amd64/image-descriptor.json) 保存镜像媒体类型；早期bundle启动失败、native/format-repair夹具失败分别保存在 `agentarts/evidence/full-v3/attempts/`，不覆盖或算最终通过。
+
+### 后续a3e加固候选：本地WSL通过，原生CI失败
+
+固定源码 `a3e61e520011623bafc6456f13abb433b460e689`，clean构建输入摘要 `4e0882ca223810ba9109a97c6e95d4477d9dd25626e9c22442853a9103a3c2fb`，实际本地image ID `sha256:736b08392b0dc3ac77f748a99a46dd80febe1819dbcbf81242e03adb938c537a`。WSL内核 `6.18.40.1-microsoft`、Docker `29.8.2`；[legacy9](../../agentarts/evidence/full-v3/hardened-container-amd64/smoke.jsonl) 12020ms、[2启动拒绝](../../agentarts/evidence/full-v3/hardened-container-amd64/startup-negative.json)、[默认v3十四检查](../../agentarts/evidence/full-v3/hardened-container-amd64/full-smoke.jsonl) 13005ms与 [namespace-negative](../../agentarts/evidence/full-v3/hardened-container-amd64/namespace-negative.jsonl) 314ms均通过。这是确定性模型与真实DSH，不含真实模型、云或GitHub，也不证明AppArmor policy enforcement。
+
+该候选保留固定Debian bubblewrap0.8.0-2+deb12u1四项补丁，只把新PID namespace procfs改为 `subset=pid`；源输入/patch/C hash、hardening=+all、无setuid、对应源码/许可/构建说明随镜像提供，见 [metadata](../../agentarts/bubblewrap-source.json)。`subset=pid`缩小系统proc暴露面，不能保证兼容父proc masked mounts；Linux5.8+只说明feature存在，内核版本不是充分验收条件。
+
+[原生镜像CI 37580414164](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37580414164) 的AMD64/ARM64在专用AppArmor enforce下仍报 `Can't mount proc on /newroot/proc: Operation not permitted`；补丁已实际编译存在，目标宿主仍拒绝。继续保留Docker masked paths、五cap/no-new-privileges/BPF和强制namespace，不以放宽宿主策略换通过。真实AgentArts仍待确认可行性，09e七例模型结果不改写成a3e模型验收。
+
+### 本轮v3真实DeepSeek七任务
+
+09e的固定2d3e镜像执行真实DSH与DeepSeek，runId `c00d93fd-9cd4-4f48-83db-dd2fda770454`，[suite](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.suite.json) 七例自动rubric通过，共32次provider请求。四个write案例均导入真实delta并独立执行固定Docker契约测试，完整原文件/候选/delta保存在各 `.candidate.json`。逐例表和边界见 [评测](evaluation.md#本轮v3七任务真实deepseek)。所有manualVerdict仍not-reviewed、actualCost unknown、successRate not-computed；绑定为合成GitHub身份，无GitHub发布，也未调用AgentArts。[清理记录](../../agentarts/evidence/full-v3/live-model/secret-cleanup.json) 核实专用模型key文件、容器和临时本地API capability已删除，不记录秘密路径或值。
+
+七份真实记录的 [Demo QA](../../agentarts/evidence/full-v3/browser-qa.json) 另用独立fresh-profile Edge154实际完成16布局/截图检查、静态原字节与历史/本地真实模型标签检查，page/CSP errors为空；四candidate的bytes SHA和评测绑定独立核对。浏览器只回放记录，未重新调用模型/云/GitHub；人工业务判读仍未完成。该次新QA与此前模拟写页面32布局检查分别保留。
+
+### 当前远程CI仍有失败
+
+[原生双架构镜像CI 37577194244](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37577194244) 的AMD64/ARM64均构建并通过legacy，但v3 namespace setup失败、provider请求为0；不能写原生ARM或v3 CI通过。09e源码普通CI还因原字节coverage JSON被格式检查失败；后续 `0acaa70` 排除raw evidence目录的格式重写，[CI 37577380843](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37577380843) 格式通过但有24项非root fixture清理失败。`47cc133` 只在显式test-only私有目录恢复owner-write再dispose，不改生产路径；Linux UID10001两文件实际复测46通过，7.66s，不把它写成此前完整CI已通过。
+
+`42a8bcb` 增加独立AppArmor策略，`ae7e319`修可选audit读取不遮蔽probe。42a普通CI实际2029通过、29跳过，64.94s，ae7普通CI也通过；a3e普通CI结果见下段。这些源码测试通过不代表镜像隔离通过。ae7原生镜像CI中default AppArmor拒mount，project策略已推进至proc挂载，但仍EPERM；a3e加proc subset补丁后也保留上述失败。固定probe无凭据/模型，project profile独立清理；parser检查与AppArmor未启用的WSL通过不证明enforcement。原始记录不为格式化改写，云容器能否提供这些宿主策略仍待租户确认，不使用SYS_ADMIN、unconfined或关闭宿主保护绕过失败。[部署要求](deployment.md#32-apparmor宿主策略)。
+
+[a3e普通CI 37580414609](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37580414609) 已success：2029通过、29跳过；128测试文件通过、4跳过，63.17s；coverage statements82.48%、branches76.56%、functions89.97%、lines84.32%，Docker Integrity 36.60s与native e2e通过。该runner的测试权限不等于部署镜像的五cap配置。后续用同a3e镜像额外运行默认installer与Session，实际发现worker-owned文件和session-plan的chmod EPERM；因此十四smoke通过不证明这两条生产路径已可用。后续610f685实际五cap复验通过，详见前节；不加FOWNER或其它cap，不把root全cap测试通过代替生产配置验收。
 
 ## 历史只读阶段：2026-10-04源码与证据
 

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "runId": "c00d93fd-9cd4-4f48-83db-dd2fda770454",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "diagnose-bounds",
+  "caseVersion": 1,
+  "operation": "diagnose",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+  "acceptanceDigest": "c7ae2a37654eee2a2bb910f6c6a0ccefd47f6578bf0557ec4221bfbda82b9c1f",
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Diagnosis identifies the exclusive upper bound and a concrete equality/empty counterexample",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [],
+  "taskDigest": "46b0e35c7a42f6d5575a49f5b3580f553cb032a39d0e4fbfa535ef190a8e1af9",
+  "workspaceDigest": "01993fd3edc8224f4505814899c12d0d828ff1e9f230254d51ed8d626b6d955e",
+  "delta": null,
+  "output": {
+    "protocolVersion": 1,
+    "operation": "diagnose",
+    "state": "final",
+    "summary": "Diagnosed the failing contract in src/bounds.ts. inBounds uses `index <= length` instead of `index < length`, an off-by-one that accepts index == length and accepts index 0 for empty collections (length 0), violating the contract that valid indices are 0 through length-1 and empty collections have no valid index.",
+    "findings": [
+      {
+        "title": "inBounds accepts out-of-range indices due to off-by-one upper bound",
+        "body": "The predicate returns `index >= 0 && index <= length`. The contract requires valid indices to be 0 through length-1, so the upper comparison must be strict (`index < length`). Using `<=` makes index == length pass and makes every nonnegative index pass when length == 0.",
+        "severity": "high",
+        "category": "correctness",
+        "confidence": 1,
+        "path": "src/bounds.ts",
+        "line": 2,
+        "evidence": "inBounds(3,3) evaluates (3>=0 && 3<=3) = true, but valid indices for length 3 are 0,1,2 so expected false (frozen counterexample). inBounds(0,0) evaluates (0>=0 && 0<=0) = true, but an empty collection has no valid index so expected false (frozen counterexample).",
+        "suggestion": "Change the return expression to `index >= 0 && index < length` so the upper bound is exclusive, preserving the public function contract."
+      }
+    ],
+    "diagnosis": "Off-by-one in the upper-bound comparison: `index <= length` should be `index < length`, causing index == length and all nonnegative indices for length == 0 to be incorrectly reported as in-bounds.",
+    "changePlan": []
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 4,
+    "requestLimit": 12,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-only"
+  },
+  "durationMs": 20781,
+  "startedAt": "2026-10-07T05:36:18.552Z",
+  "completedAt": "2026-10-07T05:36:39.333Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 12,
+    "actualRequestCount": 4,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:2d3e340d4f6682deace5ccbcca90db173422a08d89ab521798af4ccc4a60c56a",
+    "sourceCommit": "09e41d9a14542be47afaaee334210101142f0e4c",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

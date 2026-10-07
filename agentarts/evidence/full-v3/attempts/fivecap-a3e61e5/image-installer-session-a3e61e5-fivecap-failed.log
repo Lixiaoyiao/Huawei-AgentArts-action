@@ -1,0 +1,71 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/opt/fixture[39m
+
+ [31m×[39m test/agentarts-session-runtime.test.ts[2m > [22mproduction DSH Session through the full Runtime[2m > [22msaves real DSH events, resumes them in a fresh namespace and keeps the current workspace[32m 84[2mms[22m[39m
+[31m   → EPERM: operation not permitted, chmod '/tmp/agentarts-task-Qm720z/dsh-action-R5zpf5/home/action-state/session-plan.json'[39m
+ [31m×[39m test/agentarts-runtime-installer.test.ts[2m > [22mproduction isolated default package installer[2m > [22minstalls pinned runtime and a pinned package without lifecycle scripts, then passes the original lock audit[33m 652[2mms[22m[39m
+[31m   → EPERM: operation not permitted, chmod '/tmp/dsh-action-I7kQdM/home/profiles/github-action'[39m
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 2 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m test/agentarts-runtime-installer.test.ts[2m > [22mproduction isolated default package installer[2m > [22minstalls pinned runtime and a pinned package without lifecycle scripts, then passes the original lock audit
+[31m[1mError[22m: EPERM: operation not permitted, chmod '/tmp/dsh-action-I7kQdM/home/profiles/github-action'[39m
+[36m [2m❯[22m writableTree src/agentarts/installer.ts:[2m128:5[22m[39m
+    [90m126|[39m   [35mconst[39m writableTree [33m=[39m [35masync[39m (directory[33m:[39m string)[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m [33m=>[39m {
+    [90m127|[39m     [35mawait[39m [34mchown[39m(directory[33m,[39m [33mUID[39m[33m,[39m [33mUID[39m)[33m;[39m
+    [90m128|[39m     [35mawait[39m [34mchmod[39m(directory[33m,[39m [34m0o750[39m)[33m;[39m
+    [90m   |[39m     [31m^[39m
+    [90m129|[39m     for (const entry of await readdir(directory, { withFileTypes: true…
+    [90m130|[39m       [35mconst[39m path [33m=[39m [34mjoin[39m(directory[33m,[39m entry[33m.[39mname)[33m;[39m
+[90m [2m❯[22m installAgentArtsPackages src/agentarts/installer.ts:[2m140:3[22m[39m
+[90m [2m❯[22m test/agentarts-runtime-installer.test.ts:[2m71:9[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ errno: -1, code: 'EPERM', syscall: 'chmod', path: '/tmp/dsh-action-I7kQdM/home/profiles/github-action' }[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m test/agentarts-session-runtime.test.ts[2m > [22mproduction DSH Session through the full Runtime[2m > [22msaves real DSH events, resumes them in a fresh namespace and keeps the current workspace
+[31m[1mError[22m: EPERM: operation not permitted, chmod '/tmp/agentarts-task-Qm720z/dsh-action-R5zpf5/home/action-state/session-plan.json'[39m
+[36m [2m❯[22m permissions src/agentarts/worker.ts:[2m245:3[22m[39m
+    [90m243|[39m   testOnly[33m:[39m boolean[33m,[39m
+    [90m244|[39m )[33m:[39m [33mPromise[39m[33m<[39m[35mvoid[39m[33m>[39m {
+    [90m245|[39m   [35mawait[39m [34mchmod[39m(path[33m,[39m mode)[33m;[39m
+    [90m   |[39m   [31m^[39m
+    [90m246|[39m   if (!testOnly) await chown(path, workerOwned ? AGENTARTS_WORKER_UID …
+    [90m247|[39m }
+[90m [2m❯[22m runAgentArtsRuntimeTask src/agentarts/worker.ts:[2m608:7[22m[39m
+[90m [2m❯[22m test/agentarts-session-runtime.test.ts:[2m188:21[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22m[39m
+[31m[1mSerialized Error:[22m[39m [90m{ errno: -1, code: 'EPERM', syscall: 'chmod', path: '/tmp/agentarts-task-Qm720z/dsh-action-R5zpf5/home/action-state/session-plan.json' }[39m
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[31m2 failed[39m[22m[90m (2)[39m
+[2m   Start at [22m 06:21:03
+[2m   Duration [22m 1.92s[2m (transform 523ms, setup 0ms, import 976ms, tests 738ms, environment 0ms)[22m
+
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: /usr/local/bin/node /opt/fixture/node_modules/vitest/vitest.mjs run test/agentarts-runtime-installer.test.ts test/agentarts-session-runtime.test.ts --config /tmp/vitest-image-proof.mjs --configLoader native --maxWorkers 1 --no-file-parallelism --reporter verbose
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:925:11)
+    at execFileSync (node:child_process:961:15)
+    at file:///opt/fixture/[eval1]:6:1
+    at ModuleJob.run (node:internal/modules/esm/module_job:437:25)
+    at async node:internal/modules/esm/loader:246:26
+    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:243:20)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 14,
+  stdout: null,
+  stderr: null
+}
+
+Node.js v24.15.0

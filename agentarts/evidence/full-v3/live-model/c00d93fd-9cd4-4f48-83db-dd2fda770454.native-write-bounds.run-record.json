@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "744b1c24-8534-4ec2-a0cd-4e270e4ccb94",
+    "repository": "agentarts-fixtures/full-v1",
+    "url": "",
+    "pullNumber": 0,
+    "kind": "repository",
+    "operation": "task",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd"
+  },
+  "stages": [
+    {
+      "name": "Runtime + DSH + Controller boundary + business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-07T05:37:12.506Z",
+      "completedAt": "2026-10-07T05:37:37.665Z"
+    }
+  ],
+  "tools": [],
+  "validation": {
+    "status": "passed",
+    "original": {
+      "status": "passed",
+      "commandCount": 1
+    },
+    "checks": [
+      "PASS: Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "PASS: Runtime returned a final result",
+      "PASS: Native DSH tool observations were recorded (telemetry, not individual tool grants or proof of a source read)"
+    ]
+  },
+  "result": {
+    "summary": "Fixed the inBounds boundary check in src/bounds.ts to treat valid indices as 0 through length-1 (index < length instead of index <= length), so empty collections (length 0) have no valid index and index == length is out of bounds. This resolves both frozen counterexamples: {index:3,length:3} now returns false and {index:0,length:0} now returns false, while preserving the exported inBounds(index: number, length: number): boolean API."
+  },
+  "observedTools": [
+    "bash",
+    "create_goal",
+    "edit",
+    "exit_plan_mode",
+    "get_goal",
+    "glob",
+    "grep",
+    "interrupt_agent",
+    "job_kill",
+    "job_list",
+    "job_output",
+    "list_agents",
+    "read",
+    "read_image",
+    "send_message",
+    "skill",
+    "subagent",
+    "subagent_fork",
+    "todo_write",
+    "update_goal",
+    "web_search",
+    "workflow",
+    "write"
+  ],
+  "runtime": {
+    "sessionId": "744b1c24-8534-4ec2-a0cd-4e270e4ccb94",
+    "endpoint": "loopback-production-full-container",
+    "dshVersion": "0.2.0-rc.2"
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 25162,
+  "warnings": [
+    "Budget approval is not a dollar-denominated hard cap. Configure the trusted supervisor request ceiling before execution.",
+    "Automatic contract rubric only; human acceptance remains pending.",
+    "This loopback production Runtime evidence is not Huawei AgentArts or real GitHub task evidence.",
+    "GitHub binding is synthetic; no GitHub publication was attempted.",
+    "One AgentLoop turn per case. Multi-turn repair is covered separately by offline Controller integration tests.",
+    "Human acceptance pending; actual dollar cost unknown."
+  ]
+}

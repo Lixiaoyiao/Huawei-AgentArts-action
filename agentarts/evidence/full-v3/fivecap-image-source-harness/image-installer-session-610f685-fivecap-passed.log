@@ -1,0 +1,11 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/opt/fixture[39m
+
+ [32m✓[39m test/agentarts-session-runtime.test.ts[2m > [22mproduction DSH Session through the full Runtime[2m > [22msaves real DSH events, resumes them in a fresh namespace and keeps the current workspace[33m 2319[2mms[22m[39m
+ [32m✓[39m test/agentarts-runtime-installer.test.ts[2m > [22mproduction isolated default package installer[2m > [22minstalls pinned runtime and a pinned package without lifecycle scripts, then passes the original lock audit[33m 80597[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m   Start at [22m 06:31:01
+[2m   Duration [22m 84.06s[2m (transform 499ms, setup 0ms, import 948ms, tests 82.92s, environment 0ms)[22m
+

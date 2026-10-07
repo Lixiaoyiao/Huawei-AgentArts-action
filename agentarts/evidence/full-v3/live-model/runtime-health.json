@@ -1,0 +1,1 @@
+{"status":"Healthy","modelPolicy":{"kind":"live-provider","provider":"deepseek","model":"deepseek-v4-pro","upstreamOrigin":"https://api.deepseek.com","requestLimit":12,"maxOutputTokens":4096},"protocolVersions":[3]}

@@ -6,9 +6,11 @@
 
 当前 Action 已将原 `review`、通用读写 `task`、CI `diagnose`、受控 `fix` 和 Issue→PR `implement` 接到版本化 Runtime engine，并适配 controlled/native 组合、原工具回调、扩展和 DSH checkpoint 传输。这是代码接入状态，各环境实际验收另见 [能力迁移表](docs/agentarts/capability-matrix.md)。**真实 GitHub → AgentArts → DSH → GitHub 闭环尚未验收；账号准入仍待审批。**
 
+本地 `09e41d9` clean AMD64生产镜像已通过七个真实DeepSeek案例，含四次实际文件修改与独立Docker契约测试；合成GitHub身份、自动规则通过，人工未复核、费用未知。最终本地 `610f685` 镜像修复所有权交接后，固定模型smoke与额外五cap源码测试中的扩展安装、Session恢复通过；原生Ubuntu24镜像CI仍拒绝proc挂载。[验证记录](docs/agentarts/verification.md) 分开保存证据范围，创建云资源前须先确认目标租户能满足所需沙箱。
+
 代码通过绑定任务、实体、ref、提交和权限的受检工作区清单送入 Runtime。DSH 必须在 Linux 文件、进程、用户和网络 namespace 内运行；真实凭据留在受信监督进程。停止 DSH 后捕获的实际文件差异返回 Controller，继续使用原独立 Docker 测试、验证完整性检查和 GitHub finalizer。监督进程代理已接入受限只读 HTTP MCP 凭据工具，任务中的明文凭据定义仍拒绝；这不等于华为 Gateway/MCP 服务已验收。
 
-从 [迁移 README](agentarts/README.md) 和 [部署手册](docs/agentarts/deployment.md) 开始。[新工作流安装器](agentarts/install.mjs) 复用原模板，要求显式固定本项目 Action commit。另见 [验证记录](docs/agentarts/verification.md)、[Demo 指南](docs/agentarts/demo-guide.md)、[业务验收](docs/agentarts/evaluation.md) 和 [上游更新说明](docs/agentarts/maintenance.md)。历史只读镜像和真实模型评测不替代本轮完整任务代码验收。
+从 [迁移 README](agentarts/README.md) 和 [部署手册](docs/agentarts/deployment.md) 开始。[新工作流安装器](agentarts/install.mjs) 复用原模板，要求显式固定本项目 Action commit。另见 [Demo 指南](docs/agentarts/demo-guide.md)、[业务验收](docs/agentarts/evaluation.md) 和 [上游更新说明](docs/agentarts/maintenance.md)。部署须满足文档中的内核、namespace和宿主策略检查。
 
 本项目入口是 `agentarts/action.yml`。根目录旧 Action 与旧安装器仍指向原项目，作为上游参考与回归材料保留；完整旧介绍归档于 [docs/upstream](docs/upstream/README.zh-CN.md)，不要把旧安装命令当成本版入口。
 

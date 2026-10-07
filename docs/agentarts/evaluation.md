@@ -1,6 +1,6 @@
 # 业务评测与真实运行验收
 
-固定模型任务集为 `pr-review-boundaries-v1`，源码在 [agentarts/fixtures/pr-review/cases.json](../../agentarts/fixtures/pr-review/cases.json)。另保留 `cloud-github-review-candidates-v1` 的真实GitHub首轮候选，二者不混作已运行任务集。当前v3已接原五种operation与文件/Session传输，状态见 [能力表](capability-matrix.md)；下面四例真实模型与旧v1/v2容器证明原记录中的只读版本，不证明本轮完整迁移。测试数量不是审查成功率，夹具响应不算模型发现缺陷，平台分数不替代业务判定。
+当前v3本地模型套件为 `full-runtime-contracts-v1`，另保留历史只读 `pr-review-boundaries-v1`（源码在 [cases.json](../../agentarts/fixtures/pr-review/cases.json)）和未运行的 `cloud-github-review-candidates-v1` 真实GitHub首轮候选，各自保存版本与范围。当前v3已接原五种operation与文件/Session传输，状态见 [能力表](capability-matrix.md)；旧四例真实模型与v1/v2容器仅证明旧只读版本。测试数量不是审查成功率，夹具响应不算模型发现缺陷，平台分数不替代业务判定。
 
 ## 可复现的本地验证
 
@@ -16,13 +16,35 @@ npm run typecheck
 
 worker 测试应按该文件的实际执行方式记为本地进程或模拟；只有启动安装的固定版本 DSH 才能记“本地真实 DSH”。本地模型代理返回受控响应仍不是DeepSeek模型效果评测。完整通用回归另执行 `npm test -- --maxWorkers=2` 与项目typecheck/lint/合同检查；不得把仅跑新增测试写成完整回归通过。
 
-2026-10-07完整idle coverage实际为2025通过、32跳过，118.70s；初轮并发执行的2失败与随后定向/完整复测分别保留。Linux另有两组各36项实际通过，覆盖生产namespace、五operation、Session、HTTPS凭据MCP及默认npm安装/原lock audit；它们使用确定性模型，Session用例有重叠，不合并为唯一用例数或模型效果。当前clean生产镜像、v3真实模型和原生ARM验收待新记录，详见 [验证记录](verification.md)。
+2026-10-07完整idle coverage实际为2025通过、32跳过，118.70s；初轮并发执行的2失败与随后定向/完整复测分别保留。Linux另有两组各36项实际通过，覆盖生产namespace、五operation、Session、HTTPS凭据MCP及默认npm安装/原lock audit；它们使用确定性模型，Session用例有重叠，不合并为唯一用例数或模型效果。当前clean AMD64镜像与v3真实模型已有独立记录，原生ARM/v3 CI仍失败，详见 [验证记录](verification.md)。
 
-[历史 AMD64 生产容器 CI](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37186465878) 实际启动固定版本 DSH、独立 UID与只读工具；它只对应其旧commit/镜像。当前 [local-container.sh](../../agentarts/local-container.sh) 分别运行显式开启legacy的旧9场景和默认v3的14项检查。v3含7种operation/mode/读写组合、本地入站认证、默认拒绝legacy、重复任务、未授写入、非法输出、取消与超时清理；另独立运行namespace安全配置缺失时在模型调用前拒绝的检查。模型和PR/CI为确定性夹具；代码列出的检查不等于本轮最终镜像已通过，实际结果见 [验证记录](verification.md)。源码dirty试运行、最终本轮验证与历史双架构CI分开留存，这些边界检查不计入真实模型审查成功率。
+最终610f685本地镜像另以五cap执行固定模型smoke，默认安装器与Session源码harness两例通过；这是所有权修复的部署配置补证，不是新镜像真实模型效果。86普通CI2031通过/32跳过与原生镜像CI procEPERM分别保留，交付复验脚本另有追加private FD用例，不能混写为之前两例harness的同一次运行。
+
+[历史 AMD64 生产容器 CI](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37186465878) 实际启动固定版本 DSH、独立 UID与只读工具；它只对应其旧commit/镜像。当前 [local-container.sh](../../agentarts/local-container.sh) 分别运行显式开启legacy的旧9场景和默认v3的14项检查。v3含7种operation/mode/读写组合、本地入站认证、默认拒绝legacy、重复任务、未授写入、非法输出、取消与超时清理；另独立运行namespace安全配置缺失时在模型调用前拒绝的检查。模型和PR/CI为确定性夹具；本轮clean AMD64镜像实际通过，原生双架构远程CI仍在v3隔离setup失败，分别见 [验证记录](verification.md)。源码dirty试运行、最终本轮验证与历史双架构CI分开留存，这些边界检查不计入真实模型审查成功率。
 
 v2工具回调测试复用原Controller `runAgentLoop`、callId与不可信反馈。注入transport/provider的回调测试属于本地模拟，不是实际AgentArts/GitHub API结果；生产镜像中的真实DSH v2 read/typed output另记。文件传输测试验证完整bytes、SHA/mode、拒绝路径、stage/rollback与上游strict完整性分类，不运行仓库测试、不发布GitHub；不能计为云端fix/Issue→PR已通过。
 
-## 固定四任务：模型评测与自动规则
+## 本轮v3七任务真实DeepSeek
+
+本地生产Runtime、真实DSH `0.2.0-rc.2` 与 `deepseek-v4-pro` 执行 `full-runtime-contracts-v1`。固定源码 `09e41d9a14542be47afaaee334210101142f0e4c` 与实际镜像 `sha256:2d3e340d4f6682deace5ccbcca90db173422a08d89ab521798af4ccc4a60c56a` 的clean构建记录见 [验证记录](verification.md)。评测CLI中的source/image仍标operatorProvided，不能单凭CLI声明代替构建证明。
+
+[原始suite](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.suite.json) 的runId为 `c00d93fd-9cd4-4f48-83db-dd2fda770454`，七例自动rubric均passed，每例固定一轮，合成repository/entity/base/head，不向GitHub发布。读取case依独立源码反例、精度过滤与diff定位规则判定；write case从实际工作区采集delta，导入Controller后用独立Docker运行冻结的契约测试，不采模型自报测试结果。
+
+| case / DSH模式                | provider请求 | 实测耗时 | 自动验收范围与原始证据                                                                                                                                                                                                                                                                                                                                 |
+| ----------------------------- | ------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| review-bounds / controlled    | 4            | 28059ms  | 缺陷反例与diff定位，保留1finding；[evaluation](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.review-bounds.evaluation.json)                                                                                                                                                                                         |
+| review-clean / controlled     | 3            | 11940ms  | 保持语义且无高精度误报；[evaluation](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.review-clean.evaluation.json)                                                                                                                                                                                                    |
+| diagnose-bounds / controlled  | 4            | 20781ms  | 读源码并识别exclusive upper bound与具体反例，无修改；[evaluation](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.diagnose-bounds.evaluation.json)                                                                                                                                                                    |
+| fix-bounds / controlled       | 5            | 10965ms  | 真实delta、独立Docker 72契约case通过；[evaluation](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.fix-bounds.evaluation.json)、[candidate](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.fix-bounds.candidate.json)                                                               |
+| task-write-roles / controlled | 5            | 12126ms  | 真实delta、独立Docker 38契约case通过；[evaluation](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.task-write-roles.evaluation.json)、[candidate](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.task-write-roles.candidate.json)                                                   |
+| implement-roles / controlled  | 5            | 10073ms  | 真实delta、独立Docker 38契约case通过；[evaluation](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.implement-roles.evaluation.json)、[candidate](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.implement-roles.candidate.json)                                                     |
+| native-write-bounds / native  | 6            | 25162ms  | 真实delta、独立Docker 72契约case通过；native仅记录观测名称，不伪造逐工具成功回执；[evaluation](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.native-write-bounds.evaluation.json)、[candidate](../../agentarts/evidence/full-v3/live-model/c00d93fd-9cd4-4f48-83db-dd2fda770454.native-write-bounds.candidate.json) |
+
+总计32次provider请求。记录批准值为每case最多12次请求、单请求最多4096输出tokens、每case300000ms、套件5美元参考预算；美元不是账单硬上限，actualCost仍unknown。四份candidate保存完整原bytes、候选bytes和绑定delta，供人工查阅；JSON文件本身不执行代码或发布。72/38是对应fixture的契约case数量，重复运行不算新独立业务任务。
+
+全部 `manualVerdict: not-reviewed`、`humanReviewRequired: true`、`successRate: not-computed`，只通过自动固定契约与执行边界。测试通过不等于所有需求正确；尚须人工审阅候选、反例和潜在回归。无真实GitHub任务/评论/PR，无AgentArts调用，成本和平台Trace未知。[七记录Demo QA](../../agentarts/evidence/full-v3/browser-qa.json) 独立Edge实际检查16布局/截图、原字节与四candidate绑定，页面只历史回放，不继承此前模拟写页面的通过结果。[清理检查](../../agentarts/evidence/full-v3/live-model/secret-cleanup.json) 核实专用模型key文件、容器和临时API capability已删除。
+
+## 历史固定四任务：模型评测与自动规则
 
 每个case均固定id/version、base/head完整源码、patch、requirements、expectedLines、成功标准和counterexamples。任务使用内容摘要构造合成commit identifiers，不是GitHub commit；其仓库身份与PR编号也是夹具，没有真实GitHub链接。改变源码/patch/oracle时必须更改case或suite版本，并保存suiteDigest，不能拿已有记录覆盖新任务。
 

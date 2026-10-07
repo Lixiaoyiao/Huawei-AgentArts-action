@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "7aa92110-32a4-4b0a-aa7e-3a464dc396b4",
+    "repository": "agentarts-fixtures/full-v1",
+    "url": "",
+    "pullNumber": 0,
+    "kind": "repository",
+    "operation": "diagnose",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd"
+  },
+  "stages": [
+    {
+      "name": "Runtime + DSH + Controller boundary + business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-07T05:36:18.552Z",
+      "completedAt": "2026-10-07T05:36:39.330Z"
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.search",
+      "runtimeName": "glob",
+      "ok": true,
+      "completed": true,
+      "durationMs": 16
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 6
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 5
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "checks": [
+      "PASS: Diagnosis identifies the exclusive upper bound and a concrete equality/empty counterexample",
+      "PASS: Runtime returned a final result",
+      "PASS: Real source context was read through a successful completed tool receipt"
+    ]
+  },
+  "result": {
+    "summary": "Diagnosed the failing contract in src/bounds.ts. inBounds uses `index <= length` instead of `index < length`, an off-by-one that accepts index == length and accepts index 0 for empty collections (length 0), violating the contract that valid indices are 0 through length-1 and empty collections have no valid index."
+  },
+  "runtime": {
+    "sessionId": "7aa92110-32a4-4b0a-aa7e-3a464dc396b4",
+    "endpoint": "loopback-production-full-container",
+    "dshVersion": "0.2.0-rc.2"
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 20782,
+  "warnings": [
+    "Budget approval is not a dollar-denominated hard cap. Configure the trusted supervisor request ceiling before execution.",
+    "Automatic contract rubric only; human acceptance remains pending.",
+    "This loopback production Runtime evidence is not Huawei AgentArts or real GitHub task evidence.",
+    "GitHub binding is synthetic; no GitHub publication was attempted.",
+    "One AgentLoop turn per case. Multi-turn repair is covered separately by offline Controller integration tests.",
+    "Human acceptance pending; actual dollar cost unknown."
+  ]
+}

@@ -4,22 +4,26 @@
 
 “代码接入”表示主Action实际选择原Controller加v3Runtime engine；不表示本轮新源码全部生产环境测试已完成。各次源码、镜像、实际模型/夹具与平台验收分别记录于 [verification.md](verification.md)。历史v1/v2只读镜像与四例真实模型评测保留原记录，不能继承为v3/native/write证据。
 
+本轮09e clean AMD64生产镜像已通过默认v3十四检查与安全拒绝；同镜像七个真实DeepSeek任务自动rubric通过，含四write真实delta和独立Docker契约测试。人工判读仍未完成，无真实GitHub/AgentArts。新a3e process-only procfs候选在原生Ubuntu24双架构CI专用AppArmor enforce下仍报proc mount EPERM；不把09e本地通过扩展为新镜像或所有宿主通过。
+
+最终610f685本地镜像另通过固定模型smoke，五cap所有权修复后的真正默认安装器/Session恢复在同image只读源码harness通过；其范围独立于部署bundle HTTP与09e模型。86普通CI通过，原生镜像CI仍拒proc；审批后先核对目标租户等价sandbox能力，不能满足就暂停该部署路线，经用户同意另评备选，不新建资源硬试。
+
 ## Operation、事件和输入
 
 原operation为 `task`、`review`、`diagnose`、`fix`、`implement`，auto只负责路由。[命令解析](../../src/commands/parse.ts)、[路由](../../src/commands/router.ts)、[上下文状态机](../../src/orchestration/context.ts) 保留。
 
-| 原能力                                      | 当前迁移实现                                                                | 当前边界/验收                                                                                   |
-| ------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| PR `review`                                 | 原diff/精度过滤/行映射/publisher，通过v3 engine运行DSH                      | 代码接入；历史本地真实DeepSeek四例自动rubric通过，合成PR、人工未复核；本轮新源码及云/GitHub另验 |
-| `task --read`                               | 原Issue/PR/automation任务、typed taskOutput和答复finalizer                  | 代码接入；当前发送原准备工作区全部文件；不可信任务仍只有上下文                                  |
-| `diagnose`                                  | 原head绑定check-runs/jobs/有界不可信日志，Controller工具请求/反馈与发布     | 代码接入；GitHub读凭据不进入Runtime；真实失败run、日志权限及云环境待验                          |
-| PR `fix`                                    | v3真实编辑/delta导入后进入原验证/finishFix/API提交                          | 代码接入；需allow-write、原授权、独立测试、固定head/ref；真实云写/实际GitHub待验                |
-| Issue `implement`                           | v3工作区返回原finishImplement、Issue指纹/base复查、确定性branch/PR marker   | 代码接入；不把PR fix绑定替代Issue身份；真实创建PR待验                                           |
-| `task --write`                              | 保留PR提交、Issue/automation创建PR和无变更答复的原task分支                  | 代码接入；原write policy、operation identity、验证和finalizer仍决定权限                         |
-| 自动PR review、精确mention                  | 原opened/synchronize/ready/reopened；Issue/review/review-comment首行mention | 原路由直接复用；触发不授权限，正文/代码/日志不重新解释为命令                                    |
-| label/assignee/actor、fork                  | 原过滤与政策；不可信fork只有bounded context，无工具/工作区/扩展/Session     | 参数恢复为原contract；真实事件组合逐项验收                                                      |
-| dispatch/schedule/prompt-file/context-files | 原受信prompt修订、automation基线与附件文本选择                              | 参数/代码接入；不是任意GitHub数据成为控制指令；原未实现多模态仍未实现                           |
-| workflow_run                                | 原失败run diagnose/明确授权fix；无同仓PR fix降diagnose                      | 无PR工作区固定workflowRun.headSha，PR仍head优先；真实run权限/行为待验                           |
+| 原能力                                      | 当前迁移实现                                                                | 当前边界/验收                                                                                  |
+| ------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| PR `review`                                 | 原diff/精度过滤/行映射/publisher，通过v3 engine运行DSH                      | 本轮v3本地真实DeepSeek defect/clean自动rubric通过；合成PR、人工未复核，云/GitHub待验           |
+| `task --read`                               | 原Issue/PR/automation任务、typed taskOutput和答复finalizer                  | 代码接入；当前发送原准备工作区全部文件；不可信任务仍只有上下文                                 |
+| `diagnose`                                  | 原head绑定check-runs/jobs/有界不可信日志，Controller工具请求/反馈与发布     | 代码接入；GitHub读凭据不进入Runtime；真实失败run、日志权限及云环境待验                         |
+| PR `fix`                                    | v3真实编辑/delta导入后进入原验证/finishFix/API提交                          | 本地真实模型delta+独立Docker契约通过；仍需allow-write/原授权/固定head/ref，真实云/GitHub写待验 |
+| Issue `implement`                           | v3工作区返回原finishImplement、Issue指纹/base复查、确定性branch/PR marker   | 代码接入；不把PR fix绑定替代Issue身份；真实创建PR待验                                          |
+| `task --write`                              | 保留PR提交、Issue/automation创建PR和无变更答复的原task分支                  | 代码接入；原write policy、operation identity、验证和finalizer仍决定权限                        |
+| 自动PR review、精确mention                  | 原opened/synchronize/ready/reopened；Issue/review/review-comment首行mention | 原路由直接复用；触发不授权限，正文/代码/日志不重新解释为命令                                   |
+| label/assignee/actor、fork                  | 原过滤与政策；不可信fork只有bounded context，无工具/工作区/扩展/Session     | 参数恢复为原contract；真实事件组合逐项验收                                                     |
+| dispatch/schedule/prompt-file/context-files | 原受信prompt修订、automation基线与附件文本选择                              | 参数/代码接入；不是任意GitHub数据成为控制指令；原未实现多模态仍未实现                          |
+| workflow_run                                | 原失败run diagnose/明确授权fix；无同仓PR fix降diagnose                      | 无PR工作区固定workflowRun.headSha，PR仍head优先；真实run权限/行为待验                          |
 
 原十类事件 `issues`、`issue_comment`、`pull_request`、`pull_request_target`、`pull_request_review`、`pull_request_review_comment`、`workflow_dispatch`、`repository_dispatch`、`schedule`、`workflow_run` 保留。[事件](../../src/github/events.ts)、[实体解析](../../src/github/context.ts)。
 
@@ -66,6 +70,10 @@ Controller原restore后才导出安全metadata与原sessions/plan：repository/w
 ## 真实平台依赖与范围
 
 生产新v3必须有Linux root supervisor、UID/GID10001、CHOWN/DAC_OVERRIDE/KILL/SETGID/SETUID、bwrap和user/PID/network/IPC/UTS/filesystem namespace。Docker需固定 [seccomp-bwrap.json](../../agentarts/seccomp-bwrap.json)，允许bwrap setup所需六项syscall；worker启动后额外BPF拒新namespace。没有SYS_ADMIN、privileged或Docker socket要求。ARM64新增BPF/kernel隔离要求匹配架构的原生Linux验收，旧x64用户态QEMU通过不继承；本地Linux/Docker通过不能证明AgentArts租户支持这些kernel/seccomp能力，真实平台不满足即停止，不降级执行。
+
+当前helper从固定Debian bubblewrap0.8.0-2+deb12u1源码保留四补丁，仅改新PID namespace的procfs为 `subset=pid`；无setuid、Debian hardening=+all、完整对应源码/许可随镜像。Linux5.8+ feature与实际probe均须满足，系统proc条目不可用的工具须另验；保留Docker masked paths，不挂hostproc/完整proc fallback。这项实现未解决当前Ubuntu24 CI所有限制，不能声明AgentArts已兼容。[源码metadata](../../agentarts/bubblewrap-source.json)、[部署](deployment.md)。
+
+启用AppArmor的宿主另需允许setup。独立 [固定profile](../../agentarts/apparmor-runtime.profile) 保留Moby其它限制，允许userns创建、mount和bwrap两处固定pivot；mount未按路径缩小，必须与无SYS_ADMIN/五cap/no-new-privileges/worker清cap和BPF合用。CI先无凭据固定probe记录default拒绝，再加载专用profile复测，always仅卸载自身策略；不能用unconfined或全局关闭宿主限制替代。真实AgentArts是否提供这类宿主策略能力未确认，不能声称可部署。[部署与清理](deployment.md#32-apparmor宿主策略)。
 
 华为官方HTTP当前要求ARM64/8080/`/ping`/`/invocations`；创建API同时列arm64/x86_64。API_KEY创建后不能变；Latest随版本移动，固定alias仍可被管理员移动。AgentArts会话存储启用后不能关闭，FUSE权限不保证chmod/chown，所以不拿它保存DSH私有状态。[HTTP](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_070.html)、[创建API](https://support.huaweicloud.com/api-agentarts/CreateCoreRuntime.html)、[认证](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_227.html)、[访问方式](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_048.html)、[会话](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_119.html)。
 

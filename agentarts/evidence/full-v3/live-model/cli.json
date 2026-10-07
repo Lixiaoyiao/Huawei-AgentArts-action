@@ -1,0 +1,144 @@
+{
+  "status": "passed",
+  "plan": {
+    "schemaVersion": 1,
+    "suiteVersion": "full-runtime-contracts-v1",
+    "mode": "local-real-model",
+    "execute": true,
+    "suiteDigest": "56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9",
+    "cases": [
+      {
+        "id": "review-bounds",
+        "version": 1,
+        "operation": "review",
+        "access": "read",
+        "dshMode": "controlled",
+        "sourceFixture": "bounds-defect",
+        "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+        "criteria": "Report an actionable correctness finding on the changed upper-bound comparison, supported by the concrete index===length counterexample; no unrelated actionable finding."
+      },
+      {
+        "id": "review-clean",
+        "version": 1,
+        "operation": "review",
+        "access": "read",
+        "dshMode": "controlled",
+        "sourceFixture": "bounds-clean",
+        "sourceDigest": "3f74c40e784889100c774938ebec377182fb64ef9cb54ee93b90d80cbedd3b5a",
+        "criteria": "Return no high-precision actionable finding: the refactor retains the exclusive upper bound and the lower bound. Style suggestions are not defects."
+      },
+      {
+        "id": "diagnose-bounds",
+        "version": 1,
+        "operation": "diagnose",
+        "access": "read",
+        "dshMode": "controlled",
+        "sourceFixture": "bounds-defect",
+        "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+        "criteria": "Read actual source and identify the exclusive upper-bound defect with a concrete counterexample; no edits or execution."
+      },
+      {
+        "id": "fix-bounds",
+        "version": 1,
+        "operation": "fix",
+        "access": "write",
+        "dshMode": "controlled",
+        "sourceFixture": "bounds-defect",
+        "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+        "criteria": "Import a real source delta, preserve frozen tests, and pass the independent Docker contract suite; no GitHub publication."
+      },
+      {
+        "id": "task-write-roles",
+        "version": 1,
+        "operation": "task",
+        "access": "write",
+        "dshMode": "controlled",
+        "sourceFixture": "roles-defect",
+        "sourceDigest": "437efd0aad7b7c4a46c59f82999aa20107eda5bbdb815b55d7f3c94471695030",
+        "criteria": "Import a real source delta, preserve frozen tests, and pass the independent Docker contract suite; no GitHub publication."
+      },
+      {
+        "id": "implement-roles",
+        "version": 1,
+        "operation": "implement",
+        "access": "write",
+        "dshMode": "controlled",
+        "sourceFixture": "roles-defect",
+        "sourceDigest": "93180753bf8e5ae5bfb784ea630666f80dcb507da186963bc452c641a0f8c212",
+        "criteria": "Import a real source delta, preserve frozen tests, and pass the independent Docker contract suite; no GitHub publication."
+      },
+      {
+        "id": "native-write-bounds",
+        "version": 1,
+        "operation": "task",
+        "access": "write",
+        "dshMode": "native",
+        "sourceFixture": "bounds-defect",
+        "sourceDigest": "f38b07834910098dea9932c972098bec76573cff49f75ee4624dae09422df5ed",
+        "criteria": "Import a real source delta, preserve frozen tests, and pass the independent Docker contract suite; no GitHub publication."
+      }
+    ],
+    "maximumRuntimeInvocations": 7,
+    "maximumTurnsPerCase": 1,
+    "approvedProviderRequestsPerCase": 12,
+    "approvedMaxOutputTokens": 4096,
+    "maximumProviderRequests": 84,
+    "perCaseTimeoutMs": 300000,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d",
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false,
+    "githubBinding": "synthetic-content-hash-identities",
+    "githubPublication": "not-attempted",
+    "cloudVerification": "not-performed",
+    "warnings": [
+      "Budget approval is not a dollar-denominated hard cap. Configure the trusted supervisor request ceiling before execution.",
+      "Automatic contract rubric only; human acceptance remains pending.",
+      "This loopback production Runtime evidence is not Huawei AgentArts or real GitHub task evidence."
+    ]
+  },
+  "records": [
+    {
+      "caseId": "review-bounds",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.review-bounds.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.review-bounds.run-record.json"
+    },
+    {
+      "caseId": "review-clean",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.review-clean.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.review-clean.run-record.json"
+    },
+    {
+      "caseId": "diagnose-bounds",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.diagnose-bounds.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.diagnose-bounds.run-record.json"
+    },
+    {
+      "caseId": "fix-bounds",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.fix-bounds.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.fix-bounds.run-record.json"
+    },
+    {
+      "caseId": "task-write-roles",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.task-write-roles.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.task-write-roles.run-record.json"
+    },
+    {
+      "caseId": "implement-roles",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.implement-roles.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.implement-roles.run-record.json"
+    },
+    {
+      "caseId": "native-write-bounds",
+      "status": "passed",
+      "evidencePath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.native-write-bounds.evaluation.json",
+      "demoPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.native-write-bounds.run-record.json"
+    }
+  ],
+  "summaryPath": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.suite.json"
+}

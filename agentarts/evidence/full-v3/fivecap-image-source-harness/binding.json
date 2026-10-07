@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "mode": "container-source-harness",
+  "sourceCommit": "610f68572f384d481b6f98e4dac39ee173d91c06",
+  "sourceDirty": false,
+  "imageId": "sha256:469ce7fb699c031cc012b94a20f04e7dbca687d527824ce554600f76f459f217",
+  "buildInputDigest": "c38d7d80d39457308df480273c3ea9ec9114021fe285a1853c450699ad82fa47",
+  "testsPassed": 2,
+  "durationMs": 84060,
+  "sessionTestDurationMs": 2319,
+  "installerTestDurationMs": 80597,
+  "capabilities": ["CHOWN", "SETUID", "SETGID", "DAC_OVERRIDE", "KILL"],
+  "noNewPrivileges": true,
+  "sourceAndDevDependenciesReadOnly": true,
+  "customSeccomp": "agentarts/seccomp-bwrap.json",
+  "publicRegistry": "https://registry.npmjs.org",
+  "realDshCalled": true,
+  "realModelCalled": false,
+  "cloudCalled": false,
+  "githubPublished": false,
+  "limitations": [
+    "Source tests use the image's actual Node, npm and hardened bubblewrap; this is separate from compiled Runtime HTTP evidence.",
+    "This run used the one-off verification harness. The delivered check-image script is tested and recorded separately.",
+    "WSL success does not prove AppArmor enforcement or compatibility with the Ubuntu runner or AgentArts."
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "610f68572f384d481b6f98e4dac39ee173d91c06",
+  "scriptCommit": "18d8a79c2a4d9b17bdb46c068c32efdc97abeb93",
+  "executionScriptSha256": "456cc6a443d5ce35aa0b129d1af939af521940f4cfd95e6861a6285f9492347a",
+  "scriptHashCollectionAt": "after-execution; committed before this run and unchanged afterward",
+  "imageId": "sha256:469ce7fb699c031cc012b94a20f04e7dbca687d527824ce554600f76f459f217",
+  "mode": "container-source-harness",
+  "status": "passed",
+  "passedTests": 5,
+  "testFiles": 3,
+  "durationMs": 100820,
+  "sessionDurationMs": 2239,
+  "installerDurationMs": 97263,
+  "cleanup": "passed",
+  "modelEvidence": "deterministic-fixture",
+  "realModelCalled": false,
+  "cloudCalled": false,
+  "githubPublished": false,
+  "limitation": "Source tests inside the fixed image, separate from compiled Runtime HTTP and cloud acceptance."
+}

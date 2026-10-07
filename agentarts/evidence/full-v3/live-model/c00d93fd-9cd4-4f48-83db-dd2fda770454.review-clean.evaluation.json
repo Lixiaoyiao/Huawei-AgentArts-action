@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "runId": "c00d93fd-9cd4-4f48-83db-dd2fda770454",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "review-clean",
+  "caseVersion": 1,
+  "operation": "review",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "85b785703e441f74cd946e77f6cda5beca418eb7",
+    "entity": {
+      "kind": "pull_request",
+      "number": 2
+    },
+    "ref": "fixture-pr"
+  },
+  "sourceDigest": "3f74c40e784889100c774938ebec377182fb64ef9cb54ee93b90d80cbedd3b5a",
+  "acceptanceDigest": "ec386637e8770642d0766d8dc2d69be4d3d7daf99acd4ce5ab55350279f52c44",
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "The fixed diff reconstructs exactly the admitted base and head source",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 1",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 2",
+      "passed": true
+    },
+    {
+      "name": "Independent contract oracle matches the frozen expected and observed values for example 3",
+      "passed": true
+    },
+    {
+      "name": "Every frozen input preserves the required behavior",
+      "passed": true
+    },
+    {
+      "name": "All retained actionable findings map to admitted changed source lines",
+      "passed": true
+    },
+    {
+      "name": "Correct change has no high-precision actionable false positive",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [],
+  "taskDigest": "a3b28ddcfb0638450819b7802ac2480eace9e2ae5963fe7af41746302999aaa6",
+  "workspaceDigest": "2d5d1bbc243faefa0e7f9da40d13cfa0df25ac019bc95e9385de9ba8bd83e5db",
+  "delta": null,
+  "output": {
+    "protocolVersion": 1,
+    "operation": "review",
+    "state": "final",
+    "summary": "The PR diff is a semantically equivalent readability refactor. The original `return index >= 0 && index < length;` is replaced by hoisting `index < length` into a local constant and returning `index >= 0 && belowUpperBound;`. Both forms evaluate identically for the documented contract (nonnegative integer length, indices 0..length-1), including the empty-collection and out-of-range cases covered by the frozen counterexamples. No correctness, security, concurrency, reliability, or regression issues were found.",
+    "findings": []
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 3,
+    "requestLimit": 12,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-only"
+  },
+  "durationMs": 11940,
+  "startedAt": "2026-10-07T05:36:06.610Z",
+  "completedAt": "2026-10-07T05:36:18.550Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 12,
+    "actualRequestCount": 3,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:2d3e340d4f6682deace5ccbcca90db173422a08d89ab521798af4ccc4a60c56a",
+    "sourceCommit": "09e41d9a14542be47afaaee334210101142f0e4c",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

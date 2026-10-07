@@ -1,0 +1,10 @@
+{"schemaVersion":1,"kind":"fixed-image-binary-hardening","status":"passed","architecture":"x64","binarySha256":"1aa87e14804be7fed7231acd9481aea68975792e21132551c59f5baa07ec7221","checks":{"processOnlyProc":true,"positionIndependentExecutable":true,"relro":true,"nonExecutableStack":true,"bindNow":true,"stackProtector":true,"recordedDebianHardening":true,"builderToolsAbsent":true},"realModelCalled":false,"cloudCalled":false,"githubCalled":false}
+bubblewrap 0.8.0-2+deb12u1 plus the dated process-only proc patch.
+Corresponding upstream and Debian source archives, descriptor, patch, license and build script are included.
+Rebuild with Node 24, dpkg-dev, build-essential, pkg-config, libcap-dev and libselinux1-dev;
+place the three agentarts inputs and scripts/build-agentarts-bwrap.mjs in their repository paths, then run the script.
+--disable-man --enable-selinux --with-priv-mode=none; make -j2 bwrap. No setuid bit.
+Debian dpkg-buildflags with DEB_BUILD_MAINT_OPTIONS=hardening=+all:
+CFLAGS=-g -O2 -ffile-prefix-map=/build/bubblewrap=. -fstack-protector-strong -Wformat -Werror=format-security
+CPPFLAGS=-Wdate-time -D_FORTIFY_SOURCE=2
+LDFLAGS=-Wl,-z,relro -Wl,-z,now

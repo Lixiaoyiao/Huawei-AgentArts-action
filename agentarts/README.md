@@ -2,6 +2,8 @@
 
 这是原 Action 的完整能力迁移，PR Review 仍是第一条真实云验收链路。当前主入口复用原 `runAction`，将 DSH engine 接到 Runtime v3；事件解析、授权、工具回调、独立验证与发布继续使用原 Controller。账号准入待审批，没有真实 AgentArts 或 GitHub 发布验收。[能力表](../docs/agentarts/capability-matrix.md) 逐项列出代码接入、实测范围和待验条件；历史只读证据不代表本轮新代码通过。
 
+本地09e clean AMD64镜像已完成七个真实DeepSeek任务的自动rubric，四write实际delta与独立Docker契约通过；Demo另完成七记录16布局检查。合成GitHub身份、无发布/云、人工未复核、成本未知。最终610f685本地镜像修复五cap所有权交接后，smoke及额外源码测试中的真正默认安装器、Session恢复通过；源码harness与部署bundle分开记录。原生Ubuntu24双架构镜像CI仍在proc挂载时失败，新镜像不继承09e模型通过。[验证记录](../docs/agentarts/verification.md) 和 [部署门槛](../docs/agentarts/deployment.md) 明确范围；云审批后先确认租户可提供同等sandbox，不能满足时暂停该部署路线，再经用户同意评估架构备选。
+
 ```text
 GitHub 事件 → Controller 授权、实体/ref/提交绑定、原上下文与工作区
             → Runtime supervisor → 隔离 namespace 中的原 DSH
@@ -22,6 +24,8 @@ GitHub 事件 → Controller 授权、实体/ref/提交绑定、原上下文与�
 DSH 停止后 supervisor 从实际文件捕获 delta；Controller 检查原SHA/mode、保护路径、source baseline、任务/权限/ref/revision/digest和凭据边界，stage后事务交换workerRoot。取消、截止、重复/迟到结果或导入失败会阻断finalizer。模型的changePlan和测试通过声明不代替内容或验收。原独立无凭据Docker测试、strict完整性分类/baseline replay、PR head/Issue指纹/base复查、部分效果与GitHub reconciliation继续由Controller完成。
 
 controlled/native 都复用原Profile、Bundle和launcher。生产必须有bwrap、必要Linux namespace与固定seccomp策略，不能降级为只换UID的宿主执行。Runtime supervisor仅保留CHOWN、DAC_OVERRIDE、KILL、SETGID、SETUID五项cap；worker UID/GID10001、cap为空、新namespace创建被额外BPF限制，模型经Unix socket代理。没有Docker-in-Docker、Docker socket或privileged模式。网络扩展须由操作者配置精确origin的受信egress代理，默认关闭并拒私网/元数据地址；任意子进程不保证遵循代理，不能以授network权限声称已兼容所有联网工具。
+
+当前镜像从固定Debian bubblewrap0.8.0-2+deb12u1源码保留四补丁，仅将新PID namespace的procfs挂载改为 `subset=pid`；保留Docker masked paths，无完整proc/host proc回退。需要Linux5.8+对应feature及实际namespace probe通过，启用AppArmor的宿主另需独立策略。worker不提供 `/proc/sys`、`/proc/meminfo` 等系统proc文件，依赖它们的工具须另验。helper不带setuid、使用Debian hardening=+all；对应源码/补丁/许可/构建说明随镜像提供。[部署限制](../docs/agentarts/deployment.md)、[来源](bubblewrap-source.json)。
 
 原 DSH Session 使用原checkpoint格式、binding/provenance检查与artifact store：Controller restore后导出安全metadata与限长历史，Runtime在固定`/workspace`保存/恢复，返回严格checkpoint后导入Controller，再走原save。不会用AgentArts Session取代DSH历史，不恢复旧工作区、旧权限或重放旧工具。正文含已知secret、附件/不可移植内容、改写历史、摘要或provenance错误都拒绝。
 
@@ -87,6 +91,6 @@ node /absolute/path/to/Huawei-AgentArts-action/agentarts/install.mjs \
 
 ## 来源与维护
 
-GitHub事件/权限、工作区、原DSH compositions/launcher/代理、结果协议、loop、验证、finalizers、Session artifacts、安装器模板及通用测试来自 [原项目](https://github.com/Lixiaoyiao/deepseek-harness-action)。新增Runtime transport、受检workspace/Session传输、namespace/出站代理、安装入口、Demo/评测和文档在本衍生仓库维护；上游局部接口调整保留来源与测试。[许可](../LICENSE) 和 [第三方声明](../THIRD_PARTY_NOTICES.md) 包含派生的Moby seccomp策略。
+GitHub事件/权限、工作区、原DSH compositions/launcher/代理、结果协议、loop、验证、finalizers、Session artifacts、安装器模板及通用测试来自 [原项目](https://github.com/Lixiaoyiao/deepseek-harness-action)。新增Runtime transport、受检workspace/Session传输、namespace/出站代理、安装入口、Demo/评测和文档在本衍生仓库维护；上游局部接口调整保留来源与测试。[许可](../LICENSE) 和 [第三方声明](../THIRD_PARTY_NOTICES.md) 保留Moby策略Apache-2.0及独立bubblewrap helper的LGPL-2.0-or-later声明与对应源码。
 
 维护关系为 `DSH官方 → 原Action已验证更新 → 本衍生版`；[upstream-lock.json](upstream-lock.json) 固定基线，按 [维护手册](../docs/agentarts/maintenance.md) 人工开独立升级分支，不追latest、不重复各自追DSH。能力、剩余平台依赖和证据见 [迁移表](../docs/agentarts/capability-matrix.md) 与 [验证记录](../docs/agentarts/verification.md)。

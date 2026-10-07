@@ -1,0 +1,15 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.11 [39m[90m/opt/fixture[39m
+
+ [32m✓[39m test/agentarts-session-runtime.test.ts[2m > [22mproduction DSH Session through the full Runtime[2m > [22msaves real DSH events, resumes them in a fresh namespace and keeps the current workspace[33m 2239[2mms[22m[39m
+ [32m✓[39m test/agentarts-runtime-installer.test.ts[2m > [22mproduction isolated default package installer[2m > [22minstalls pinned runtime and a pinned package without lifecycle scripts, then passes the original lock audit[33m 97263[2mms[22m[39m
+ [32m✓[39m test/agentarts-private-permissions.test.ts[2m > [22mprivate ownership handoff without FOWNER[2m > [22mreclaims a worker-owned file and directory before chmod and final handoff[32m 8[2mms[22m[39m
+ [32m✓[39m test/agentarts-private-permissions.test.ts[2m > [22mprivate ownership handoff without FOWNER[2m > [22mrejects a symlink without changing its target[32m 3[2mms[22m[39m
+ [32m✓[39m test/agentarts-private-permissions.test.ts[2m > [22mprivate ownership handoff without FOWNER[2m > [22mrejects a FIFO without blocking and rejects non-private argument shapes[32m 7[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m   Start at [22m 06:46:24
+[2m   Duration [22m 100.82s[2m (transform 536ms, setup 0ms, import 1.01s, tests 99.52s, environment 0ms)[22m
+
+{"schemaVersion":1,"kind":"fixed-image-source-fixture-tests","status":"passed","exitCode":0,"signal":null,"modelEvidence":"deterministic-fixture","realModelCalled":false,"cloudCalled":false,"githubPublished":false,"limitations":["Source tests use this image's real bwrap/Node/npm; this is separate from compiled Runtime HTTP smoke evidence.","Only the approved public npm registry and pinned fixture package are downloaded; model replies stay local."]}

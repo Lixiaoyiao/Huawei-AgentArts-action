@@ -3,3 +3,5 @@
 *.jpg binary
 *.jpeg binary
 *.gif binary
+# Keep measured evidence byte-for-byte, including original line endings.
+agentarts/evidence/full-v3/** -text -whitespace

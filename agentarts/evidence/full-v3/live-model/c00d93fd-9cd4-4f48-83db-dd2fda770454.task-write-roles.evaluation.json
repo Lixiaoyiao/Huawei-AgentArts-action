@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "runId": "c00d93fd-9cd4-4f48-83db-dd2fda770454",
+  "mode": "local-real-model",
+  "suiteVersion": "full-runtime-contracts-v1",
+  "caseId": "task-write-roles",
+  "caseVersion": 1,
+  "operation": "task",
+  "dshMode": "controlled",
+  "binding": {
+    "repository": "agentarts-fixtures/full-v1",
+    "baseSha": "d5b0d0b01e0d8da02276f0f92077167fe0f70f8b",
+    "headSha": "dd42c54e3064617dfd82b90122aeab71a7a749a8",
+    "entity": {
+      "kind": "repository"
+    },
+    "ref": "main"
+  },
+  "sourceDigest": "437efd0aad7b7c4a46c59f82999aa20107eda5bbdb815b55d7f3c94471695030",
+  "acceptanceDigest": "2aa431663acc59b6f04a143ae8706b43530f0e3740f9ab2a09b9e247d337a75c",
+  "candidateSha": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+  "candidateEvidence": {
+    "path": "/var/tmp/codex-agentarts-01a10594/full-migration-20261007/live-model/final/c00d93fd-9cd4-4f48-83db-dd2fda770454.task-write-roles.candidate.json",
+    "maxBytes": 262144
+  },
+  "status": "passed",
+  "automaticVerdict": "passed",
+  "checks": [
+    {
+      "name": "Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "passed": true
+    },
+    {
+      "name": "Runtime returned a final result",
+      "passed": true
+    },
+    {
+      "name": "Real source context was read through a successful completed tool receipt",
+      "passed": true
+    }
+  ],
+  "validation": [
+    {
+      "argv": [
+        "node",
+        "tests/acceptance.mjs"
+      ],
+      "result": {
+        "exitCode": 0,
+        "stdout": "Frozen contract cases passed: 38\n",
+        "stderr": "",
+        "timedOut": false,
+        "outputTruncated": false
+      }
+    }
+  ],
+  "taskDigest": "e1df854310f8ffc895192d9168e8265814a832c4550f7bda8b5976438bc0b489",
+  "workspaceDigest": "e7c6c3d9a05b26e869a45dbf7ab221864ac425459ac67d748eab07e3dc3e51a2",
+  "delta": {
+    "inputDigest": "e7c6c3d9a05b26e869a45dbf7ab221864ac425459ac67d748eab07e3dc3e51a2",
+    "resultDigest": "4425d0c49665132123a8f765b23b665fabb55ec5c89ecd3fc1e6c2964cbcfcc3",
+    "changes": [
+      {
+        "kind": "modified",
+        "path": "src/access.ts"
+      }
+    ]
+  },
+  "output": {
+    "protocolVersion": 1,
+    "operation": "task",
+    "state": "final",
+    "summary": "Updated src/access.ts to require every role in requiredRoles (using Array.prototype.every) instead of any single role (Array.prototype.some). Empty requiredRoles now yields true via every's vacuous-truth behavior, matching the contract.",
+    "findings": [],
+    "diagnosis": "The authorization check used .some(), granting access when the user held at least one required role. The contract requires all roles in requiredRoles, so the check was changed to .every(); this also preserves the empty-requiredRoles case because every() over an empty array returns true.",
+    "changePlan": [
+      {
+        "path": "src/access.ts",
+        "summary": "Changed requiredRoles.some(...) to requiredRoles.every(...) to enforce all required roles while preserving empty-requirement access."
+      }
+    ],
+    "verification": [
+      {
+        "command": "node tests/acceptance.mjs",
+        "status": "skipped",
+        "summary": "Not run in this session per instructions; the Controller will run the frozen acceptance tests independently."
+      }
+    ]
+  },
+  "modelExecution": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro",
+    "upstreamOrigin": "https://api.deepseek.com",
+    "requestCount": 5,
+    "requestLimit": 12,
+    "maxOutputTokens": 4096
+  },
+  "sandboxEvidence": {
+    "backend": "agentarts-bwrap",
+    "credentialMediated": true,
+    "processIsolated": true,
+    "networkIsolated": true,
+    "workspaceAccess": "read-write"
+  },
+  "durationMs": 12126,
+  "startedAt": "2026-10-07T05:36:50.303Z",
+  "completedAt": "2026-10-07T05:37:02.429Z",
+  "budget": {
+    "approvedUsd": 5,
+    "requestLimit": 12,
+    "actualRequestCount": 5,
+    "maxOutputTokens": 4096,
+    "actualCost": "unknown",
+    "dollarBudgetIsHardCap": false
+  },
+  "provenance": {
+    "imageDigest": "sha256:2d3e340d4f6682deace5ccbcca90db173422a08d89ab521798af4ccc4a60c56a",
+    "sourceCommit": "09e41d9a14542be47afaaee334210101142f0e4c",
+    "operatorProvided": true,
+    "validationImage": "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d"
+  },
+  "humanReviewRequired": true,
+  "manualVerdict": "not-reviewed",
+  "verdictScope": "automatic-rubric-only",
+  "githubPublication": "not-attempted",
+  "githubBinding": "synthetic",
+  "cloudVerification": "not-performed"
+}

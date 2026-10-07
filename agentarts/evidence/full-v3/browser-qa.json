@@ -1,0 +1,400 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "runId": "c00d93fd-9cd4-4f48-83db-dd2fda770454",
+  "checkedAt": "2026-10-07T05:45:29.789Z",
+  "browser": "Microsoft Edge (Chromium)",
+  "browserVersion": "154.0.4258.48",
+  "runner": "playwright@1.63.0",
+  "execution": "real installed Edge, headless rendering, fresh isolated temporary profile; only loopback page requests permitted and observed",
+  "inAppBrowser": {
+    "status": "unavailable",
+    "bootstrapAttempted": true,
+    "troubleshootingRead": true,
+    "reason": "privileged native pipe bridge is not available; browser-client is not trusted"
+  },
+  "origin": "http://127.0.0.1:63881",
+  "exportsRoot": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\static-aAR5I5",
+  "recordBytePreservation": true,
+  "views": [
+    {
+      "caseId": "review-bounds",
+      "taskId": "07c0d4a3-c746-4ffc-a114-6f62f4cd8adc",
+      "operation": "review",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "stageStatus": "passed",
+      "validationStatus": "passed",
+      "originalValidation": null,
+      "receiptCount": 4,
+      "observedNames": [],
+      "githubLink": null,
+      "errorPanelVisible": false,
+      "manualVerdict": "not-reviewed",
+      "providerRequestCount": 4,
+      "durationMs": 28059,
+      "actualCost": "unknown"
+    },
+    {
+      "caseId": "review-clean",
+      "taskId": "9ce6bc25-ed5d-4bfb-8e8f-924306b7f299",
+      "operation": "review",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "stageStatus": "passed",
+      "validationStatus": "passed",
+      "originalValidation": null,
+      "receiptCount": 4,
+      "observedNames": [],
+      "githubLink": null,
+      "errorPanelVisible": false,
+      "manualVerdict": "not-reviewed",
+      "providerRequestCount": 3,
+      "durationMs": 11940,
+      "actualCost": "unknown"
+    },
+    {
+      "caseId": "diagnose-bounds",
+      "taskId": "7aa92110-32a4-4b0a-aa7e-3a464dc396b4",
+      "operation": "diagnose",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "stageStatus": "passed",
+      "validationStatus": "passed",
+      "originalValidation": null,
+      "receiptCount": 3,
+      "observedNames": [],
+      "githubLink": null,
+      "errorPanelVisible": false,
+      "manualVerdict": "not-reviewed",
+      "providerRequestCount": 4,
+      "durationMs": 20781,
+      "actualCost": "unknown"
+    },
+    {
+      "caseId": "fix-bounds",
+      "taskId": "7199db70-83b6-43c3-a7b5-7a9505bde1be",
+      "operation": "fix",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "stageStatus": "passed",
+      "validationStatus": "passed",
+      "originalValidation": {
+        "status": "passed",
+        "commandCount": 1
+      },
+      "receiptCount": 5,
+      "observedNames": [],
+      "githubLink": null,
+      "errorPanelVisible": false,
+      "manualVerdict": "not-reviewed",
+      "providerRequestCount": 5,
+      "durationMs": 10965,
+      "actualCost": "unknown"
+    },
+    {
+      "caseId": "task-write-roles",
+      "taskId": "88d49c30-6142-4d0c-bf53-b29b64b31a53",
+      "operation": "task",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "stageStatus": "passed",
+      "validationStatus": "passed",
+      "originalValidation": {
+        "status": "passed",
+        "commandCount": 1
+      },
+      "receiptCount": 5,
+      "observedNames": [],
+      "githubLink": null,
+      "errorPanelVisible": false,
+      "manualVerdict": "not-reviewed",
+      "providerRequestCount": 5,
+      "durationMs": 12126,
+      "actualCost": "unknown"
+    },
+    {
+      "caseId": "implement-roles",
+      "taskId": "77b9177b-9990-4d04-a7df-1127087c4dfe",
+      "operation": "implement",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "stageStatus": "passed",
+      "validationStatus": "passed",
+      "originalValidation": {
+        "status": "passed",
+        "commandCount": 1
+      },
+      "receiptCount": 5,
+      "observedNames": [],
+      "githubLink": null,
+      "errorPanelVisible": false,
+      "manualVerdict": "not-reviewed",
+      "providerRequestCount": 5,
+      "durationMs": 10073,
+      "actualCost": "unknown"
+    },
+    {
+      "caseId": "native-write-bounds",
+      "taskId": "744b1c24-8534-4ec2-a0cd-4e270e4ccb94",
+      "operation": "task",
+      "mode": "local",
+      "modelEvidence": {
+        "kind": "live-provider",
+        "provider": "deepseek",
+        "model": "deepseek-v4-pro"
+      },
+      "historicalSnapshot": true,
+      "stageStatus": "passed",
+      "validationStatus": "passed",
+      "originalValidation": {
+        "status": "passed",
+        "commandCount": 1
+      },
+      "receiptCount": 0,
+      "observedNames": [
+        "bash",
+        "create_goal",
+        "edit",
+        "exit_plan_mode",
+        "get_goal",
+        "glob",
+        "grep",
+        "interrupt_agent",
+        "job_kill",
+        "job_list",
+        "job_output",
+        "list_agents",
+        "read",
+        "read_image",
+        "send_message",
+        "skill",
+        "subagent",
+        "subagent_fork",
+        "todo_write",
+        "update_goal",
+        "web_search",
+        "workflow",
+        "write"
+      ],
+      "githubLink": null,
+      "errorPanelVisible": false,
+      "manualVerdict": "not-reviewed",
+      "providerRequestCount": 6,
+      "durationMs": 25162,
+      "actualCost": "unknown"
+    }
+  ],
+  "layouts": [
+    {
+      "caseId": "review-bounds",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\review-bounds-1280.png"
+    },
+    {
+      "caseId": "review-bounds",
+      "width": 390,
+      "scrollWidth": 390,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\review-bounds-390.png"
+    },
+    {
+      "caseId": "review-clean",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\review-clean-1280.png"
+    },
+    {
+      "caseId": "review-clean",
+      "width": 390,
+      "scrollWidth": 390,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\review-clean-390.png"
+    },
+    {
+      "caseId": "diagnose-bounds",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\diagnose-bounds-1280.png"
+    },
+    {
+      "caseId": "diagnose-bounds",
+      "width": 390,
+      "scrollWidth": 390,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\diagnose-bounds-390.png"
+    },
+    {
+      "caseId": "fix-bounds",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\fix-bounds-1280.png"
+    },
+    {
+      "caseId": "fix-bounds",
+      "width": 390,
+      "scrollWidth": 390,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\fix-bounds-390.png"
+    },
+    {
+      "caseId": "fix-bounds",
+      "width": 320,
+      "scrollWidth": 320,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\fix-bounds-320.png"
+    },
+    {
+      "caseId": "task-write-roles",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\task-write-roles-1280.png"
+    },
+    {
+      "caseId": "task-write-roles",
+      "width": 390,
+      "scrollWidth": 390,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\task-write-roles-390.png"
+    },
+    {
+      "caseId": "implement-roles",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\implement-roles-1280.png"
+    },
+    {
+      "caseId": "implement-roles",
+      "width": 390,
+      "scrollWidth": 390,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\implement-roles-390.png"
+    },
+    {
+      "caseId": "native-write-bounds",
+      "width": 1280,
+      "scrollWidth": 1280,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\native-write-bounds-1280.png"
+    },
+    {
+      "caseId": "native-write-bounds",
+      "width": 390,
+      "scrollWidth": 390,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\native-write-bounds-390.png"
+    },
+    {
+      "caseId": "native-write-bounds",
+      "width": 320,
+      "scrollWidth": 320,
+      "path": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-demo-qa\\full-v3-live-model\\native-write-bounds-320.png"
+    }
+  ],
+  "candidateChecks": [
+    {
+      "caseId": "fix-bounds",
+      "artifactPath": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-validation\\full-v3-live-model\\c00d93fd-9cd4-4f48-83db-dd2fda770454.fix-bounds.candidate.json",
+      "sha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+      "candidateBytes": 108,
+      "candidateEqualsReturnedDeltaBytes": true,
+      "independentDockerCommandCount": 1,
+      "manualVerdict": "not-reviewed"
+    },
+    {
+      "caseId": "task-write-roles",
+      "artifactPath": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-validation\\full-v3-live-model\\c00d93fd-9cd4-4f48-83db-dd2fda770454.task-write-roles.candidate.json",
+      "sha256": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+      "candidateBytes": 174,
+      "candidateEqualsReturnedDeltaBytes": true,
+      "independentDockerCommandCount": 1,
+      "manualVerdict": "not-reviewed"
+    },
+    {
+      "caseId": "implement-roles",
+      "artifactPath": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-validation\\full-v3-live-model\\c00d93fd-9cd4-4f48-83db-dd2fda770454.implement-roles.candidate.json",
+      "sha256": "2594875386a6868f14f59d75175c03be452e50cc011b0c9e9942b0e563165fde",
+      "candidateBytes": 174,
+      "candidateEqualsReturnedDeltaBytes": true,
+      "independentDockerCommandCount": 1,
+      "manualVerdict": "not-reviewed"
+    },
+    {
+      "caseId": "native-write-bounds",
+      "artifactPath": "C:\\Users\\lenovo\\Documents\\Codex\\2026-10-04\\agentarts-ict-https-github-com-lixiaoyiao\\outputs\\pr-review-validation\\full-v3-live-model\\c00d93fd-9cd4-4f48-83db-dd2fda770454.native-write-bounds.candidate.json",
+      "sha256": "8c727768e7adde9e31661a82999bf559dfcd93b6026d6d77141d9a2b8fb56dce",
+      "candidateBytes": 108,
+      "candidateEqualsReturnedDeltaBytes": true,
+      "independentDockerCommandCount": 1,
+      "manualVerdict": "not-reviewed"
+    }
+  ],
+  "requests": [
+    "http://127.0.0.1:63881/project/review-bounds/",
+    "http://127.0.0.1:63881/project/review-bounds/run-record.json",
+    "http://127.0.0.1:63881/project/review-bounds/run-record.json",
+    "http://127.0.0.1:63881/project/review-clean/",
+    "http://127.0.0.1:63881/project/review-clean/run-record.json",
+    "http://127.0.0.1:63881/project/diagnose-bounds/",
+    "http://127.0.0.1:63881/project/diagnose-bounds/run-record.json",
+    "http://127.0.0.1:63881/project/fix-bounds/",
+    "http://127.0.0.1:63881/project/fix-bounds/run-record.json",
+    "http://127.0.0.1:63881/project/task-write-roles/",
+    "http://127.0.0.1:63881/project/task-write-roles/run-record.json",
+    "http://127.0.0.1:63881/project/implement-roles/",
+    "http://127.0.0.1:63881/project/implement-roles/run-record.json",
+    "http://127.0.0.1:63881/project/native-write-bounds/",
+    "http://127.0.0.1:63881/project/native-write-bounds/run-record.json"
+  ],
+  "pageErrors": [],
+  "cspErrors": [],
+  "staticSnapshot": {
+    "autoPolling": false,
+    "reloadButtonVerified": true
+  },
+  "limitations": [
+    "Local production container + actual DSH + live DeepSeek evidence; no Huawei AgentArts or real GitHub task/publication acceptance.",
+    "All seven input records passed their automatic rubric; no new genuine failure case was invented for this visual check.",
+    "Candidate checks establish byte/hash binding and retained independent Docker results, not a human correctness verdict; manualVerdict remains not-reviewed.",
+    "Static Demo displays record summaries and validation; candidate JSON sidecars are separately retained for manual source inspection and are not published by the exporter.",
+    "No model, cloud, GitHub write or external browser request was made by this QA."
+  ],
+  "visualInspection": {
+    "status": "passed",
+    "checkedAt": "2026-10-07T05:48:02.403Z",
+    "scope": "Visual layout and record presentation only, not business correctness acceptance",
+    "viewedScreenshots": [
+      "fix-bounds-1280.png",
+      "review-clean-390.png",
+      "native-write-bounds-320.png",
+      "implement-roles-390.png",
+      "review-bounds-390.png",
+      "diagnose-bounds-390.png",
+      "task-write-roles-390.png",
+      "fix-bounds-320.png"
+    ],
+    "findings": []
+  }
+}

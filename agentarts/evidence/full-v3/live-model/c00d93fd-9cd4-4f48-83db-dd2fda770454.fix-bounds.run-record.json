@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "mode": "local",
+  "task": {
+    "id": "7199db70-83b6-43c3-a7b5-7a9505bde1be",
+    "repository": "agentarts-fixtures/full-v1",
+    "url": "",
+    "pullNumber": 4,
+    "kind": "pull_request",
+    "operation": "fix",
+    "baseSha": "0ba603e613a209108f9f91b3637cfb813835a589",
+    "headSha": "7820d7e5fd9b322a6d1b2e6ba1b97b1bad4b4fdd"
+  },
+  "stages": [
+    {
+      "name": "Runtime + DSH + Controller boundary + business rubric",
+      "status": "passed",
+      "startedAt": "2026-10-07T05:36:39.335Z",
+      "completedAt": "2026-10-07T05:36:50.296Z"
+    }
+  ],
+  "tools": [
+    {
+      "id": "workspace.search",
+      "runtimeName": "glob",
+      "ok": true,
+      "completed": true,
+      "durationMs": 28
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 5
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 5
+    },
+    {
+      "id": "workspace.edit",
+      "runtimeName": "edit",
+      "ok": true,
+      "completed": true,
+      "durationMs": 7
+    },
+    {
+      "id": "workspace.read",
+      "runtimeName": "read",
+      "ok": true,
+      "completed": true,
+      "durationMs": 3
+    }
+  ],
+  "validation": {
+    "status": "passed",
+    "original": {
+      "status": "passed",
+      "commandCount": 1
+    },
+    "checks": [
+      "PASS: Actual source delta imported and independently executed frozen contract tests passed in Docker",
+      "PASS: Runtime returned a final result",
+      "PASS: Real source context was read through a successful completed tool receipt"
+    ]
+  },
+  "result": {
+    "summary": "Fixed the inBounds off-by-one bug in src/bounds.ts by changing the upper-bound comparison from `index <= length` to `index < length`, restoring the contract that valid indices for nonnegative length are 0 through length-1 and that empty collections have no valid index."
+  },
+  "runtime": {
+    "sessionId": "7199db70-83b6-43c3-a7b5-7a9505bde1be",
+    "endpoint": "loopback-production-full-container",
+    "dshVersion": "0.2.0-rc.2"
+  },
+  "modelEvidence": {
+    "kind": "live-provider",
+    "provider": "deepseek",
+    "model": "deepseek-v4-pro"
+  },
+  "durationMs": 10966,
+  "warnings": [
+    "Budget approval is not a dollar-denominated hard cap. Configure the trusted supervisor request ceiling before execution.",
+    "Automatic contract rubric only; human acceptance remains pending.",
+    "This loopback production Runtime evidence is not Huawei AgentArts or real GitHub task evidence.",
+    "GitHub binding is synthetic; no GitHub publication was attempted.",
+    "One AgentLoop turn per case. Multi-turn repair is covered separately by offline Controller integration tests.",
+    "Human acceptance pending; actual dollar cost unknown."
+  ]
+}

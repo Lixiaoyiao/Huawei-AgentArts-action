@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "610f68572f384d481b6f98e4dac39ee173d91c06",
+  "imageId": "sha256:469ce7fb699c031cc012b94a20f04e7dbca687d527824ce554600f76f459f217",
+  "scope": "container-source-harness; separate from compiled Runtime HTTP smoke",
+  "modelEvidence": "deterministic-fixture",
+  "realModelCalled": false,
+  "cloudCalled": false,
+  "githubPublished": false,
+  "executionHelperSha256": "3ff2acc8610697bd420ea3abca6487da0fea485aeebf5829996aa041ab144b04",
+  "executionScriptSha256": "456cc6a443d5ce35aa0b129d1af939af521940f4cfd95e6861a6285f9492347a",
+  "scriptHashCollectionAt": "after-execution; shell script unchanged since this run",
+  "status": "expected-timeout",
+  "observedExitCode": 124,
+  "cleanup": {
+    "schemaVersion": 1,
+    "status": "passed",
+    "originalExitCode": 124,
+    "containerNames": [
+      "agentarts-image-check.ZgZzqHuU-binary",
+      "agentarts-image-check.ZgZzqHuU-fixtures"
+    ]
+  },
+  "limitation": "This verifies final script timeout cleanup, not a second successful installer run."
+}
