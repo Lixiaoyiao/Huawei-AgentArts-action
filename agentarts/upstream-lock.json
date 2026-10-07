@@ -6,7 +6,8 @@
   "upstreamPackageVersion": "0.9.3",
   "dshVersion": "0.2.0-rc.2",
   "huaweiRuntimeProtocol": "HTTP /invocations, /ping; API_KEY; explicit version alias",
+  "actionRuntimeProtocolVersion": 3,
   "huaweiSdkRuntimeDependency": null,
-  "documentationChecked": "2026-10-04",
+  "documentationChecked": "2026-10-07",
   "cloudVerified": false
 }

@@ -58,6 +58,16 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
     expect(await readFile(join(outputPath, "run-record.json"))).toEqual(original);
     expect(await readFile(evidence)).toEqual(original);
   });
+  it.each(["fix-test-failed", "implement-partial-success"])(
+    "exports the labelled %s UI example byte-for-byte",
+    async (name) => {
+      const evidence = resolve("agentarts/demo/examples/" + name + ".json");
+      const original = await readFile(evidence);
+      await run("--record", evidence, "--out", outputPath);
+      expect((JSON.parse(original.toString("utf8")) as { mode?: unknown }).mode).toBe("simulation");
+      expect(await readFile(join(outputPath, "run-record.json"))).toEqual(original);
+    },
+  );
 
   it("preserves the complete original record bytes and adds snapshot CSP without remote assets", async () => {
     const original = await readFile(recordPath);
@@ -92,6 +102,35 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
     ["container evidence", { schemaVersion: 1, mode: "container", status: "passed" }],
     ["raw Runtime response", { schemaVersion: 1, taskId: "raw", output: {}, toolReceipts: [] }],
     ["unknown mode", { ...record, mode: "cloud-real" }],
+    ["unknown operation", { ...record, task: { ...record.task, operation: "deploy" } }],
+    ["observed tool object", { ...record, observedTools: [{ id: "Read", ok: true }] }],
+    ["overlong observed tool", { ...record, observedTools: ["x".repeat(129)] }],
+    ["unknown write status", { ...record, result: { writeStatus: "probably-success" } }],
+    ["invalid commit", { ...record, result: { commitSha: "main" } }],
+    [
+      "unknown original validation",
+      {
+        ...record,
+        validation: { ...record.validation, original: { status: "pretend", commandCount: 1 } },
+      },
+    ],
+    [
+      "invalid original validation count",
+      {
+        ...record,
+        validation: { ...record.validation, original: { status: "passed", commandCount: -1 } },
+      },
+    ],
+    [
+      "original validation credential",
+      {
+        ...record,
+        validation: {
+          ...record.validation,
+          original: { status: "passed", commandCount: 1, apiKey: "synthetic-hidden-key" },
+        },
+      },
+    ],
     ["bad validation", { ...record, validation: { status: "passed", checks: [17] } }],
     ["unknown stage state", { ...record, stages: [{ ...record.stages[0], status: "pretend" }] }],
     ["credential root field", { ...record, apiKey: "synthetic-private-key" }],
@@ -198,6 +237,144 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
     await run("--record", recordPath, "--out", outputPath);
     expect(await readFile(join(outputPath, "run-record.json"), "utf8")).toBe(payload);
   });
+
+  it.each(["fix", "implement"])(
+    "preserves %s write and original validation metadata without filling historical records",
+    async (operation) => {
+      const payload = JSON.stringify({
+        ...record,
+        task: { ...record.task, operation, kind: operation === "fix" ? "pull_request" : "issue" },
+        validation: { ...record.validation, original: { status: "passed", commandCount: 2 } },
+        result: {
+          writeStatus: "partial-success",
+          commitSha: "c".repeat(40),
+          branchName: "fixture/fix",
+          githubUrl: "https://github.com/fixture/review/commit/" + "c".repeat(40),
+          error: "Simulation UI fixture: later comment failed.",
+        },
+      });
+      await writeFile(recordPath, payload);
+      await run("--record", recordPath, "--out", outputPath);
+      expect(await readFile(join(outputPath, "run-record.json"), "utf8")).toBe(payload);
+      expect(await readFile(recordPath, "utf8")).toBe(payload);
+    },
+  );
+  it("does not present an explicitly unfinished tool as completed success", async () => {
+    const view = await renderSnapshot({
+      ...record,
+      tools: [{ id: "workspace.read", ok: true, completed: false, durationMs: 7 }],
+    });
+    expect(view.element("tools").children[0]?.children[1]?.children[0]?.textContent).toBe("未完成");
+  });
+  it("keeps observed native names distinct from successful execution receipts", async () => {
+    const payload = { ...record, tools: [], observedTools: ["Read", "Bash", "<img src=x>"] };
+    await writeFile(recordPath, JSON.stringify(payload));
+    await run("--record", recordPath, "--out", outputPath);
+    expect(await readFile(join(outputPath, "run-record.json"), "utf8")).toBe(
+      JSON.stringify(payload),
+    );
+    const view = await renderSnapshot(payload);
+    expect(view.element("toolCount").textContent).toBe("0 次调用");
+    expect(view.element("observedToolsPanel").classList.contains("hidden")).toBe(false);
+    expect(view.element("observedTools").children.map((child) => child.textContent)).toEqual(
+      payload.observedTools,
+    );
+  });
+
+  it.each([
+    {
+      operation: "fix",
+      title: "PR 修复运行记录",
+      writeStatus: "success",
+      validationStatus: "passed",
+      originalStatus: "passed",
+      error: "",
+      expectedOutcome: "阶段已结束",
+    },
+    {
+      operation: "implement",
+      title: "Issue 实现运行记录",
+      writeStatus: "no-changes",
+      validationStatus: "not-run",
+      originalStatus: "not-applicable",
+      error: "",
+      expectedOutcome: "阶段已结束",
+    },
+    {
+      operation: "fix",
+      title: "PR 修复运行记录",
+      writeStatus: undefined,
+      validationStatus: "failed",
+      originalStatus: "failed",
+      error: "Simulation fixture: independent tests failed; no publication.",
+      expectedOutcome: "执行失败",
+    },
+    {
+      operation: "implement",
+      title: "Issue 实现运行记录",
+      writeStatus: "partial-success",
+      validationStatus: "passed",
+      originalStatus: "passed",
+      error: "Simulation fixture: comment failed after commit.",
+      expectedOutcome: "部分写入已完成",
+    },
+  ])(
+    "renders $operation / $writeStatus / $originalStatus as recorded without inventing effects",
+    async ({
+      operation,
+      title,
+      writeStatus,
+      validationStatus,
+      originalStatus,
+      error,
+      expectedOutcome,
+    }) => {
+      const payload = {
+        ...record,
+        task: { ...record.task, operation, kind: operation === "fix" ? "pull_request" : "issue" },
+        validation: {
+          status: validationStatus,
+          checks: ["Simulation fixture"],
+          original: { status: originalStatus, commandCount: 2 },
+        },
+        result: {
+          ...(writeStatus ? { writeStatus } : {}),
+          ...(error ? { error } : {}),
+          ...(writeStatus === "partial-success"
+            ? {
+                githubUrl: "https://github.com/fixture/review/pull/2",
+                commitSha: "c".repeat(40),
+                branchName: "fixture/implement",
+              }
+            : {}),
+        },
+      };
+      const view = await renderSnapshot(payload);
+      expect(view.element("title").textContent).toBe(title);
+      expect(view.element("mode").textContent).toBe("模拟运行");
+      expect(view.element("sourceBadge").textContent).toBe("历史回放 · 静态页面");
+      expect(view.element("taskStatus").textContent).toBe(expectedOutcome);
+      expect(view.element("validationOriginal").textContent).toContain("2 条命令");
+      expect(view.element("resultError").textContent).toBe(error);
+      if (writeStatus === "partial-success") {
+        expect(view.element("writeStatus").textContent).toContain("先核对已有效果");
+        expect(view.element("writeDetails").textContent).toContain("c".repeat(40));
+        expect(view.element("resultLink").children[0]?.href).toBe(
+          "https://github.com/fixture/review/pull/2",
+        );
+        expect(view.element("resultLink").children[0]?.textContent).toContain("已记录 GitHub 效果");
+        expect(
+          view
+            .element("warnings")
+            .children.some((warning) => warning.textContent.includes("不能盲目")),
+        ).toBe(true);
+      } else {
+        expect(view.element("resultLink").classList.contains("hidden")).toBe(true);
+        expect(view.element("resultLinkEmpty").classList.contains("hidden")).toBe(false);
+      }
+      expect(view.scheduled).not.toHaveBeenCalled();
+    },
+  );
 
   it("bounds scanning depth and nodes before JSON.parse or directory creation", async () => {
     await writeFile(recordPath, `${"[".repeat(41)}0${"]".repeat(41)}`);
@@ -309,6 +486,39 @@ describe("AgentArts static Demo exporter (local CLI, no cloud or publication)", 
   });
 });
 
+async function renderSnapshot(payload: unknown) {
+  const html = await readFile(resolve("agentarts/demo/index.html"), "utf8");
+  const source = /<script>([\s\S]*?)<\/script>/u.exec(html)?.[1];
+  if (source === undefined) throw new Error("Missing Demo script");
+  const elements = new Map<string, FakeElement>();
+  const element = (id: string) => {
+    let current = elements.get(id);
+    if (current === undefined) {
+      current = new FakeElement();
+      elements.set(id, current);
+    }
+    return current;
+  };
+  element("content").classList.add("hidden");
+  const scheduled = vi.fn();
+  new Script(source).runInNewContext({
+    document: {
+      getElementById: element,
+      createElement: () => new FakeElement(),
+      querySelector: () => ({}),
+    },
+    location: { protocol: "https:" },
+    fetch: () => Promise.resolve(new Response(JSON.stringify(payload))),
+    AbortSignal,
+    TextEncoder,
+    URL,
+    setTimeout: scheduled,
+    clearTimeout: vi.fn(),
+  });
+  await new Promise<void>((done) => setImmediate(done));
+  return { element, scheduled };
+}
+
 class FakeElement {
   textContent = "";
   className = "";
@@ -319,6 +529,7 @@ class FakeElement {
   rel = "";
   readonly classes = new Set<string>();
   readonly listeners = new Map<string, () => void>();
+  children: FakeElement[] = [];
   readonly classList = {
     add: (value: string) => {
       this.classes.add(value);
@@ -332,11 +543,11 @@ class FakeElement {
       else this.classes.delete(value);
     },
   };
-  append() {
-    /* No HTML parsing: VM verifies source and scheduling contracts only. */
+  append(...children: FakeElement[]) {
+    this.children.push(...children);
   }
-  replaceChildren() {
-    /* No visual-layout claim. */
+  replaceChildren(...children: FakeElement[]) {
+    this.children = children;
   }
   addEventListener(event: string, callback: () => void) {
     this.listeners.set(event, callback);

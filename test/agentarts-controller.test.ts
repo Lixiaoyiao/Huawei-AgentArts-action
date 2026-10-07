@@ -953,6 +953,7 @@ describe("AgentArts Controller integration (simulated Runtime and GitHub transpo
       resolve("dist-agentarts/controller/index.js"),
     );
     expect(metadata).toMatch(/^\s+command:/mu);
-    expect(metadata).not.toMatch(/^\s+(?:deepseek-api-key|allow-write):/mu);
+    expect(metadata).not.toMatch(/^\s+deepseek-api-key:/mu);
+    expect(metadata).toMatch(/^\s+allow-write:/mu);
   });
 });

@@ -6,6 +6,7 @@ import { isAbsolute, join, normalize } from "node:path";
 import type { ExtensionRuntimeLockAudit, RuntimeLockBaseline } from "../extensions/runtime-lock.js";
 import { validatedControllerBaseUrl } from "./base-url.js";
 import { DshConfigurationError } from "./errors.js";
+import type { SessionBinding, SessionRunIdentity } from "../session/contracts.js";
 
 export type DshRuntimeIsolation = "docker" | "none";
 export const DSH_RUNTIME_PROFILE_NAME = "github-action" as const;
@@ -46,6 +47,13 @@ export interface DshRuntime {
     sessionId?: string;
     checkpointEventCount?: number;
     readonly knownSecrets: Set<string>;
+    /** Controller-verified provenance for bounded remote persistence transport; never credentials. */
+    readonly transport?: {
+      readonly binding: SessionBinding;
+      readonly current: SessionRunIdentity;
+      readonly generation: number;
+      readonly retentionDays: number;
+    };
   };
   /** Immutable after the first successful call to bindDshRuntime. */
   readonly binding?: DshRuntimeBindingState;

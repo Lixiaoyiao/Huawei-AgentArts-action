@@ -379,6 +379,7 @@ try {
       DEEPSEEK_BASE_URL: `http://127.0.0.1:${address.port}`,
       API_KEY: runtimeKey,
       AGENTARTS_MODEL_EVIDENCE: "deterministic-fixture",
+      AGENTARTS_ENABLE_LEGACY_PROTOCOLS: "true",
     },
   });
   const capture = (chunk) => {

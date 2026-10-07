@@ -572,12 +572,12 @@ export async function runLiveReviewSuite(
   };
   if (options.execute !== true) return { status: "dry-run" as const, plan, records: [] };
   const fetcher = dependencies.fetchImplementation ?? fetch;
-  const secrets: readonly string[] = [];
+  const secrets: readonly string[] = [process.env.AGENTARTS_LOCAL_API_KEY ?? ""].filter(Boolean);
   const config: RuntimeClientConfig = {
     origin: "https://loopback.invalid",
     runtimeName: "production-review",
     endpoint: "fixed-v1",
-    apiKey: "loopback-public-no-key",
+    apiKey: process.env.AGENTARTS_LOCAL_API_KEY ?? "loopback-public-no-key",
   };
   let modelPolicy: ModelPolicy;
   {
@@ -973,7 +973,7 @@ export function parseLiveReviewArguments(args: readonly string[]): LiveReviewOpt
   };
 }
 
-async function main(): Promise<void> {
+export async function runLiveReviewMain(): Promise<void> {
   const options = parseLiveReviewArguments(process.argv.slice(2));
   const cancel = new AbortController();
   const abort = (): void => {
@@ -992,13 +992,4 @@ async function main(): Promise<void> {
     process.removeListener("SIGINT", abort);
     process.removeListener("SIGTERM", abort);
   }
-}
-
-if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  void main().catch(() => {
-    process.stderr.write(
-      "Verification refused or failed. No automatic retry or GitHub publication; inspect the bounded evidence when present.\n",
-    );
-    process.exitCode = 1;
-  });
 }

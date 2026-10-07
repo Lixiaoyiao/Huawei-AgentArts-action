@@ -87,6 +87,7 @@ function validate(record) {
       "task",
       "stages",
       "tools",
+      "observedTools",
       "validation",
       "result",
       "runtime",
@@ -120,7 +121,7 @@ function validate(record) {
     throw new Error("Invalid task kind.");
   if (
     record.task.operation !== undefined &&
-    !["review", "task", "diagnose"].includes(record.task.operation)
+    !["review", "task", "diagnose", "fix", "implement"].includes(record.task.operation)
   )
     throw new Error("Invalid task operation.");
   if (record.task.baseSha !== undefined && typeof record.task.baseSha !== "string")
@@ -162,25 +163,54 @@ function validate(record) {
       throw new Error("Invalid Demo tool metadata.");
   }
   if (
+    record.observedTools !== undefined &&
+    (!strings(record.observedTools) ||
+      record.observedTools.length > 512 ||
+      record.observedTools.some((name) => name.length > 128))
+  )
+    throw new Error("Invalid observed tool names; observations are not execution receipts.");
+  if (
     !object(record.validation) ||
     !["passed", "failed", "not-run"].includes(record.validation.status) ||
     !strings(record.validation.checks) ||
     record.validation.checks.length > 1000
   )
     throw new Error("Invalid independent validation record.");
-  fields(record.validation, ["status", "checks"], "validation");
+  fields(record.validation, ["status", "checks", "original"], "validation");
+  if (record.validation.original !== undefined) {
+    const original = record.validation.original;
+    fields(original, ["status", "commandCount"], "original validation");
+    if (
+      !["passed", "failed", "skipped", "not-applicable"].includes(original.status) ||
+      !Number.isSafeInteger(original.commandCount) ||
+      original.commandCount < 0
+    )
+      throw new Error("Invalid original Controller validation summary.");
+  }
   if (record.durationMs !== undefined && !finite(record.durationMs))
     throw new Error("Invalid record duration.");
   if (
     record.result !== undefined &&
     (!object(record.result) ||
-      ["githubUrl", "summary", "error"].some(
+      ["githubUrl", "summary", "error", "commitSha", "branchName"].some(
         (key) => record.result[key] !== undefined && typeof record.result[key] !== "string",
       ))
   )
     throw new Error("Invalid Demo result.");
-  if (record.result !== undefined)
-    fields(record.result, ["githubUrl", "summary", "error"], "result");
+  if (record.result !== undefined) {
+    fields(
+      record.result,
+      ["githubUrl", "summary", "error", "writeStatus", "commitSha", "branchName"],
+      "result",
+    );
+    if (
+      (record.result.writeStatus !== undefined &&
+        !["success", "partial-success", "no-changes"].includes(record.result.writeStatus)) ||
+      (record.result.commitSha !== undefined && !/^[a-f0-9]{40}$/u.test(record.result.commitSha)) ||
+      (record.result.branchName !== undefined && record.result.branchName.length > 1024)
+    )
+      throw new Error("Invalid original GitHub write summary.");
+  }
   if (
     record.runtime !== undefined &&
     (!object(record.runtime) ||

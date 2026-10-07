@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { gzipSync } from "node:zlib";
 import {
   chmod,
   link,
@@ -41,6 +42,8 @@ const faults = vi.hoisted(() => ({
   failRollback: false,
   sourceDriftPath: "",
   sourceDriftAfterIntegrity: "",
+  cancelPhase: "",
+  controller: undefined as AbortController | undefined,
 }));
 vi.mock("node:fs/promises", async (original) => {
   const actual = await original<typeof FsPromises>();
@@ -79,7 +82,14 @@ vi.mock("node:fs/promises", async (original) => {
         faults.failRollback = false;
         throw new Error("Injected rollback I/O failure");
       }
-      return await actual.rename(...args);
+      await actual.rename(...args);
+      if (
+        (faults.cancelPhase === "backup" && basename(String(args[1])) === "backup") ||
+        (faults.cancelPhase === "candidate" && basename(path) === "candidate")
+      ) {
+        faults.cancelPhase = "";
+        faults.controller?.abort(new Error("Scoped transfer cancellation"));
+      }
     },
   };
 });
@@ -116,6 +126,8 @@ beforeEach(async () => {
   faults.failRollback = false;
   faults.sourceDriftPath = "";
   faults.sourceDriftAfterIntegrity = "";
+  faults.cancelPhase = "";
+  faults.controller = undefined;
 });
 afterEach(async () => {
   faults.writeName = "";
@@ -123,6 +135,8 @@ afterEach(async () => {
   faults.failRollback = false;
   faults.sourceDriftPath = "";
   faults.sourceDriftAfterIntegrity = "";
+  faults.cancelPhase = "";
+  faults.controller = undefined;
   await rm(root, { recursive: true, force: true });
 });
 
@@ -500,30 +514,88 @@ describe("Workspace transfer prototype (offline actual files, no cloud fix integ
     ).toEqual([]);
   });
 
-  it("fails complete capture on bounds instead of dropping generated files or excessive entries", async () => {
+  it("omits only upstream generated roots and refuses ordinary files over the declared bounds", async () => {
     const snapshot = await fixture();
     await mkdir(join(snapshot.workerRoot, "node_modules/pkg"), { recursive: true });
     await writeFile(
       join(snapshot.workerRoot, "node_modules/pkg/data.txt"),
       "captured, not silently ignored",
     );
-    const manifest = await packWorkspaceSnapshot(snapshot, binding);
+    const normal = await packWorkspaceSnapshot(snapshot, binding);
+    expect(normal.files.some((file) => file.path.startsWith("node_modules/"))).toBe(false);
+    expect(normal.files.map((file) => file.path)).toEqual([
+      "removed.txt",
+      "src/binary.bin",
+      "src/text.txt",
+    ]);
+    const manifest = await packWorkspaceSnapshot(snapshot, binding, {
+      excludeGeneratedRoots: false,
+    });
     expect(manifest.files.some((file) => file.path === "node_modules/pkg/data.txt")).toBe(true);
     await expect(
-      packWorkspaceSnapshot(snapshot, binding, { limits: { maxFiles: 3 } }),
+      packWorkspaceSnapshot(snapshot, binding, {
+        excludeGeneratedRoots: false,
+        limits: { maxFiles: 3 },
+      }),
     ).rejects.toThrow(/file count/u);
     await expect(
       packWorkspaceSnapshot(snapshot, binding, { limits: { maxPayloadBytes: 100 } }),
     ).rejects.toThrow(/byte limit/u);
     await expect(
-      packWorkspaceSnapshot(snapshot, binding, { limits: { maxFiles: 501 } }),
+      packWorkspaceSnapshot(snapshot, binding, { limits: { maxFiles: 5001 } }),
     ).rejects.toThrow(/narrow/u);
-    const remoteRoot = await remote(manifest);
+    const remoteRoot = join(root, "remote-generated");
+    await materializeWorkspaceManifest(manifest, remoteRoot, { excludeGeneratedRoots: false });
     await writeFile(
       join(remoteRoot, "node_modules/pkg/data.txt"),
       "unobserved generated-root modification",
     );
-    await expect(createWorkspaceDelta(manifest, remoteRoot)).rejects.toThrow(/generated roots/u);
+    await expect(
+      createWorkspaceDelta(manifest, remoteRoot, { excludeGeneratedRoots: false }),
+    ).rejects.toThrow(/generated roots/u);
+  });
+
+  it.each(["backup", "candidate"])(
+    "rolls back cancellation after the %s directory rename without publishing or leaving late changes",
+    async (phase) => {
+      const snapshot = await fixture(),
+        { input, delta } = await modified(snapshot);
+      const before = await fingerprintWorkspace(snapshot.workerRoot),
+        source = await fingerprintWorkspace(snapshot.sourceRoot);
+      const controller = new AbortController();
+      faults.controller = controller;
+      faults.cancelPhase = phase;
+      await expect(
+        applyWorkspaceDelta(snapshot, input, delta, {
+          signal: controller.signal,
+          deadlineMs: Date.now() + 60_000,
+        }),
+      ).rejects.toThrow(/Scoped transfer cancellation/u);
+      await unchanged(snapshot, before, source);
+      expect(
+        (await readdir(root)).filter((name) => name.startsWith(".agentarts-workspace-transfer-")),
+      ).toEqual([]);
+    },
+  );
+  it("rejects cancellation and expired deadline before staging and serializes competing imports", async () => {
+    const snapshot = await fixture(),
+      { input, delta } = await modified(snapshot);
+    const before = await fingerprintWorkspace(snapshot.workerRoot),
+      source = await fingerprintWorkspace(snapshot.sourceRoot);
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      applyWorkspaceDelta(snapshot, input, delta, { signal: controller.signal }),
+    ).rejects.toThrow();
+    await expect(
+      applyWorkspaceDelta(snapshot, input, delta, { deadlineMs: Date.now() - 1 }),
+    ).rejects.toThrow(/deadline/u);
+    await unchanged(snapshot, before, source);
+    const applying = applyWorkspaceDelta(snapshot, input, delta);
+    await expect(applyWorkspaceDelta(snapshot, input, delta)).rejects.toThrow(/another import/u);
+    await applying;
+    await expect(applyWorkspaceDelta(snapshot, input, delta)).rejects.toThrow(/no longer matches/u);
+    expect(await fingerprintWorkspace(snapshot.sourceRoot)).toBe(source);
   });
 
   it("refuses .git rather than treating it as an ignored directory", async () => {
@@ -531,6 +603,52 @@ describe("Workspace transfer prototype (offline actual files, no cloud fix integ
     await mkdir(join(snapshot.workerRoot, ".git"));
     await writeFile(join(snapshot.workerRoot, ".git/config"), "private metadata");
     await expect(packWorkspaceSnapshot(snapshot, binding)).rejects.toThrow(/\.git/u);
+  });
+  it("transfers large text and binary bytes through explicit compression without dropping ordinary files", async () => {
+    const snapshot = await fixture(),
+      text = "large ordinary source content\n".repeat(20_000),
+      binary = Buffer.alloc(700_000, 0xff);
+    await writeFile(join(snapshot.workerRoot, "large.txt"), text);
+    await writeFile(join(snapshot.workerRoot, "large.bin"), binary);
+    const input = await packWorkspaceSnapshot(snapshot, binding);
+    expect(
+      input.files.filter((file) => file.path.startsWith("large.")).map((file) => file.encoding),
+    ).toEqual(["gzip-base64", "gzip-base64"]);
+    const copied = await remote(input);
+    expect(await readFile(join(copied, "large.txt"), "utf8")).toBe(text);
+    expect((await readFile(join(copied, "large.bin"))).equals(binary)).toBe(true);
+    expect(input.files.find((file) => file.path === "large.txt")?.sha256).toBe(hash(text));
+  });
+  it("rejects gzip bombs and cumulative expansion before creating any destination", async () => {
+    const snapshot = await fixture(),
+      input = await packWorkspaceSnapshot(snapshot, binding),
+      expanded = Buffer.alloc(20_000, 0);
+    const file = input.files[0];
+    if (file === undefined) throw new Error("Missing fixture");
+    const compressed = {
+      ...file,
+      path: "bomb.bin",
+      encoding: "gzip-base64" as const,
+      content: gzipSync(expanded).toString("base64"),
+      sha256: hash(expanded),
+    };
+    const bomb = rehash({ ...input, files: [compressed] });
+    await expect(
+      materializeWorkspaceManifest(bomb, join(root, "bomb"), {
+        limits: { maxExpandedBytes: 1024 },
+      }),
+    ).rejects.toThrow(/expanded byte limit/u);
+    const cumulative = rehash({
+      ...input,
+      files: [compressed, { ...compressed, path: "second.bin" }],
+    });
+    await expect(
+      materializeWorkspaceManifest(cumulative, join(root, "sum"), {
+        limits: { maxExpandedBytes: 25_000 },
+      }),
+    ).rejects.toThrow(/total expanded/u);
+    expect(await readdir(root)).not.toContain("bomb");
+    expect(await readdir(root)).not.toContain("sum");
   });
 
   it("rejects a real directory symlink/junction, including an added-file parent escape", async () => {

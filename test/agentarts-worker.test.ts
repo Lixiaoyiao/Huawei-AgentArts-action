@@ -29,6 +29,7 @@ const output = {
   findings: [],
 };
 const environment = {
+  AGENTARTS_ENABLE_LEGACY_PROTOCOLS: "true",
   ...process.env,
   DEEPSEEK_API_KEY: realKey,
   API_KEY: runtimeKey,

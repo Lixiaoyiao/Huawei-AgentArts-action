@@ -1,6 +1,10 @@
 # 演示流程：从本地证据到真实云端闭环
 
-演示开始先说明当前证据层次：**本地真实DSH既有确定性模型夹具运行，也有生产AMD64容器接真实DeepSeek的四个固定审查案例；最新AMD64/ARM64 QEMU镜像分别通过运行与拒绝检查；真实 GitHub → AgentArts → GitHub 闭环仍待云端验收。** 四例真实模型只通过自动rubric，人工尚未复核、实际成本未知；PR和提交仍是合成夹具，无GitHub发布。页面是记录查看器，不调用模型或证明数据来自云端。
+演示先说明证据层次：当前v3主链路接入五种原operation，页面已支持fix/implement、原独立测试摘要、部分写入与实际结果链接；云端闭环仍未验收。历史只读版本有本地真实DSH/确定性模型、AMD64真实DeepSeek四例自动rubric和双架构镜像证据，不能继承为新v3全部能力通过。四例人工尚未复核、成本未知，合成PR无GitHub发布。页面只读记录，不触发执行或证明数据来自云端。
+
+写任务可导入 [fix-test-failed.json](../../agentarts/demo/examples/fix-test-failed.json) 和 [implement-partial-success.json](../../agentarts/demo/examples/implement-partial-success.json)。它们明确是simulation UI示例，时间/测试数/commit均为合成，无Runtime/模型/测试/GitHub调用；不作为业务验收证据。页面展示原validation.original的status/commandCount，工具观测名称与成功回执分开；部分写入后失败须核对已有效果，不盲重跑，没有实际GitHub链接就保持空态。
+
+2026-10-07真实独立Edge154检查覆盖32截图/布局场景（1280/390/320），包括旧本地DSH记录原字节回放、五种operation、fix通过/失败、implement部分写入、CSP/HTML文本与静态子路径/无轮询。写状态为明确模拟；本地元数据/截图在 `outputs/pr-review-demo-qa/full-migration-20261007-final2/`，不声称云或真实写业务通过。
 
 ## 1. 当场运行本地审查
 
@@ -88,7 +92,7 @@ Linux/macOS 使用同样的 `--record`/`--out` 参数和绝对路径。输出目
 5. 打开记录中的真实 GitHub 结果链接，核对评论所在 PR、代码行和当前提交。评测者用固定源文件/diff 独立判定授权 guard 缺陷是否成立；不以 schema 通过、模型自评或测试数量代替这个判定。
 6. 再跑 clean、权限拒绝、提交变化、超时、取消和人工重跑案例。检查真实 GitHub 评论没有重复、DSH 已停止、Session 无遗留运行。分别保留失败原因和清理证据，不能只录正常案例。
 
-只有上述真实事件、平台 DSH/工具证据、控制端验证和 GitHub 结果都能对应，才把该次任务写为「云端闭环通过」。Runtime 日志是现有观测依据；尚未接入的 Gateway/MCP、完整 Trace 和平台评估不列为演示功能。CI 修复、Issue→PR 当前应拒绝，不能换用本地上游模式冒充已迁移。
+只有真实事件、平台DSH/工具、Controller检查和实际GitHub结果对应同一任务，才称该次云端闭环通过。Gateway/MCP服务、完整平台Trace与平台评估按实际证据标记；原MCP代码接入不代表华为Gateway已接入。fix/implement现有v3主链路，但仍须在相应环境证明真实文件返回、独立测试、原finalizer和失败停止，不能以UI模拟或旧只读证据代替。
 
 ## 5. 停止条件与留档
 

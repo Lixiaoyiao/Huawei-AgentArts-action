@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "bundler": "@vercel/ncc@0.45.0",
+  "adaptations": [
+    {
+      "package": "@deepseek-ai/dsh-llm",
+      "version": "0.2.0-rc.2",
+      "source": "@deepseek-ai/dsh-llm/lib/index.js",
+      "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+      "replacements": 1,
+      "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+      "reason": "inline-locked-upstream-package-version",
+      "sourceMapOffsetsPreserved": true
+    }
+  ]
+}

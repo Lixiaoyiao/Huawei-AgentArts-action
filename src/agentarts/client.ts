@@ -18,8 +18,18 @@ import {
   type ReadOnlyTaskReply,
 } from "./readonly-task-protocol.js";
 import { formatRuntimeFailure, runtimeFailureDiagnostics } from "./failure-format.js";
+import {
+  runtimeTaskReplySchema,
+  MAX_RUNTIME_TASK_BYTES,
+  type RuntimeTask,
+  type RuntimeTaskReply,
+} from "./runtime-task-protocol.js";
+import { throwIfCancelled } from "../lifecycle/cancellation.js";
 
-async function readRuntimeJson(response: Response): Promise<unknown> {
+async function readRuntimeJson(
+  response: Response,
+  maximumBytes = MAX_TASK_BYTES,
+): Promise<unknown> {
   if (!response.headers.get("content-type")?.includes("application/json") || response.body === null)
     throw new DshConfigurationError("Runtime must return application/json");
   const reader = response.body.getReader();
@@ -30,7 +40,7 @@ async function readRuntimeJson(response: Response): Promise<unknown> {
       const chunk: ReadableStreamReadResult<Uint8Array> = await reader.read();
       if (chunk.done) break;
       bytes += chunk.value.byteLength;
-      if (bytes > MAX_TASK_BYTES) throw new DshConfigurationError("Runtime response exceeds limit");
+      if (bytes > maximumBytes) throw new DshConfigurationError("Runtime response exceeds limit");
       chunks.push(chunk.value);
     }
   } finally {
@@ -105,10 +115,22 @@ export async function invokeReadOnlyTask(
 ): Promise<ReadOnlyTaskReply> {
   return invokeRuntime(config, task, readOnlyTaskReplySchema, options);
 }
+/** Full v3 transport; authority and file deltas remain independently checked by the Controller. */
+export async function invokeRuntimeTask(
+  config: RuntimeClientConfig,
+  task: RuntimeTask,
+  options: {
+    readonly signal?: AbortSignal;
+    readonly fetchImplementation?: typeof fetch;
+    readonly onRequestId?: (id: string) => void;
+  } = {},
+): Promise<RuntimeTaskReply> {
+  return invokeRuntime(config, task, runtimeTaskReplySchema, options);
+}
 
 async function invokeRuntime<T>(
   config: RuntimeClientConfig,
-  task: ReviewTask | ReadOnlyTask,
+  task: ReviewTask | ReadOnlyTask | RuntimeTask,
   replySchema: z.ZodType<T>,
   options: {
     readonly signal?: AbortSignal;
@@ -116,10 +138,12 @@ async function invokeRuntime<T>(
     readonly onRequestId?: (id: string) => void;
   },
 ): Promise<T> {
+  throwIfCancelled(options.signal);
   const fetcher = options.fetchImplementation ?? fetch;
   const url = runtimeUrl(config);
   const body = JSON.stringify(task);
-  if (Buffer.byteLength(body) > MAX_TASK_BYTES)
+  const maximumBytes = task.schemaVersion === 3 ? MAX_RUNTIME_TASK_BYTES : MAX_TASK_BYTES;
+  if (Buffer.byteLength(body) > maximumBytes)
     throw new DshConfigurationError("Task exceeds transport limit");
   const timeout = AbortSignal.timeout(task.timeoutMs);
   const signal =
@@ -141,7 +165,7 @@ async function invokeRuntime<T>(
     if (!response.ok) {
       let failure: unknown;
       try {
-        failure = await readRuntimeJson(response);
+        failure = await readRuntimeJson(response, maximumBytes);
       } catch {
         await response.body?.cancel();
       }
@@ -151,7 +175,9 @@ async function invokeRuntime<T>(
       if (response.status === 499) throw new DshError("DSH_ABORTED", message);
       throw new DshConfigurationError(message);
     }
-    return replySchema.parse(await readRuntimeJson(response));
+    const result = replySchema.parse(await readRuntimeJson(response, maximumBytes));
+    throwIfCancelled(signal);
+    return result;
   } catch (error) {
     if (options.signal?.aborted) throw new DshAbortedError();
     if (timeout.aborted) throw new DshTimeoutError(task.timeoutMs);

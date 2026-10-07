@@ -401,6 +401,7 @@
       }
       .validation-summary {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 10px;
         margin-bottom: 16px;
@@ -446,6 +447,11 @@
         white-space: pre-wrap;
         overflow-wrap: anywhere;
         margin: 14px 0 0;
+      }
+      .write-details {
+        overflow-wrap: anywhere;
+        white-space: pre-wrap;
+        font-size: 12px;
       }
       .result-link {
         margin-top: 18px;
@@ -740,6 +746,7 @@
             <div class="panel-body">
               <div class="validation-summary">
                 <span id="validationStatus" class="badge neutral">尚未验证</span>
+                <span id="validationOriginal" class="badge neutral hidden"></span>
               </div>
               <ul id="checks" class="check-list"></ul>
               <p id="checksEmpty" class="placeholder">暂无验证检查记录。</p>
@@ -751,6 +758,8 @@
             <div class="panel-body">
               <p id="resultSummary" class="result-summary"></p>
               <p id="resultError" class="result-error hidden"></p>
+              <p id="writeStatus" class="hidden"></p>
+              <p id="writeDetails" class="mono write-details hidden"></p>
               <div id="resultLink" class="result-link hidden"></div>
               <p id="resultLinkEmpty" class="placeholder">记录未提供 GitHub 结果链接。</p>
             </div>
@@ -775,6 +784,11 @@
               </table>
             </div>
             <p id="toolsEmpty" class="placeholder">暂无工具调用记录。</p>
+            <div id="observedToolsPanel" class="hidden">
+              <h3>观测名称（非成功回执）</h3>
+              <p class="status-note">仅记录 native 工具名称；没有可核验的成功状态或耗时。</p>
+              <ul id="observedTools" class="check-list mono"></ul>
+            </div>
           </div>
         </section>
         <section class="panel" aria-labelledby="runtimeHeading">
@@ -894,7 +908,7 @@
           throw new Error("任务类型不受支持。");
         if (
           record.task.operation !== undefined &&
-          !["review", "task", "diagnose"].includes(record.task.operation)
+          !["review", "task", "diagnose", "fix", "implement"].includes(record.task.operation)
         )
           throw new Error("任务操作不受支持。");
         if (!Array.isArray(record.stages) || !Array.isArray(record.tools))
@@ -910,12 +924,46 @@
         if (record.tools.some((t) => !t || typeof t !== "object" || typeof t.ok !== "boolean"))
           throw new Error("工具记录必须包含布尔值 ok。");
         if (
+          record.observedTools !== undefined &&
+          (!Array.isArray(record.observedTools) ||
+            record.observedTools.length > 512 ||
+            record.observedTools.some((name) => typeof name !== "string" || name.length > 128))
+        )
+          throw new Error("工具观测名称格式不受支持。");
+        if (
           !record.validation ||
           !["passed", "failed", "not-run"].includes(record.validation.status) ||
           !Array.isArray(record.validation.checks) ||
           record.validation.checks.some((c) => typeof c !== "string")
         )
           throw new Error("记录缺少有效的独立验证结果。");
+        const original = record.validation.original;
+        if (
+          original !== undefined &&
+          (!original ||
+            typeof original !== "object" ||
+            Array.isArray(original) ||
+            Object.keys(original).some((key) => !["status", "commandCount"].includes(key)) ||
+            !["passed", "failed", "skipped", "not-applicable"].includes(original.status) ||
+            !Number.isSafeInteger(original.commandCount) ||
+            original.commandCount < 0)
+        )
+          throw new Error("原控制端验证摘要格式不受支持。");
+        const result = record.result;
+        if (
+          result !== undefined &&
+          (!result ||
+            typeof result !== "object" ||
+            Array.isArray(result) ||
+            ["githubUrl", "summary", "error", "commitSha", "branchName"].some(
+              (key) => result[key] !== undefined && typeof result[key] !== "string",
+            ) ||
+            (result.writeStatus !== undefined &&
+              !["success", "partial-success", "no-changes"].includes(result.writeStatus)) ||
+            (result.commitSha !== undefined && !/^[a-f0-9]{40}$/u.test(result.commitSha)) ||
+            (result.branchName !== undefined && result.branchName.length > 1024))
+        )
+          throw new Error("GitHub 写入摘要格式不受支持。");
         if (
           record.warnings !== undefined &&
           (!Array.isArray(record.warnings) || record.warnings.some((w) => typeof w !== "string"))
@@ -994,14 +1042,18 @@
         $("updated").dateTime = lastLoadedAt.toISOString();
         $("taskName").textContent = str(record.task.repository, "未提供仓库");
         $("title").textContent =
-          record.task.operation === "diagnose"
-            ? "CI 诊断运行记录"
-            : record.task.operation === "task"
-              ? "GitHub 任务处理记录"
-              : record.task.kind === "pull_request" ||
-                  (!record.task.kind && record.task.pullNumber > 0)
-                ? "PR 审查运行记录"
-                : "GitHub 任务运行记录";
+          record.task.operation === "fix"
+            ? "PR 修复运行记录"
+            : record.task.operation === "implement"
+              ? "Issue 实现运行记录"
+              : record.task.operation === "diagnose"
+                ? "CI 诊断运行记录"
+                : record.task.operation === "task"
+                  ? "GitHub 任务处理记录"
+                  : record.task.kind === "pull_request" ||
+                      (!record.task.kind && record.task.pullNumber > 0)
+                    ? "PR 审查运行记录"
+                    : "GitHub 任务运行记录";
         const taskUrl = githubUrl(record.task.url);
         $("taskDesc").replaceChildren(
           node(
@@ -1030,14 +1082,19 @@
         $("baseSha").textContent = str(record.task.baseSha, "");
         $("baseField").classList.toggle("hidden", !$("baseSha").textContent);
         $("duration").textContent = duration(record.durationMs);
-        const outcome = record.stages.some((s) => s.status === "failed")
-          ? ["含失败阶段", "error"]
-          : record.stages.some((s) => s.status === "running")
-            ? ["含执行中阶段", ""]
-            : record.stages.length &&
-                record.stages.every((s) => s.status === "passed" || s.status === "skipped")
-              ? ["阶段已结束", "neutral"]
-              : ["暂无阶段", "neutral"];
+        const outcome =
+          record.result?.writeStatus === "partial-success"
+            ? ["部分写入已完成", "warning"]
+            : record.result?.error
+              ? ["执行失败", "error"]
+              : record.stages.some((s) => s.status === "failed")
+                ? ["含失败阶段", "error"]
+                : record.stages.some((s) => s.status === "running")
+                  ? ["含执行中阶段", ""]
+                  : record.stages.length &&
+                      record.stages.every((s) => s.status === "passed" || s.status === "skipped")
+                    ? ["阶段已结束", "neutral"]
+                    : ["暂无阶段", "neutral"];
         badge($("taskStatus"), ...outcome);
         $("stages").replaceChildren();
         $("stageEmpty").classList.toggle("hidden", !!record.stages.length);
@@ -1076,18 +1133,57 @@
           "not-run": ["尚未验证", "neutral"],
         };
         badge($("validationStatus"), ...validation[record.validation.status]);
+        const original = record.validation.original;
+        $("validationOriginal").classList.toggle("hidden", !original);
+        if (original) {
+          const labels = {
+            passed: "通过",
+            failed: "失败",
+            skipped: "跳过",
+            "not-applicable": "不适用",
+          };
+          badge(
+            $("validationOriginal"),
+            `原独立测试：${labels[original.status]} · ${original.commandCount} 条命令`,
+            original.status === "failed"
+              ? "error"
+              : original.status === "passed"
+                ? "success"
+                : "neutral",
+          );
+        }
         $("checks").replaceChildren(...record.validation.checks.map((c) => node("li", c)));
         $("checksEmpty").classList.toggle("hidden", !!record.validation.checks.length);
         const result = record.result && typeof record.result === "object" ? record.result : {};
         $("resultSummary").textContent = str(result.summary, "暂无结果摘要。");
         $("resultError").textContent = str(result.error, "");
         $("resultError").classList.toggle("hidden", !$("resultError").textContent);
+        const writeLabels = {
+          success: "原控制端确认写入成功",
+          "partial-success": "原控制端确认部分写入；请先核对已有效果再重跑。",
+          "no-changes": "原控制端记录无文件变更",
+        };
+        $("writeStatus").textContent = writeLabels[result.writeStatus] || "";
+        $("writeStatus").classList.toggle("hidden", !$("writeStatus").textContent);
+        $("writeDetails").textContent = [
+          result.commitSha ? `Commit ${result.commitSha}` : "",
+          result.branchName ? `分支 ${result.branchName}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        $("writeDetails").classList.toggle("hidden", !$("writeDetails").textContent);
         $("resultLink").replaceChildren();
         const resultUrl = githubUrl(result.githubUrl);
         $("resultLink").classList.toggle("hidden", !resultUrl);
         $("resultLinkEmpty").classList.toggle("hidden", Boolean(resultUrl));
         if (resultUrl) {
-          const a = node("a", "查看 GitHub 结果 ↗", "button");
+          const a = node(
+            "a",
+            result.writeStatus === "partial-success"
+              ? "查看已记录 GitHub 效果 ↗"
+              : "查看 GitHub 结果 ↗",
+            "button",
+          );
           a.href = resultUrl;
           a.target = "_blank";
           a.rel = "noopener noreferrer";
@@ -1102,11 +1198,19 @@
           tr.append(node("td", str(t.id, "未提供 ID"), "mono"));
           const td = node("td"),
             state = node("span");
-          badge(state, t.ok ? "成功" : "失败", t.ok ? "success" : "error");
+          badge(
+            state,
+            t.completed === false ? "未完成" : t.ok ? "成功" : "失败",
+            t.completed === false ? "warning" : t.ok ? "success" : "error",
+          );
           td.append(state);
           tr.append(td, node("td", duration(t.durationMs), "mono"));
           $("tools").append(tr);
         });
+        $("observedTools").replaceChildren(
+          ...(record.observedTools || []).map((name) => node("li", name)),
+        );
+        $("observedToolsPanel").classList.toggle("hidden", !(record.observedTools || []).length);
         const runtime = record.runtime && typeof record.runtime === "object" ? record.runtime : {};
         for (const [id, key] of [
           ["session", "sessionId"],
@@ -1124,6 +1228,8 @@
           warnings.push("结果链接不是有效的 https://github.com 地址，已隐藏。");
         if (resultUrl && record.validation.status !== "passed")
           warnings.push("记录提供了 GitHub 结果链接，但独立验证未通过；请核查控制端行为。");
+        if (result.writeStatus === "partial-success")
+          warnings.push("部分 GitHub 效果可能已经存在。失败不等于没有写入，不能盲目重新提交。");
         $("warnings").replaceChildren(...warnings.map((w) => node("p", w)));
         $("warnings").classList.toggle("hidden", !warnings.length);
       }

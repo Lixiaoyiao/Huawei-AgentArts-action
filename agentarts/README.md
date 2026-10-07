@@ -1,39 +1,41 @@
 # AgentArts 上的 DeepSeek Harness Action
 
-目标是完整迁移原 Action 的已有能力，保留 DSH 和受信 GitHub Controller，由 AgentArts 提供适用的云运行基础设施。PR Review 是第一条接入与验收链路：Controller 获取绑定 base/head 的上下文，Runtime 内运行 DSH，Controller 独立检查返回结果，再由原 publisher 发布审查评论。账号准入审批中，真实云端闭环未验收。本次更新公开源码与本地证据，未创建云资源。
-
-本轮接入原只读 `task`、`diagnose` 的 v2 engine/worker 与主入口，复用原 Controller loop 的工具请求/反馈路径。最新AMD64（clean源码 `cd9ce8e`）和ARM64 QEMU（clean源码 `60b7e95`）生产镜像，各通过9运行场景和2启动拒绝，构建输入摘要相同，含真实DSH v2 read/typed output；模型/PR/CI为确定性夹具，较早d9双架构记录保留。[能力迁移表](../docs/agentarts/capability-matrix.md) 区分代码/本地/模拟/云端状态，不拿旧Review CI作为v2证据。`fix`、`implement`、`task --write` 仍拒绝。native/extensions/session 等原实现完整保留；迁移是原能力适配，不是另建平台。运行模式和旧参数是否原样保留须逐项判断，不凭源码存在宣称兼容，也不将本阶段只读约束当成永久产品定位。
-
-经批准的最终本地真实模型套件 `3a0614e9` 使用同一AMD64镜像：两个defect与两个clean案例均通过自动规则，每例2次provider请求，共8次；人工尚未复核，actualCost仍unknown。此前首例WORKER_FAILED、诊断轮roles-clean失败及单例复测记录均保留，不推定旧失败根因。合成PR无GitHub发布或AgentArts调用，详见 [评测记录](../docs/agentarts/evaluation.md) 与 [验证记录](../docs/agentarts/verification.md)。
-
-当前 Action 参数中 `command` 可选 auto/review/task/diagnose；`allowed-tools` 只允许 workspace.read/search 和受信 Controller 的 github.checks.read，工具仍经原 policy交集判断；`max-turns` 默认3，约束原loop，包括工具反馈轮次。task-output-schema仅适用于通用task；非PR任务的base-branch由Controller固定到commit，无PR workflow_run诊断则固定失败run的head。Review使用v1，不接受Controller工具请求；只读task/diagnose使用v2。native read/search实际在Runtime执行；只有已授catalog中的github.checks.read请求返回Controller，执行和反馈由原loop完成。模型没有GitHub写入或command argv；普通read不授仓库执行能力。
+这是原 Action 的完整能力迁移，PR Review 仍是第一条真实云验收链路。当前主入口复用原 `runAction`，将 DSH engine 接到 Runtime v3；事件解析、授权、工具回调、独立验证与发布继续使用原 Controller。账号准入待审批，没有真实 AgentArts 或 GitHub 发布验收。[能力表](../docs/agentarts/capability-matrix.md) 逐项列出代码接入、实测范围和待验条件；历史只读证据不代表本轮新代码通过。
 
 ```text
-GitHub PR → Controller 授权/绑定上下文 → AgentArts Runtime 内运行 DSH
-          → 只读工具/结果/回执 → Controller 独立校验与 head 复查 → GitHub 评论
+GitHub 事件 → Controller 授权、实体/ref/提交绑定、原上下文与工作区
+            → Runtime supervisor → 隔离 namespace 中的原 DSH
+            → 结果、实际工具回执、实际文件 delta、DSH checkpoint
+            → Controller 独立检查、工具反馈/测试 → 原 GitHub finalizer
 ```
 
-DSH 固定 `0.2.0-rc.2`，Node 镜像和 npm 依赖锁定。Controller 只传限长 diff、改动文件文本及显式 context-files：最多 1 MiB/500 文件，整个任务最多 2 MiB。云端不 clone 仓库，不带 `.git`、符号链接或仓库启动命令；缺失/截断上下文按缺失处理。同仓库的授权审查仅有 read/search；fork 按上游策略只接收有界上下文，不装载工具工作区。
+## 当前主链路
 
-v2也只传changedFiles.source与context-files，不上传Controller整仓。Issue/repository task默认可能只有Issue或任务文本；文件问答要显式选择context-files。授予read/search只允许访问这份有界工作区，不代表可读取完整仓库或从云端自由拉代码。
+生产server默认只接v3。v1/v2源码和旧评测保留，只有操作者显式设置`AGENTARTS_ENABLE_LEGACY_PROTOCOLS=true`才允许历史benchmark；旧协议隔离较弱，不作为部署入口或新能力证据。`prove:local`为历史Review复现显式启用该兼容路径；新主Action不会设置此flag。
 
-| 受信位置             | 凭据与职责                                                                 |
-| -------------------- | -------------------------------------------------------------------------- |
-| GitHub Controller    | GitHub 写 token、Runtime 入站 API Key；授权、独立验证、PR 复查、评论发布   |
-| Runtime supervisor   | DeepSeek 模型 key；启动原模型代理、封闭环境、只读工作区和 UID/GID10001 DSH |
-| DSH / 模型 / PR 数据 | 只有任务代理 token 与授予的只读工具；不持有真实 GitHub、Runtime 或模型 key |
+五种原 operation 都由 [AgentArtsFullEngine](../src/agentarts/engine-full.ts) 进入 [Runtime v3](../src/agentarts/runtime-task-protocol.ts)：`review`、`task`（read/write）、`diagnose`、`fix`、`implement`。原 command auto/mention、label/assignee/actor、自动化/CI 路由、prompt-file/context-files、typed taskOutput、progress/check/output 参数由原输入解析与授权处理。[当前 Action](action.yml) 由原 contract 生成，模型 key、DSH 版本/可执行文件、隔离和代理 origin 由受信 Runtime 管理，不能作为 Action 输入覆盖。
 
-独立 UID 不等于网络隔离。真实租户仍须验证父进程、文件、云元数据凭据、网络与截止/取消清理。未满足时停止部署验收；禁止将测试 UID 豁免用于云端。当前审查不执行 PR 代码和测试，不接受文件修改、模型测试通过声明或控制端工具请求。未知结果、绑定错误、越权/未结束回执、工作区变化和凭据泄漏会阻断发布；模型评论仍需按业务标准判断。
+原 loop 保留多轮工具反馈和验证失败后的修复；每轮单独固定 taskId、operation identity、entity/ref、base/head、revision、有效工具/扩展权限摘要、输入工作区摘要和 taskDigest。Controller 原命令与 typed GitHub 工具仍在 Controller 执行，模型只请求已授 catalog 工具；Runtime 执行原 DSH 原生工具和经批准的扩展。GitHub 写 token 始终不进 Runtime。
 
-后续写能力须将真实文件变更按路径、基线 SHA/模式与任务绑定返回，导入受信 Controller 的隔离工作区，再复用原验证完整性检查、无凭据容器测试和独立 GitHub finalizer。`changePlan` 只是模型描述，不包含补丁内容；不能改用模型“测试通过”声明，也不能简单解除本阶段只读限制。
+受信任务使用原准备好的工作区完整文件集，不再仅传改动文件。工作区清单最多16 MiB编码、128 MiB解压累计、5000文件；支持原bytes的UTF-8/base64与有界gzip-base64，拒绝.git、链接、特殊文件、别名冲突和超限，generated node_modules不传。整个 v3 HTTP body最多32 MiB、单次最多30分钟；这些是本项目上限，不是 AgentArts 平台承诺。Controller 总截止、平台请求/生命周期上限仍需共同满足。fork等不可信任务继续只有有界上下文，不获文件、工具、扩展或Session。
 
-本轮已实现 [文件传输原型](../src/agentarts/workspace-transfer.ts)，从真实工作区打包/capture/delta，严格校验后 stage/交换原 Controller workspace；它还未接入云端 write 或 GitHub finalizer。repository/commit/revision/digest 绑定不能代替外层 task/ref授权，详情与测试范围见 [能力表](../docs/agentarts/capability-matrix.md)。
+DSH 停止后 supervisor 从实际文件捕获 delta；Controller 检查原SHA/mode、保护路径、source baseline、任务/权限/ref/revision/digest和凭据边界，stage后事务交换workerRoot。取消、截止、重复/迟到结果或导入失败会阻断finalizer。模型的changePlan和测试通过声明不代替内容或验收。原独立无凭据Docker测试、strict完整性分类/baseline replay、PR head/Issue指纹/base复查、部分效果与GitHub reconciliation继续由Controller完成。
 
-新增配置入口不自动补齐workflow权限。PR Review使用contents read/pull-requests write；诊断读取check-runs/失败run日志需相应checks read/actions read。Issue答复的写权限只给Controller并按实际comment endpoint配置；它不等于开放文件/ref写入。[上游诊断权限例](../examples/ci-diagnose.yml)、[GitHub评论权限](https://docs.github.com/en/rest/issues/comments#create-an-issue-comment)。当前审批后部署预检与第一条云验收仍以Review为主；其他operation的真实GitHub/云场景单独记录。
+controlled/native 都复用原Profile、Bundle和launcher。生产必须有bwrap、必要Linux namespace与固定seccomp策略，不能降级为只换UID的宿主执行。Runtime supervisor仅保留CHOWN、DAC_OVERRIDE、KILL、SETGID、SETUID五项cap；worker UID/GID10001、cap为空、新namespace创建被额外BPF限制，模型经Unix socket代理。没有Docker-in-Docker、Docker socket或privileged模式。网络扩展须由操作者配置精确origin的受信egress代理，默认关闭并拒私网/元数据地址；任意子进程不保证遵循代理，不能以授network权限声称已兼容所有联网工具。
 
-## 本地运行与证据
+原 DSH Session 使用原checkpoint格式、binding/provenance检查与artifact store：Controller restore后导出安全metadata与限长历史，Runtime在固定`/workspace`保存/恢复，返回严格checkpoint后导入Controller，再走原save。不会用AgentArts Session取代DSH历史，不恢复旧工作区、旧权限或重放旧工具。正文含已知secret、附件/不可移植内容、改写历史、摘要或provenance错误都拒绝。
 
-需要 Node.js 24.15.0、npm、Git。已有本地复现命令如下，不调用华为或真实模型：
+| 位置               | 真实凭据与职责                                                                      |
+| ------------------ | ----------------------------------------------------------------------------------- |
+| GitHub Controller  | GitHub token、Runtime入站API Key；授权、原工具、独立测试、发布、DSH artifact存储    |
+| Runtime supervisor | 模型key和受信出站策略；原模型代理、封闭worker环境、namespace、工具/文件/Session收集 |
+| DSH及仓库代码      | 任务代理token和当前获准工作区/工具；没有GitHub、Runtime或真实模型key                |
+
+MCP/plugins的原定义、安装锁、受控/native组合已接入代码；任务中明文secret仍拒绝。[监督进程MCP代理](../src/agentarts/mcp-credential-bridge.ts)支持固定HTTPS endpoint、独立只读凭据、当前grant交集/预算、POST与有限SSE；key不进Profile/worker/模型，回显key阻断整次结果。OAuth、长订阅、凭据stdio/直接Plugin配置尚无通用代理适配。配置见 [部署手册](../docs/agentarts/deployment.md#31-可选的只读-mcp-凭据代理)。原MCP接入与华为Gateway/MCP服务是两件事；后者仍未配置或验收，平台评分未接入，不用本地日志冒充平台Trace。
+
+## 本地开发与验证
+
+需要Node.js24.15.0、npm、Git；完整生产运行另需要Linux与Docker/bwrap。以下不调用华为或真实模型：
 
 ```bash
 npm ci --ignore-scripts
@@ -41,36 +43,50 @@ npm run typecheck
 npm run lint
 npm run test:agentarts
 npm run build:agentarts
-npm run prove:local -- --out /absolute/path/to/work/local-proof-new.json
-node agentarts/demo/serve.mjs --record /absolute/path/to/work/local-proof-new.json
+npm test -- --maxWorkers=2
 ```
 
-`prove:local` 实际经过本地 HTTP Runtime、原 DSH、只读工具与 Controller 检查，模型/PR 是确定性夹具。使用新的 `--out` 路径保存本轮，避免覆盖历史evidence；该命令当前不拒绝覆盖已有同名文件，操作者需选新的路径。Windows 有明确的测试UID豁免；Linux root可用 `node dist-agentarts/local-proof/index.js --linux-isolation --out /absolute/path/to/work/linux-proof-new.json` 另验UID/文件/父进程环境，仍不是云端证据。完整通用回归另执行 `npm test -- --maxWorkers=2`，targeted test不能代替它。
-
-Linux本机生产镜像复现用 `bash agentarts/local-container.sh`；支持已准备宿主的AMD64/ARM64，不自动登记QEMU、不推送SWR。它保留实际image ID、descriptor、dirty/source tree摘要和smoke记录。固定Review任务/无调用dry-run、受信root key单文件挂载和清理见 [部署手册4节](../docs/agentarts/deployment.md#4-本地预检与复现)。有真实key也不自动调用模型，须独立确认模型费用与次数/时限上限。
-
-既有双架构镜像 CI 绑定源码 `3957bbe4e6b589c7fd790a1a05ff86394d11be9f`：[实际运行](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37187847055)。AMD64 与 ARM64 QEMU 都运行了真实 DSH/read、重复拒绝和真实请求超时清理；它们不证明本轮其他源码、原生 ARM 硬件或 AgentArts 通过。本轮容器/live 命令和新记录按 [部署手册](../docs/agentarts/deployment.md) 与 [验证记录](../docs/agentarts/verification.md) 分开留存。
-
-Demo 默认在 `http://127.0.0.1:4173`，只读记录；文件导入标为历史回放。静态导出保留原 JSON，拒绝 raw/container、未知字段和重复键，不执行任务、不持续轮询。已知字符串仍需人工脱敏；导出与公开托管是不同操作，当前不发布。详见 [Demo 指南](../docs/agentarts/demo-guide.md)。浏览器不配置 key。
-
-多轮Action记录汇总实际native与Controller工具回执，但runtime/task/session/requestId当前保留最后一轮Session，不是完整平台Trace。平台日志须另按各次真实任务查询；GitHub源事件、回执和演示记录不能补造为未采集的中间云轨迹。
-
-## 审批后的第一条真实链路
-
-按 [部署与验收手册](../docs/agentarts/deployment.md) 使用已有或明确批准的 SWR/Runtime/LTS 资源。首次固定 ARM64 镜像 digest、Runtime 版本和单版本 alias，使用 HTTP/8080 与 API_KEY 认证。控制端只需 `contents: read`、`pull-requests: write`；敏感值分别存入 Controller 和 supervisor，不进部署 JSON、镜像、任务 body 或 Demo。
-
-可先离线检查本地部署配置：
+Session真实save→resume的确定性模型测试在Linux root且namespace可用时执行；Windows按平台条件跳过：
 
 ```bash
-node agentarts/preflight.mjs --config /absolute/path/to/deployment-config.json
+npx vitest run test/agentarts-session-runtime.test.ts --maxWorkers=1
 ```
 
-格式见 [deployment-config.example.json](examples/deployment-config.example.json)。预检只验证文件/参数以及环境变量名称是否存在；不读取 key 值、不调用云 API、不启动容器、不创建资源。可选的本地镜像检查仅查询元数据。通过不代表 key、云权限、SWR 拉取或 alias 映射已验证。
+原只读Review小闭环仍可复现，但它不是v3全部能力证明：
 
-Action 入口：[action.yml](action.yml)；受信自用 workflow：[pr-review.yml](examples/pr-review.yml)。只构建 `github.workflow_sha` 的受信代码，不 checkout/执行 PR head。先确认云安全和清理，再用新仓库的维护者 PR 实跑；平台日志、实际 DSH/工具、控制端校验和 GitHub 评论必须对应同一任务。结果与清理状态分别记录。
+```bash
+npm run prove:local -- --out /absolute/path/to/work/review-proof-new.json
+node agentarts/demo/serve.mjs --record /absolute/path/to/work/review-proof-new.json
+```
+
+命令经过本地HTTP、真实DSH和Controller检查，模型/PR为夹具；Windows使用显式测试UID豁免。选新输出路径，避免覆盖历史记录。生产镜像、真实模型预算和安全key挂载按 [部署手册](../docs/agentarts/deployment.md)，实测日志与新源码范围见 [验证记录](../docs/agentarts/verification.md)。旧双架构read-only CI不能替代新namespace/full-task镜像验证。
+
+Demo只读实际记录，导入/静态导出标为历史回放，不触发任务；浏览器无key。多轮记录汇总回执，但Runtime/session/requestId当前保留最后一轮，非完整平台Trace。[Demo指南](../docs/agentarts/demo-guide.md) 说明安全导出与标签。
+
+## 安装与第一条云验收
+
+[新安装入口](install.mjs) 复用原review/commands模板、权限、明确test argv/镜像digest和不覆盖逻辑。先核对已发布commit，再在目标仓库运行：
+
+```bash
+node /absolute/path/to/Huawei-AgentArts-action/agentarts/install.mjs \
+  --action-ref <published-40-character-commit> --mode review
+```
+
+commands/both还需受信验证argv与固定测试镜像；省略验证argv会保留原失败占位，不读取package scripts猜测试：
+
+```bash
+node /absolute/path/to/Huawei-AgentArts-action/agentarts/install.mjs \
+  --action-ref <published-40-character-commit> --mode both \
+  --test-commands '[["node","--test"]]' \
+  --container-image '<validation-image>@sha256:<64-character-digest>'
+```
+
+安装器离线生成workflow，不配置key、不开资源、不调用模型/GitHub。配置Runtime三个Variables与Controller Secret，审查生成的权限/测试；`--dsh-mode native`支持原模板选择，但须先通过对应生产环境验收。不要先启用写工作流再检查云安全。
+
+[部署与验收手册](../docs/agentarts/deployment.md) 先验证固定镜像/alias、API_KEY、namespace/caps/seccomp、网络、超时/取消/清理与日志，再用维护者小PR实跑Review。实际事件、Runtime/DSH/tool、Controller检查和GitHub结果须对应同一任务；其余operation逐项保存独立证据。创建远程资源、开付费服务或公开托管须按用户授权执行。
 
 ## 来源与维护
 
-事件/权限、不可变 GitHub 数据、DSH Profile/launcher/代理、结果协议、审查过滤/publisher、原loop/finalizers和通用测试来自 [原项目](https://github.com/Lixiaoyiao/deepseek-harness-action)。新增部分为 `src/agentarts/`、本目录工具与文档/测试；上游局部调整包括受信engine/admission接口、UID/GID参数与无PR workflow_run固定CI commit，修改来源和验证单独记录。许可证和第三方声明保留在根目录。
+GitHub事件/权限、工作区、原DSH compositions/launcher/代理、结果协议、loop、验证、finalizers、Session artifacts、安装器模板及通用测试来自 [原项目](https://github.com/Lixiaoyiao/deepseek-harness-action)。新增Runtime transport、受检workspace/Session传输、namespace/出站代理、安装入口、Demo/评测和文档在本衍生仓库维护；上游局部接口调整保留来源与测试。[许可](../LICENSE) 和 [第三方声明](../THIRD_PARTY_NOTICES.md) 包含派生的Moby seccomp策略。
 
-维护关系为 `DSH 官方 → 原 Action 已验证更新 → 本衍生版`。基线见 [upstream-lock.json](upstream-lock.json)，按 [更新说明](../docs/agentarts/maintenance.md) 在独立分支人工升级，不追 latest。Gateway/MCP、平台评分、write/native/extensions/session未接云端；只读v2的本轮证据及原能力适配条件见 [能力迁移表](../docs/agentarts/capability-matrix.md)。开发工具、各次实际验证和未知项见 [验证记录](../docs/agentarts/verification.md)；赛事整理见 [ICT 对照](../docs/agentarts/ict-track2.md)。
+维护关系为 `DSH官方 → 原Action已验证更新 → 本衍生版`；[upstream-lock.json](upstream-lock.json) 固定基线，按 [维护手册](../docs/agentarts/maintenance.md) 人工开独立升级分支，不追latest、不重复各自追DSH。能力、剩余平台依赖和证据见 [迁移表](../docs/agentarts/capability-matrix.md) 与 [验证记录](../docs/agentarts/verification.md)。

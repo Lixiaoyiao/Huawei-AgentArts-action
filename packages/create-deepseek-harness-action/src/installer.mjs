@@ -336,6 +336,7 @@ async function installWorkflows({
   templateDirectory,
   testCommands,
   containerImage,
+  transformTemplate,
 }) {
   const definitions = workflowDefinitions(mode, dshMode).map((definition) => ({
     ...definition,
@@ -395,7 +396,7 @@ async function installWorkflows({
         );
       }
     }
-    definition.contents = contents;
+    definition.contents = transformTemplate?.(contents, definition.source) ?? contents;
   }
 
   await mkdir(join(cwd, ".github", "workflows"), { recursive: true });
@@ -509,7 +510,8 @@ export async function runInstaller(options = {}) {
     templateDirectory,
     testCommands: parsed.testCommands,
     containerImage: parsed.containerImage,
+    transformTemplate: options.transformTemplate,
   });
-  printSuccess(output, mode, dshMode, createdFiles, parsed.testCommands);
+  (options.printSuccess ?? printSuccess)(output, mode, dshMode, createdFiles, parsed.testCommands);
   return { mode, dshMode, createdFiles };
 }

@@ -1,7 +1,7 @@
 {
   "name": "huawei-agentarts-action",
   "version": "0.9.3",
-  "description": "Huawei AgentArts Runtime adaptation of DeepSeek Harness for GitHub; review-only first delivery",
+  "description": "AgentArts-hosted DeepSeek Harness for GitHub tasks, reviews, diagnosis and independently validated fixes",
   "author": "Lixiaoyiao",
   "repository": {
     "type": "git",
@@ -29,14 +29,15 @@
     "format:check": "prettier --check .",
     "lint": "eslint . --max-warnings=0",
     "test": "vitest run",
-    "test:generated": "node scripts/generate-action-contract.mjs",
+    "test:generated": "node scripts/generate-action-contract.mjs && node scripts/generate-agentarts-action.mjs && node scripts/generate-agentarts-seccomp.mjs",
     "test:dsh-config": "node scripts/verify-dsh-config.mjs",
     "check:config": "node scripts/check-config.mjs",
     "test:release-contract": "node scripts/verify-release-contract.mjs",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "check": "npm run test:generated && npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:release-contract && npm run test:dsh-config && npm run build:check",
+    "check": "npm run test:generated && npm run format:check && npm run lint && npm run typecheck && npm run test:coverage && npm run test:release-contract && npm run test:dsh-config && npm run build:check && npm run build:agentarts:check",
     "build:agentarts": "node scripts/build-agentarts.mjs",
+    "build:agentarts:check": "npm run build:agentarts && node scripts/verify-agentarts-bundles.mjs && git diff --exit-code -- dist-agentarts/controller/ && git diff --cached --exit-code -- dist-agentarts/controller/",
     "test:agentarts": "vitest run agentarts-",
     "prove:local": "node dist-agentarts/local-proof/index.js"
   },

@@ -1,4 +1,6 @@
 import { randomBytes, timingSafeEqual } from "node:crypto";
+import { chmod, chown, lstat, rm } from "node:fs/promises";
+import { dirname, isAbsolute } from "node:path";
 import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 
@@ -22,6 +24,8 @@ export interface DeepSeekProxyOptions {
   readonly maxResponseBytes?: number;
   readonly requestTimeoutMs?: number;
   readonly fetchImplementation?: typeof fetch;
+  /** Optional sealed Unix listener for a network-isolated AgentArts worker. */
+  readonly socketPath?: string;
 }
 
 export interface DeepSeekProxyHandle {
@@ -31,6 +35,7 @@ export interface DeepSeekProxyHandle {
   readonly workerToken: string;
   readonly boundHost: string;
   readonly port: number;
+  readonly workerSocketPath?: string;
   close(): Promise<void>;
 }
 
@@ -346,9 +351,10 @@ export async function startDeepSeekProxy(
     activeRequests,
   };
 
-  const server = createServer((request, response) => {
+  const handler = (request: IncomingMessage, response: ServerResponse): void => {
     void handleRequest(request, response, runtime);
-  });
+  };
+  const server = createServer(handler);
   server.on("clientError", (_error, socket) => {
     socket.end("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
   });
@@ -360,6 +366,60 @@ export async function startDeepSeekProxy(
     throw new DshProxyError("Failed to start the DeepSeek credential proxy", { cause: error });
   }
 
+  let socketServer: Server | undefined;
+  if (options.socketPath !== undefined) {
+    try {
+      if (
+        process.platform !== "linux" ||
+        process.getuid?.() !== 0 ||
+        !isAbsolute(options.socketPath)
+      )
+        throw new DshConfigurationError(
+          "The mediated Unix socket requires a Linux root supervisor",
+        );
+      const parent = await lstat(dirname(options.socketPath));
+      if (
+        !parent.isDirectory() ||
+        parent.isSymbolicLink() ||
+        parent.uid !== 0 ||
+        (parent.mode & 0o067) !== 0 ||
+        ((parent.mode & 0o010) !== 0 && parent.gid !== 10001)
+      )
+        throw new DshConfigurationError(
+          "The mediated Unix socket requires a sealed root directory",
+        );
+      try {
+        await lstat(options.socketPath);
+        throw new DshConfigurationError("The mediated Unix socket path must be unused");
+      } catch (error: unknown) {
+        if (!(
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          error.code === "ENOENT"
+        ))
+          throw error;
+      }
+      socketServer = createServer(handler);
+      const selected = socketServer;
+      await new Promise<void>((resolve, reject) => {
+        selected.once("error", reject);
+        selected.listen(options.socketPath, () => {
+          selected.off("error", reject);
+          resolve();
+        });
+      });
+      await chmod(options.socketPath, 0o660);
+      await chown(options.socketPath, 0, 10001);
+    } catch (error: unknown) {
+      socketServer?.closeAllConnections();
+      socketServer?.close();
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      throw new DshProxyError("Failed to prepare the mediated Unix listener", { cause: error });
+    }
+  }
+
   let closed = false;
   return {
     workerBaseUrl: `http://${workerHost}:${String(port)}`,
@@ -369,11 +429,19 @@ export async function startDeepSeekProxy(
     workerToken: token,
     boundHost: bindHost,
     port,
+    ...(options.socketPath === undefined ? {} : { workerSocketPath: options.socketPath }),
     async close(): Promise<void> {
       if (closed) return;
       closed = true;
       for (const controller of activeRequests) controller.abort();
       server.closeAllConnections();
+      socketServer?.closeAllConnections();
+      if (socketServer !== undefined) {
+        const selected = socketServer;
+        await new Promise<void>((resolve, reject) =>
+          selected.close((error) => (error === undefined ? resolve() : reject(error))),
+        );
+      }
       await new Promise<void>((resolve, reject) => {
         server.close((error) => {
           if (error === undefined) resolve();
@@ -383,6 +451,7 @@ export async function startDeepSeekProxy(
             );
         });
       });
+      if (options.socketPath !== undefined) await rm(options.socketPath, { force: true });
     },
   };
 }

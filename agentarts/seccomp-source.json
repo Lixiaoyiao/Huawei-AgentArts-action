@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "source": "https://github.com/moby/profiles/blob/6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef/seccomp/default.json",
+  "sourceCommit": "6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef",
+  "sourceSha256": "6416b47770785a41ac59073cdc77d9fe98517df2799dc83ef207e622de3053f6",
+  "license": "Apache-2.0",
+  "licenseFile": "agentarts/LICENSE.moby-seccomp",
+  "addedSetupSyscalls": ["clone", "unshare", "mount", "umount2", "pivot_root", "setns"],
+  "outerAdditionalCapabilities": [],
+  "workerPolicyVersion": 1,
+  "workerArchitectures": ["x64", "arm64"],
+  "workerDenied": ["unshare", "setns", "clone3", "clone namespace flags"],
+  "generator": "scripts/generate-agentarts-seccomp.mjs"
+}

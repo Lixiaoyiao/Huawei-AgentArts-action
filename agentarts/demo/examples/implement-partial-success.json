@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "mode": "simulation",
+  "task": {
+    "id": "simulation-implement-partial-write",
+    "repository": "simulation/example",
+    "pullNumber": 0,
+    "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "baseSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "url": "",
+    "kind": "issue",
+    "operation": "implement"
+  },
+  "stages": [
+    {
+      "name": "模拟写入后评论失败（未执行任务）",
+      "status": "failed",
+      "startedAt": "2026-10-07T00:00:00Z",
+      "completedAt": "2026-10-07T00:00:01Z",
+      "message": "仅展示部分效果不能盲重试；时间、测试计数和 commit 均为模拟示例。"
+    }
+  ],
+  "tools": [],
+  "observedTools": ["Read", "Edit"],
+  "validation": {
+    "status": "passed",
+    "checks": ["模拟示例：测试通过后发布仍可能失败；未运行真实测试。"],
+    "original": { "status": "passed", "commandCount": 1 }
+  },
+  "result": {
+    "summary": "模拟 Issue 实现写入了部分效果后评论失败；实际没有创建提交或 PR。",
+    "error": "SIMULATION_ONLY: comment failed after a synthetic partial write.",
+    "writeStatus": "partial-success",
+    "commitSha": "cccccccccccccccccccccccccccccccccccccccc",
+    "branchName": "simulation/implement"
+  },
+  "durationMs": 1000,
+  "warnings": [
+    "纯 UI 模拟数据；无 Runtime、DSH、模型、测试或 GitHub 调用。工具名称是模拟观测，不是成功回执；没有真实结果链接。"
+  ],
+  "modelEvidence": { "kind": "unverified", "provider": "deepseek" }
+}

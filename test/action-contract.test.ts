@@ -63,7 +63,11 @@ describe("typed Action public contract", () => {
       readonly scripts: Readonly<Record<string, string>>;
     };
 
-    expect(manifest.scripts["test:generated"]).toBe("node scripts/generate-action-contract.mjs");
+    expect(manifest.scripts["test:generated"]?.split(" && ")).toEqual([
+      "node scripts/generate-action-contract.mjs",
+      "node scripts/generate-agentarts-action.mjs",
+      "node scripts/generate-agentarts-seccomp.mjs",
+    ]);
     expect(manifest.scripts.check).toContain("npm run test:generated");
     expect(ci).toContain("npm run check");
   });

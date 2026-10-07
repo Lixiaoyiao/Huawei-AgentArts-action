@@ -1,6 +1,6 @@
 # 业务评测与真实运行验收
 
-当前固定模型任务集为 `pr-review-boundaries-v1`，源码在 [agentarts/fixtures/pr-review/cases.json](../../agentarts/fixtures/pr-review/cases.json)。另保留 `cloud-github-review-candidates-v1` 的真实 GitHub 首轮候选，二者不混作一个已运行任务集。完整迁移以 PR Review 为第一条真实云验收链路；本轮增加的 v2只读task/diagnose 和文件传输原型见 [能力表](capability-matrix.md)。测试数量不是审查成功率，确定性模型响应不算模型发现了缺陷，平台分数不替代独立业务判定。
+固定模型任务集为 `pr-review-boundaries-v1`，源码在 [agentarts/fixtures/pr-review/cases.json](../../agentarts/fixtures/pr-review/cases.json)。另保留 `cloud-github-review-candidates-v1` 的真实GitHub首轮候选，二者不混作已运行任务集。当前v3已接原五种operation与文件/Session传输，状态见 [能力表](capability-matrix.md)；下面四例真实模型与旧v1/v2容器证明原记录中的只读版本，不证明本轮完整迁移。测试数量不是审查成功率，夹具响应不算模型发现缺陷，平台分数不替代业务判定。
 
 ## 可复现的本地验证
 
@@ -16,7 +16,9 @@ npm run typecheck
 
 worker 测试应按该文件的实际执行方式记为本地进程或模拟；只有启动安装的固定版本 DSH 才能记“本地真实 DSH”。本地模型代理返回受控响应仍不是DeepSeek模型效果评测。完整通用回归另执行 `npm test -- --maxWorkers=2` 与项目typecheck/lint/合同检查；不得把仅跑新增测试写成完整回归通过。
 
-[历史 AMD64 生产容器 CI](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37186465878) 实际启动固定版本 DSH、独立 UID与只读工具；它只对应其旧commit/镜像。新版 [local-container.sh](../../agentarts/local-container.sh) 在本机最终镜像覆盖 v1Review、v2typed task/diagnose、重复拒绝、未授写入、进程凭据访问拒绝、非法结果、取消与超时清理9个场景；模型和PR/CI为确定性夹具。源码dirty试运行、最终本轮验证与历史双架构CI分开留存，实际数据见 [验证记录](verification.md)。这些边界检查不计入真实模型审查成功率。
+2026-10-07完整idle coverage实际为2025通过、32跳过，118.70s；初轮并发执行的2失败与随后定向/完整复测分别保留。Linux另有两组各36项实际通过，覆盖生产namespace、五operation、Session、HTTPS凭据MCP及默认npm安装/原lock audit；它们使用确定性模型，Session用例有重叠，不合并为唯一用例数或模型效果。当前clean生产镜像、v3真实模型和原生ARM验收待新记录，详见 [验证记录](verification.md)。
+
+[历史 AMD64 生产容器 CI](https://github.com/Lixiaoyiao/Huawei-AgentArts-action/actions/runs/37186465878) 实际启动固定版本 DSH、独立 UID与只读工具；它只对应其旧commit/镜像。当前 [local-container.sh](../../agentarts/local-container.sh) 分别运行显式开启legacy的旧9场景和默认v3的14项检查。v3含7种operation/mode/读写组合、本地入站认证、默认拒绝legacy、重复任务、未授写入、非法输出、取消与超时清理；另独立运行namespace安全配置缺失时在模型调用前拒绝的检查。模型和PR/CI为确定性夹具；代码列出的检查不等于本轮最终镜像已通过，实际结果见 [验证记录](verification.md)。源码dirty试运行、最终本轮验证与历史双架构CI分开留存，这些边界检查不计入真实模型审查成功率。
 
 v2工具回调测试复用原Controller `runAgentLoop`、callId与不可信反馈。注入transport/provider的回调测试属于本地模拟，不是实际AgentArts/GitHub API结果；生产镜像中的真实DSH v2 read/typed output另记。文件传输测试验证完整bytes、SHA/mode、拒绝路径、stage/rollback与上游strict完整性分类，不运行仓库测试、不发布GitHub；不能计为云端fix/Issue→PR已通过。
 
@@ -63,7 +65,7 @@ supervisor通过 `AGENTARTS_MAX_MODEL_REQUESTS`/`AGENTARTS_MAX_OUTPUT_TOKENS` �
 
 CLI不自动完成人工审查，不计算successRate，不发布GitHub。本地imageDigest当前为操作者记录的image ID，不是已上传SWR digest；source commit/record是声明，不是cryptographic attestation。真实模型及当前代码的实际执行状态以 [验证记录](verification.md) 的独立本轮记录为准。
 
-### 本轮真实DeepSeek固定套件：自动规则通过，待人工复核
+### 历史只读真实DeepSeek套件：自动规则通过，待人工复核
 
 最终runId `3a0614e9-2513-4173-9db8-fe99e95f4266` 的 [suite原始记录](../../agentarts/evidence/current/live-model/final/3a0614e9-2513-4173-9db8-fe99e95f4266.suite.json) 为 `local-real-model`，套件 `pr-review-boundaries-v1`，suiteDigest `56eb9cea8d127b63e3f28ef4b4110bcc0d08292ab256eef6234e84eff290e1f9`。真实DSH和DeepSeek运行在本地生产容器，合成PR/context没有真实GitHub提交或发布，也未调用AgentArts。评测记录声明source `ec39f6bebbf4856ea73a66bb11a32f31dc0e320e`，实际镜像为 `sha256:a3e1d38dd8dca372da34eb2c4c7bc3413dc0b401b1a00d7fb99f07579ca7f752`；同镜像构建smoke的clean源码绑定另记在 [验证记录](verification.md)，声明不能代替镜像attestation。
 
@@ -118,9 +120,9 @@ head 仅替换为 `"Review complete"`。评测者需先检查 fixture 确实只�
 
 ## 修复与测试失败：当前能力边界
 
-`ci-fix/1` 与 `issue-to-pr/1` 是后续任务，当前云端应明确拒绝，不能计为已支持。先保留两个可复现候选：`add(a,b)` 错写成减法导致已固定单元测试失败，以及 Issue 要求空数组平均值返回 0。扩展前固定 base/head、真实错误日志、期望补丁、控制端允许的测试命令和新增行为断言；模型只通过现有测试不足以证明实现满足 Issue。
+`ci-fix/1`与`issue-to-pr/1`仍是真实云端候选；当前v3已有原fix/implement主链路，但不能计作AgentArts或真实GitHub验收。候选为`add(a,b)`错写减法导致固定测试失败，以及Issue要求空数组平均值返回0。验收固定base/head、真实错误日志、期望补丁、受信test argv/镜像和新增行为断言；模型只通过现有测试不足以证明Issue需求正确。
 
-`verification-failed/1` 应构造能通过补丁格式检查但独立测试失败的修改，验收要求是无 commit/PR 发布且保存测试失败原因。当前云端 Review 不执行测试、不接受补丁，适用的结论是“该能力尚未接入”；可以继续跑上游 `finalizers.test.ts`、`security-invariant-matrix.test.ts`、`orchestrator-failure.test.ts` 和 `orchestrator-cancellation.test.ts` 验证复用控制端的拒绝规则，但这些回归不等于云端修复链路通过。新增云端修复后必须再跑真实代码返回、独立测试失败、取消和重复运行场景。
+`verification-failed/1`构造合法delta但独立测试失败的修改，要求原Controller阻断commit/PR并保存失败。Review仍只读且不执行测试；写任务走原无凭据Docker验证与integrity/baseline replay，模型passed声明不能代替。上游finalizers/security-invariant/orchestrator失败与取消回归加v3 FullEngine测试验证接缝；注入进程/transport/GitHub结果必须标模拟，真实DSH/容器另记，不能算云写通过。验收还需取消后不迟到导入、保护路径、过期实体、重复与不确定GitHub写入。
 
 ## 每次运行记录
 

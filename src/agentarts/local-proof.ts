@@ -235,6 +235,7 @@ export async function runLocalProof(
       DEEPSEEK_BASE_URL: modelUrl,
       AGENTARTS_MODEL_EVIDENCE: "deterministic-fixture",
       API_KEY: runtimeKey,
+      AGENTARTS_ENABLE_LEGACY_PROTOCOLS: "true",
     };
     runtime = createAgentArtsServer({
       environment,

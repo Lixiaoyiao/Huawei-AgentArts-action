@@ -12,9 +12,14 @@ on:
       - package.json
       - package-lock.json
       - tsconfig.json
-      - scripts/build-agentarts.mjs
+      - scripts/**
       - src/**
-      - assets/dsh/**
+      - assets/**
+      - agentarts/full-smoke.mjs
+      - agentarts/local-container.sh
+      - agentarts/startup-negative.sh
+      - agentarts/seccomp-*.json
+      - test/fixtures/full-runtime-packets.mjs
       - test/fixtures/messages-sse.*
   pull_request:
     paths:
@@ -25,9 +30,14 @@ on:
       - package.json
       - package-lock.json
       - tsconfig.json
-      - scripts/build-agentarts.mjs
+      - scripts/**
       - src/**
-      - assets/dsh/**
+      - assets/**
+      - agentarts/full-smoke.mjs
+      - agentarts/local-container.sh
+      - agentarts/startup-negative.sh
+      - agentarts/seccomp-*.json
+      - test/fixtures/full-runtime-packets.mjs
       - test/fixtures/messages-sse.*
 
 permissions:
@@ -40,18 +50,18 @@ concurrency:
 jobs:
   smoke:
     name: Runtime image (${{ matrix.platform }})
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
         include:
           - platform: linux/amd64
+            runner: ubuntu-24.04
             node-arch: x64
-            emulated: false
           - platform: linux/arm64
+            runner: ubuntu-24.04-arm
             node-arch: arm64
-            emulated: true
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -66,54 +76,18 @@ jobs:
           [[ "$CANDIDATE_SHA" =~ ^[a-f0-9]{40}$ ]]
           [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
           ! git config --local --get-regexp '^(http\..*\.extraheader|credential\.)' >/dev/null 2>&1
-      - name: Register pinned ARM64 QEMU on the ephemeral runner
-        if: ${{ matrix.emulated }}
-        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
-        with:
-          platforms: arm64
-          image: docker.io/tonistiigi/binfmt@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
-          cache-image: false
-      - name: Build the pinned final Runtime image
+      - name: Build and exercise the final Runtime image
+        timeout-minutes: 15
         shell: bash
         env:
-          TARGET_PLATFORM: ${{ matrix.platform }}
-        run: |
-          set -euo pipefail
-          docker build --platform "$TARGET_PLATFORM" --file agentarts/Dockerfile \
-            --provenance=false --sbom=false --output type=image,oci-mediatypes=false \
-            --tag huawei-agentarts-action:smoke .
-          docker image inspect huawei-agentarts-action:smoke \
-            --format 'Image={{.Id}} Architecture={{.Architecture}}'
-      - name: Exercise the production HTTP bundle, real DSH and timeout cleanup
-        timeout-minutes: 3
-        shell: bash
-        env:
-          CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-          TARGET_PLATFORM: ${{ matrix.platform }}
-          EXPECTED_NODE_ARCH: ${{ matrix.node-arch }}
-          EMULATED: ${{ matrix.emulated }}
-        run: |
-          set -euo pipefail
-          image_id="$(docker image inspect huawei-agentarts-action:smoke --format '{{.Id}}')"
-          [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]]
-          timeout --signal=TERM --kill-after=5s 125s \
-            docker run --platform "$TARGET_PLATFORM" --rm --init --read-only --network none \
-              --cap-drop ALL --cap-add CHOWN --cap-add SETUID --cap-add SETGID \
-              --cap-add DAC_OVERRIDE --cap-add KILL \
-              --security-opt no-new-privileges --pids-limit 256 --memory 1g --cpus 2 \
-              --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \
-              --mount "type=bind,source=$GITHUB_WORKSPACE/agentarts/smoke.mjs,target=/smoke/smoke.mjs,readonly" \
-              --mount "type=bind,source=$GITHUB_WORKSPACE/test/fixtures/messages-sse.mjs,target=/smoke/messages-sse.mjs,readonly" \
-              --env "SMOKE_EXPECTED_ARCH=$EXPECTED_NODE_ARCH" --env "SMOKE_EMULATED=$EMULATED" \
-              --env "SMOKE_SOURCE_SHA=$CANDIDATE_SHA" \
-              --env "SMOKE_IMAGE_ID=$image_id" --entrypoint node \
-              huawei-agentarts-action:smoke /smoke/smoke.mjs \
-            | tee "$RUNNER_TEMP/agentarts-image-smoke.jsonl"
+          AGENTARTS_TEST_PLATFORM: ${{ matrix.platform }}
+          AGENTARTS_EVIDENCE_DIR: ${{ runner.temp }}/agentarts-container
+        run: bash agentarts/local-container.sh
       - name: Preserve measured container evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: agentarts-image-smoke-${{ matrix.node-arch }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/agentarts-image-smoke.jsonl
+          path: ${{ runner.temp }}/agentarts-container
           if-no-files-found: warn
           retention-days: 14

@@ -45,4 +45,20 @@ timeout --signal=TERM --kill-after=5s 125s \
     --env "SMOKE_SOURCE_TREE_DIGEST=$source_tree_digest" --env "SMOKE_IMAGE_ID=$image_id" \
     --entrypoint node "$image_id" /smoke/smoke.mjs | tee "$output/smoke.jsonl"
 bash agentarts/startup-negative.sh "$image_id" "$output"
+full_args=(--platform "$platform" --rm --init --read-only --network none
+  --cap-drop ALL --cap-add CHOWN --cap-add SETUID --cap-add SETGID --cap-add DAC_OVERRIDE --cap-add KILL
+  --security-opt no-new-privileges --pids-limit 256 --memory 1g --cpus 2
+  --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912
+  --mount "type=bind,source=$repo_root/agentarts/full-smoke.mjs,target=/smoke/full-smoke.mjs,readonly"
+  --mount "type=bind,source=$repo_root/test/fixtures/full-runtime-packets.mjs,target=/smoke/full-runtime-packets.mjs,readonly"
+  --mount "type=bind,source=$repo_root/test/fixtures/messages-sse.mjs,target=/smoke/messages-sse.mjs,readonly"
+  --env "SMOKE_EXPECTED_ARCH=$expected_arch" --env "SMOKE_EMULATED=$emulated"
+  --env "SMOKE_SOURCE_SHA=$source_commit" --env "SMOKE_SOURCE_DIRTY=$source_dirty"
+  --env "SMOKE_SOURCE_TREE_DIGEST=$source_tree_digest" --env "SMOKE_IMAGE_ID=$image_id"
+  --entrypoint node)
+timeout --signal=TERM --kill-after=5s 245s docker run "${full_args[@]}" \
+  --security-opt "seccomp=$repo_root/agentarts/seccomp-bwrap.json" "$image_id" /smoke/full-smoke.mjs | tee "$output/full-smoke.jsonl"
+# Missing namespace permissions must stop before the first model request.
+timeout --signal=TERM --kill-after=5s 40s docker run "${full_args[@]}" \
+  --env SMOKE_EXPECT_NAMESPACE_REFUSAL=true "$image_id" /smoke/full-smoke.mjs | tee "$output/namespace-negative.jsonl"
 printf 'Local container evidence: %s\n' "$output"

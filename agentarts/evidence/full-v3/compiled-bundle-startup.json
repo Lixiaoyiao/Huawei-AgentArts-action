@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "checks": [
+    {
+      "bundle": "controller",
+      "status": "passed",
+      "exitCode": 1,
+      "scope": "module-load-and-expected-configuration-refusal",
+      "hostNodeModulesAvailable": false,
+      "adaptation": {
+        "package": "@deepseek-ai/dsh-llm",
+        "version": "0.2.0-rc.2",
+        "source": "@deepseek-ai/dsh-llm/lib/index.js",
+        "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+        "replacements": 1,
+        "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+        "reason": "inline-locked-upstream-package-version",
+        "sourceMapOffsetsPreserved": true
+      }
+    },
+    {
+      "bundle": "runtime",
+      "status": "passed",
+      "exitCode": 1,
+      "scope": "module-load-and-expected-configuration-refusal",
+      "hostNodeModulesAvailable": false,
+      "adaptation": {
+        "package": "@deepseek-ai/dsh-llm",
+        "version": "0.2.0-rc.2",
+        "source": "@deepseek-ai/dsh-llm/lib/index.js",
+        "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+        "replacements": 1,
+        "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+        "reason": "inline-locked-upstream-package-version",
+        "sourceMapOffsetsPreserved": true
+      }
+    },
+    {
+      "bundle": "local-proof",
+      "status": "passed",
+      "exitCode": 1,
+      "scope": "module-load-and-expected-configuration-refusal",
+      "hostNodeModulesAvailable": false,
+      "adaptation": {
+        "package": "@deepseek-ai/dsh-llm",
+        "version": "0.2.0-rc.2",
+        "source": "@deepseek-ai/dsh-llm/lib/index.js",
+        "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+        "replacements": 1,
+        "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+        "reason": "inline-locked-upstream-package-version",
+        "sourceMapOffsetsPreserved": true
+      }
+    },
+    {
+      "bundle": "live-review",
+      "status": "passed",
+      "exitCode": 1,
+      "scope": "module-load-and-expected-configuration-refusal",
+      "hostNodeModulesAvailable": false,
+      "adaptation": {
+        "package": "@deepseek-ai/dsh-llm",
+        "version": "0.2.0-rc.2",
+        "source": "@deepseek-ai/dsh-llm/lib/index.js",
+        "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+        "replacements": 1,
+        "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+        "reason": "inline-locked-upstream-package-version",
+        "sourceMapOffsetsPreserved": true
+      }
+    },
+    {
+      "bundle": "live-review",
+      "status": "passed",
+      "scope": "single-cli-dry-run-no-side-effects",
+      "caseCount": 4,
+      "exitCode": 0
+    },
+    {
+      "bundle": "live-full",
+      "status": "passed",
+      "exitCode": 1,
+      "scope": "module-load-and-expected-configuration-refusal",
+      "hostNodeModulesAvailable": false,
+      "adaptation": {
+        "package": "@deepseek-ai/dsh-llm",
+        "version": "0.2.0-rc.2",
+        "source": "@deepseek-ai/dsh-llm/lib/index.js",
+        "sourceSha256": "9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120",
+        "replacements": 1,
+        "generatedModule": "./node_modules/@deepseek-ai/dsh-llm/lib/index.js",
+        "reason": "inline-locked-upstream-package-version",
+        "sourceMapOffsetsPreserved": true
+      }
+    },
+    {
+      "bundle": "live-full",
+      "status": "passed",
+      "scope": "single-cli-dry-run-no-side-effects",
+      "caseCount": 2,
+      "exitCode": 0
+    },
+    {
+      "bundle": "live-full",
+      "status": "passed",
+      "scope": "single-cli-dry-run-no-side-effects",
+      "caseCount": 7,
+      "exitCode": 0
+    }
+  ],
+  "cloudVerification": "not-performed",
+  "githubPublication": "not-attempted",
+  "modelCalls": 0
+}

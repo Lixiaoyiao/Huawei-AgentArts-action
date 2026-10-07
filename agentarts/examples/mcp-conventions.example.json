@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "servers": [
+    {
+      "id": "conventions",
+      "transport": "streamable-http",
+      "url": "https://tools.example.invalid/mcp",
+      "reconnect": { "enabled": false },
+      "tools": [
+        {
+          "id": "read",
+          "name": "conventions",
+          "description": "Read versioned repository conventions without modifying remote state",
+          "permissions": ["read", "network"],
+          "timeoutMs": 5000,
+          "maxCalls": 2
+        }
+      ],
+      "maxCalls": 2
+    }
+  ]
+}

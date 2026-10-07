@@ -2,18 +2,16 @@ import * as core from "@actions/core";
 import { mkdir, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { loadInputs } from "../inputs.js";
+import { loadAgentArtsInputs, assertFullAgentArtsAuthorizedRun } from "./inputs.js";
 import { runAction } from "../orchestrator.js";
 import { PolicyDeniedError } from "../errors.js";
 import { installCancellationHandlers } from "../lifecycle/cancellation.js";
 import { buildActionOutputs, formatStepSummary } from "../result.js";
 import { redactKnownSecrets } from "../security/env.js";
-import { AgentArtsReviewEngine } from "./engine.js";
-import { AgentArtsReadOnlyTaskEngine } from "./engine-task.js";
-import type { ReviewTask, RuntimeReply } from "./protocol.js";
-import type { ReadOnlyTask, ReadOnlyTaskReply, ReadOnlyBinding } from "./readonly-task-protocol.js";
+import { AgentArtsFullEngine } from "./engine-full.js";
+import type { RuntimeTask, RuntimeTaskReply } from "./runtime-task-protocol.js";
+import type { ValidationSummary } from "../result.js";
 import { getBranchHead } from "../write/github.js";
-import { assertAgentArtsAuthorizedRun } from "./engine.js";
 import { runtimeUrl, type RuntimeClientConfig } from "./client.js";
 
 const startedAt = Date.now();
@@ -33,7 +31,7 @@ const initialTask: {
   baseSha?: string;
   url: string;
   kind?: "pull_request" | "issue" | "repository";
-  operation?: "review" | "task" | "diagnose";
+  operation?: "review" | "task" | "diagnose" | "fix" | "implement";
 } = { id: randomUUID(), repository: "", pullNumber: 0, headSha: "", url: "" };
 const record = {
   schemaVersion: 1,
@@ -41,13 +39,25 @@ const record = {
   task: initialTask,
   stages,
   tools: [] as { id: string; ok: boolean; durationMs: number }[],
-  validation: { status: "not-run", checks: [] as string[] },
+  observedTools: [] as string[],
+  validation: { status: "not-run", checks: [] as string[] } as {
+    status: string;
+    checks: string[];
+    original?: Pick<ValidationSummary, "status" | "commandCount">;
+  },
   runtime: { sessionId: "", endpoint: "", dshVersion: "0.2.0-rc.2", requestId: "" },
-  result: {} as { githubUrl?: string; summary?: string; error?: string },
+  result: {} as {
+    githubUrl?: string;
+    summary?: string;
+    error?: string;
+    writeStatus?: "success" | "partial-success" | "no-changes";
+    commitSha?: string;
+    branchName?: string;
+  },
   durationMs: 0,
   warnings: [
     "工具清单来自执行回执；本记录不是 AgentArts 全链路 Trace。",
-    "当前云适配仅接入只读操作，不执行仓库测试，也不发布文件修改。",
+    "模型执行证据、协议检查和控制端独立测试分别记录；云环境验收仍需审批后的真实运行。",
   ],
   modelEvidence: {
     kind: "unverified" as "live-provider" | "deterministic-fixture" | "unverified",
@@ -87,69 +97,35 @@ try {
   const githubToken = core.getInput("github-token", { required: true });
   secrets = [config.apiKey, githubToken];
   secrets.forEach((secret) => core.setSecret(secret));
-  // These internal values reuse upstream policy parsing only. No local model runner is selected.
-  const fixed: Record<string, string> = {
-    "deepseek-api-key": "runtime-managed-model-proxy",
-    "github-token": githubToken,
-    "dsh-version": "0.2.0-rc.2",
-    "dsh-mode": "controlled",
-    isolation: "docker",
-    "allow-write": "false",
-    "permission-profile": "custom",
-    "allowed-tools": core.getInput("allowed-tools") || '["workspace.read","workspace.search"]',
-    "max-turns": core.getInput("max-turns") || "3",
-    "progress-comment": "false",
-    "session-mode": "off",
-    command: core.getInput("command") || "auto",
-  };
-  const allowedInputs = new Set([
-    "prompt",
-    "context-files",
-    "max-findings",
-    "timeout-minutes",
-    "bot-user-id",
-    "task-output-schema",
-    "base-branch",
-  ]);
-  const inputs = loadInputs(
-    (name) => fixed[name] ?? (allowedInputs.has(name) ? core.getInput(name) : ""),
+  const inputs = loadAgentArtsInputs((name) =>
+    name === "github-token" ? githubToken : core.getInput(name),
   );
-  if (inputs.timeoutMinutes > 10)
-    throw new PolicyDeniedError("AgentArts controller timeout must be at most 10 minutes");
-  if (
-    inputs.allowedTools.some(
-      (id) => !["workspace.read", "workspace.search", "github.checks.read"].includes(id),
-    )
-  )
-    throw new PolicyDeniedError(
-      "This cloud adapter currently grants only workspace.read, workspace.search and Controller github.checks.read",
-    );
   record.runtime.endpoint = `${config.runtimeName}/${config.endpoint}`;
   await save();
   const outcome = await runAction({
     inputs,
     signal: cancellation.signal,
     assertAuthorizedRun: (run) => {
-      assertAgentArtsAuthorizedRun(run);
+      assertFullAgentArtsAuthorizedRun(run);
       record.task = {
         id: record.task.id,
         repository: run.context.repository.fullName,
         pullNumber: run.snapshot?.kind === "pull_request" ? run.snapshot.number : 0,
         headSha: run.snapshot?.kind === "pull_request" ? run.snapshot.headSha : "",
         kind: run.snapshot?.kind ?? "repository",
-        operation: run.command.operation as "review" | "task" | "diagnose",
+        operation: run.command.operation,
         url:
           run.snapshot === undefined
             ? run.currentRunUrl
             : `https://github.com/${run.context.repository.fullName}/${run.snapshot.kind === "pull_request" ? "pull" : "issues"}/${String(run.snapshot.number)}`,
       };
     },
-    createEngine: (run, workspace) => async () => {
+    createEngine: (run, workspace, execution) => async (runtime) => {
       const hooks = {
         onRequestId: (id: string) => {
           record.runtime.requestId = id;
         },
-        onTask: async (task: ReviewTask | ReadOnlyTask) => {
+        onTask: async (task: RuntimeTask) => {
           record.validation = { status: "not-run", checks: [] };
           record.task.id = task.taskId;
           record.task.baseSha = task.binding.baseSha;
@@ -161,7 +137,7 @@ try {
             `AgentArts task=${task.taskId} repository=${task.binding.repository} head=${task.binding.headSha}`,
           );
         },
-        onValidated: async (reply: RuntimeReply | ReadOnlyTaskReply) => {
+        onValidated: async (reply: RuntimeTaskReply) => {
           record.modelEvidence = {
             kind: reply.modelExecution?.kind ?? "unverified",
             provider: "deepseek",
@@ -173,42 +149,24 @@ try {
               return { id: receipt.id, ok: receipt.ok, durationMs: receipt.durationMs };
             }),
           );
+          record.observedTools = [
+            ...new Set([...record.observedTools, ...(reply.observedTools ?? [])]),
+          ];
           stage("控制端独立结果校验");
-          const finalResult =
-            typeof reply.output === "object" &&
-            reply.output !== null &&
-            !Array.isArray(reply.output) &&
-            reply.output.state === "final";
           record.validation = {
-            status: finalResult ? "passed" : "not-run",
+            status: "not-run",
             checks: [
               "严格结果协议",
-              "仓库/实体/base/head绑定",
-              "只读工作区摘要",
-              "只读能力和工具授权边界",
+              "任务/仓库/实体/base/head/权限摘要绑定",
+              "完整输入工作区摘要与文件差异校验",
+              "工具授权和凭据边界",
               "回执完整性",
             ],
           };
-          stage("控制端工具回调或 GitHub 结果发布");
+          stage("控制端工具回调与最终验收");
           await save();
         },
       };
-      if (run.command.operation === "review") {
-        if (run.snapshot?.kind !== "pull_request")
-          throw new PolicyDeniedError("Missing PR snapshot");
-        return new AgentArtsReviewEngine(
-          config,
-          run.policy.trust,
-          {
-            repository: run.context.repository.fullName,
-            pullNumber: run.snapshot.number,
-            baseSha: run.snapshot.baseSha,
-            headSha: run.snapshot.headSha,
-          },
-          secrets,
-          hooks,
-        );
-      }
       const sourceSha =
         run.snapshot?.kind === "pull_request"
           ? run.snapshot.headSha
@@ -224,19 +182,29 @@ try {
                 )));
       if (sourceSha === undefined)
         throw new PolicyDeniedError(
-          "Read-only cloud task requires a Controller-bound immutable source revision",
+          "Cloud task requires a Controller-bound immutable source revision",
         );
-      const binding: ReadOnlyBinding = {
+      const binding = {
         repository: run.context.repository.fullName,
         baseSha: run.snapshot?.kind === "pull_request" ? run.snapshot.baseSha : sourceSha,
         headSha: sourceSha,
+        ref:
+          run.snapshot?.kind === "pull_request"
+            ? run.snapshot.headRef
+            : (run.baseBranch ?? run.context.repository.defaultBranch ?? "main"),
         entity:
           run.snapshot === undefined
-            ? { kind: "repository" }
+            ? { kind: "repository" as const }
             : { kind: run.snapshot.kind, number: run.snapshot.number },
       };
-      return new AgentArtsReadOnlyTaskEngine(config, run.policy.trust, binding, secrets, {
+      return new AgentArtsFullEngine(config, run.policy.trust, binding, secrets, {
         ...hooks,
+        workspace,
+        runtime,
+        mode: inputs.dshMode,
+        operationIdentity: execution.operationIdentity,
+        extensionPlan: execution.extensions,
+        validationCommands: inputs.testCommands,
         ...(inputs.taskOutputSchema === undefined
           ? {}
           : { taskOutputSchema: inputs.taskOutputSchema }),
@@ -258,11 +226,42 @@ try {
   }
   record.result = {
     summary: outcome.summary,
-    ...(outcome.conclusion === "success" ? { githubUrl: record.task.url } : {}),
+    ...(outcome.pullRequestUrl !== undefined
+      ? { githubUrl: outcome.pullRequestUrl }
+      : outcome.commentId !== undefined &&
+          record.task.url !== "" &&
+          record.task.kind !== "repository"
+        ? { githubUrl: `${record.task.url}#issuecomment-${String(outcome.commentId)}` }
+        : outcome.commitSha !== undefined && record.task.repository !== ""
+          ? {
+              githubUrl: `https://github.com/${record.task.repository}/commit/${outcome.commitSha}`,
+            }
+          : {}),
+    ...(outcome.writeStatus === undefined ? {} : { writeStatus: outcome.writeStatus }),
+    ...(outcome.commitSha === undefined ? {} : { commitSha: outcome.commitSha }),
+    ...(outcome.branchName === undefined ? {} : { branchName: outcome.branchName }),
     ...(outcome.error === undefined
       ? {}
       : { error: `${outcome.error.code}: ${outcome.error.message}` }),
   };
+  if (outcome.validation !== undefined) {
+    record.validation.original = {
+      status: outcome.validation.status,
+      commandCount: outcome.validation.commandCount,
+    };
+    record.validation.status =
+      outcome.validation.status === "passed"
+        ? "passed"
+        : outcome.validation.status === "failed"
+          ? "failed"
+          : "not-run";
+    record.validation.checks.push(
+      `原控制端独立验证：${outcome.validation.status}；命令数 ${String(outcome.validation.commandCount)}`,
+    );
+  } else if (outcome.conclusion === "success") {
+    record.validation.status = "passed";
+    record.validation.checks.push("原控制端结果过滤与发布前提交检查；无写入测试验收");
+  }
   if (
     outcome.conclusion === "failure" &&
     (record.validation.status !== "passed" || outcome.error?.phase === "agent")

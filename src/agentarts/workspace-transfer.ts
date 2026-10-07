@@ -1,5 +1,5 @@
 /**
- * Bounded file-transfer prototype; not wired into cloud fix or publication.
+ * Bounded transport for the Controller's original disposable workspace.
  * Callers must stop DSH before capture and exclusively own the Controller
  * workspace throughout apply. This module never runs repository code or tests.
  */
@@ -18,11 +18,14 @@ import {
 } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { TextDecoder } from "node:util";
+import { gzipSync, gunzipSync } from "node:zlib";
 import { z } from "zod";
 
 import { assertPathWithin } from "../security/paths.js";
 import { assertNoSecretOutput } from "../security/env.js";
 import { PolicyDeniedError } from "../errors.js";
+import { throwIfCancelled } from "../lifecycle/cancellation.js";
+import { DshError } from "../dsh/errors.js";
 import { assertWritablePath } from "../write/github.js";
 import {
   enforceValidationIntegrity,
@@ -38,15 +41,21 @@ import {
 import { safeWorkspacePath } from "./protocol.js";
 
 export const WORKSPACE_TRANSFER_LIMITS = Object.freeze({
-  maxPayloadBytes: 1024 * 1024,
-  maxFiles: 500,
-  maxChanges: 500,
+  maxPayloadBytes: 16 * 1024 * 1024,
+  maxExpandedBytes: 128 * 1024 * 1024,
+  maxFiles: 5000,
+  maxChanges: 5000,
 });
 export interface WorkspaceTransferOptions {
   readonly knownSecrets?: readonly string[];
-  /** Narrowing only: these are prototype transport limits, not platform limits. */
+  readonly signal?: AbortSignal;
+  readonly deadlineMs?: number;
+  /** Mirrors upstream snapshots: only generated node_modules is omitted. .git is forbidden. */
+  readonly excludeGeneratedRoots?: boolean;
+  /** Narrowing only: these are implementation transport limits, not platform limits. */
   readonly limits?: Partial<{
     readonly maxPayloadBytes: number;
+    readonly maxExpandedBytes: number;
     readonly maxFiles: number;
     readonly maxChanges: number;
   }>;
@@ -59,16 +68,41 @@ export interface ApplyWorkspaceDeltaOptions extends WorkspaceTransferOptions {
 }
 const sha256 = z.string().regex(/^[a-f0-9]{64}$/u);
 const sha1 = z.string().regex(/^[a-f0-9]{40}$/u);
-const bindingSchema = z.strictObject({
-  repository: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u),
-  baseSha: sha1,
-  headSha: sha1,
-  revision: z
-    .number()
-    .int()
-    .min(0)
-    .max(Number.MAX_SAFE_INTEGER - 1),
-});
+export const workspaceTransferBindingSchema = z
+  .strictObject({
+    repository: z.string().regex(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/u),
+    baseSha: sha1,
+    headSha: sha1,
+    revision: z
+      .number()
+      .int()
+      .min(0)
+      .max(Number.MAX_SAFE_INTEGER - 1),
+    taskId: z.uuid().optional(),
+    operation: z.enum(["review", "diagnose", "fix", "implement", "task"]).optional(),
+    entity: z
+      .discriminatedUnion("kind", [
+        z.strictObject({ kind: z.literal("pull_request"), number: z.number().int().positive() }),
+        z.strictObject({ kind: z.literal("issue"), number: z.number().int().positive() }),
+        z.strictObject({ kind: z.literal("repository") }),
+      ])
+      .optional(),
+    ref: z.string().min(1).max(1024).optional(),
+    grantDigest: sha256.optional(),
+    operationIdentity: z.string().min(1).max(4096).optional(),
+  })
+  .refine((binding) => {
+    const count = [
+      binding.taskId,
+      binding.operation,
+      binding.entity,
+      binding.ref,
+      binding.grantDigest,
+      binding.operationIdentity,
+    ].filter((value) => value !== undefined).length;
+    return count === 0 || count === 6;
+  }, "Full Runtime correlation binding must be complete");
+const bindingSchema = workspaceTransferBindingSchema;
 export type WorkspaceTransferBinding = z.infer<typeof bindingSchema>;
 function portablePath(path: string): boolean {
   return (
@@ -85,7 +119,7 @@ const pathSchema = z.string().refine(portablePath, "Unsafe or ambiguous portable
 const modeSchema = z.number().int().min(0).max(0o777);
 const stateSchema = z.strictObject({ path: pathSchema, sha256, mode: modeSchema });
 const fileSchema = stateSchema.extend({
-  encoding: z.enum(["utf8", "base64"]),
+  encoding: z.enum(["utf8", "base64", "gzip-base64"]),
   content: z.string().max(WORKSPACE_TRANSFER_LIMITS.maxPayloadBytes),
 });
 export type WorkspaceTransferFile = z.infer<typeof fileSchema>;
@@ -95,6 +129,7 @@ const manifestSchema = z.strictObject({
   files: z.array(fileSchema).max(WORKSPACE_TRANSFER_LIMITS.maxFiles),
   digest: sha256,
 });
+export const workspaceTransferManifestSchema = manifestSchema;
 export type WorkspaceTransferManifest = z.infer<typeof manifestSchema>;
 const changeSchema = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("added"), file: fileSchema }),
@@ -108,6 +143,7 @@ const deltaSchema = z.strictObject({
   resultDigest: sha256,
   changes: z.array(changeSchema).max(WORKSPACE_TRANSFER_LIMITS.maxChanges),
 });
+export const workspaceTransferDeltaSchema = deltaSchema;
 export type WorkspaceTransferDelta = z.infer<typeof deltaSchema>;
 export interface AppliedWorkspaceDelta {
   readonly manifest: WorkspaceTransferManifest;
@@ -119,12 +155,23 @@ export interface AppliedWorkspaceDelta {
 function denied(message: string): never {
   throw new PolicyDeniedError(`Workspace transfer ${message}`);
 }
+function guard(options: WorkspaceTransferOptions): void {
+  throwIfCancelled(options.signal);
+  if (
+    options.deadlineMs !== undefined &&
+    (!Number.isFinite(options.deadlineMs) || Date.now() >= options.deadlineMs)
+  )
+    throw new DshError(
+      "DSH_TIMEOUT",
+      "Workspace transport deadline expired; result was not installed",
+    );
+}
 const hash = (value: Uint8Array | string) => createHash("sha256").update(value).digest("hex");
 const order = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
 const key = (path: string) => path.normalize("NFC").toLowerCase();
 function limits(options: WorkspaceTransferOptions) {
   const result = { ...WORKSPACE_TRANSFER_LIMITS, ...options.limits };
-  for (const name of ["maxPayloadBytes", "maxFiles", "maxChanges"] as const)
+  for (const name of ["maxPayloadBytes", "maxExpandedBytes", "maxFiles", "maxChanges"] as const)
     if (
       !Number.isSafeInteger(result[name]) ||
       result[name] < 1 ||
@@ -155,6 +202,7 @@ function noSecrets(bytes: Buffer, options: WorkspaceTransferOptions): void {
   assertNoSecretOutput("stdout", bytes.toString("latin1"), variants);
 }
 function budget(value: unknown, options: WorkspaceTransferOptions): void {
+  guard(options);
   let text: unknown;
   try {
     text = JSON.stringify(value);
@@ -173,7 +221,16 @@ function bytes(file: WorkspaceTransferFile, options: WorkspaceTransferOptions): 
   } else {
     contents = Buffer.from(file.content, "base64");
     if (contents.toString("base64") !== file.content) denied("contains noncanonical base64");
+    if (file.encoding === "gzip-base64") {
+      try {
+        contents = gunzipSync(contents, { maxOutputLength: limits(options).maxExpandedBytes });
+      } catch {
+        denied("compressed file is invalid or exceeds the expanded byte limit");
+      }
+    }
   }
+  if (contents.byteLength > limits(options).maxExpandedBytes)
+    denied("expanded file exceeds the byte limit");
   if (hash(contents) !== file.sha256) denied("file content hash mismatch");
   noSecrets(contents, options);
   return contents;
@@ -185,12 +242,15 @@ function assertFileTree(
   if (files.length > limits(options).maxFiles)
     denied("file count limit exceeded; no files were omitted");
   const names = new Set<string>();
+  let expandedBytes = 0;
   for (const file of files) {
     if (!portablePath(file.path)) denied("contains an unsafe path");
     const name = key(file.path);
     if (names.has(name)) denied("contains duplicate or aliased paths");
     names.add(name);
-    bytes(file, options);
+    expandedBytes += bytes(file, options).byteLength;
+    if (expandedBytes > limits(options).maxExpandedBytes)
+      denied("workspace exceeds the total expanded byte limit; no files were omitted");
   }
   for (const file of files) {
     const segments = file.path.split("/");
@@ -232,6 +292,26 @@ function checkedManifest(
   if (parsed.digest !== canonical.digest) denied("input manifest digest mismatch");
   return canonical;
 }
+export function validateWorkspaceTransferManifest(
+  raw: unknown,
+  options: WorkspaceTransferOptions = {},
+): WorkspaceTransferManifest {
+  return checkedManifest(raw, options);
+}
+export function createWorkspaceTransferManifest(
+  binding: WorkspaceTransferBinding,
+  files: readonly WorkspaceTransferFile[],
+  options: WorkspaceTransferOptions = {},
+): WorkspaceTransferManifest {
+  return manifest(binding, files, options);
+}
+export function validateWorkspaceTransferDelta(
+  input: unknown,
+  delta: unknown,
+  options: ApplyWorkspaceDeltaOptions = {},
+): WorkspaceTransferManifest {
+  return plannedResult(checkedManifest(input, options), delta, options);
+}
 async function directory(root: string): Promise<string> {
   const info = await lstat(root);
   if (info.isSymbolicLink() || !info.isDirectory())
@@ -271,6 +351,7 @@ async function capture(
   binding: WorkspaceTransferBinding,
   options: WorkspaceTransferOptions,
 ): Promise<WorkspaceTransferManifest> {
+  guard(options);
   const canonicalRoot = await directory(root);
   const files: WorkspaceTransferFile[] = [];
   const pending = [""];
@@ -278,6 +359,7 @@ async function capture(
     totalBytes = 0;
   const envelope = limits(options);
   while (pending.length > 0) {
+    guard(options);
     const current = pending.pop();
     if (current === undefined) break;
     const currentLexical =
@@ -289,6 +371,13 @@ async function capture(
       current === "" ? canonicalRoot : await assertPathWithin(canonicalRoot, current);
     if (resolve(currentPath) !== resolve(currentLexical)) denied("directory alias is forbidden");
     for (const entry of await readdir(currentPath, { withFileTypes: true })) {
+      guard(options);
+      if (
+        current === "" &&
+        entry.name === "node_modules" &&
+        options.excludeGeneratedRoots !== false
+      )
+        continue;
       entries += 1;
       if (entries > envelope.maxFiles * 4 + 16) denied("directory entry limit exceeded");
       const path = current === "" ? entry.name : `${current}/${entry.name}`;
@@ -305,12 +394,13 @@ async function capture(
       if (!metadata.isFile()) denied("special entries are forbidden");
       if (files.length >= envelope.maxFiles)
         denied("file count limit exceeded; no files were omitted");
-      const { data, mode } = await boundedFile(absolute, envelope.maxPayloadBytes - totalBytes);
+      const { data, mode } = await boundedFile(absolute, envelope.maxExpandedBytes - totalBytes);
       totalBytes += data.byteLength;
-      if (totalBytes > envelope.maxPayloadBytes)
-        denied("content exceeds the byte limit; no files were omitted");
+      if (totalBytes > envelope.maxExpandedBytes)
+        denied("content exceeds the expanded byte limit; no files were omitted");
+      guard(options);
       noSecrets(data, options);
-      let content: string, encoding: "utf8" | "base64";
+      let content: string, encoding: "utf8" | "base64" | "gzip-base64";
       try {
         content = new TextDecoder("utf-8", { fatal: true }).decode(data);
         if (data.includes(0) || !Buffer.from(content).equals(data)) throw new Error("binary");
@@ -319,13 +409,22 @@ async function capture(
         content = data.toString("base64");
         encoding = "base64";
       }
+      // Large tracked bundles remain part of the complete workspace. Explicit
+      // compression changes wire representation only, never the original hash.
+      if (data.byteLength > 256 * 1024) {
+        const compressed = gzipSync(data, { level: 6 });
+        if ((compressed.byteLength * 4) / 3 < Buffer.byteLength(content) * 0.8) {
+          encoding = "gzip-base64";
+          content = compressed.toString("base64");
+        }
+      }
       files.push({ path, encoding, content, sha256: hash(data), mode });
     }
   }
   return manifest(binding, files, options);
 }
 
-/** Pack every actual worker file; generated directories are included rather than silently discarded. */
+/** Pack actual worker files, excluding only the original generated-root policy (node_modules). */
 export async function packWorkspaceSnapshot(
   snapshot: WorkspaceSnapshot,
   binding: WorkspaceTransferBinding,
@@ -469,6 +568,7 @@ async function populate(
 ): Promise<void> {
   await mkdir(root, { mode: 0o700 });
   for (const file of value.files) {
+    guard(options);
     const target = await assertPathWithin(root, file.path);
     await mkdir(dirname(target), { recursive: true, mode: 0o700 });
     if ((await assertPathWithin(root, file.path)) !== target) denied("staging parent path changed");
@@ -524,12 +624,29 @@ async function assertSourceBaseline(snapshot: WorkspaceSnapshot, source: string)
  * The original sourceRoot/baseline remain the upstream validation/publication
  * authority. No test is run and no checkout, commit or remote API is written.
  */
+const activeImports = new Set<string>();
 export async function applyWorkspaceDelta(
   snapshot: WorkspaceSnapshot,
   rawInput: unknown,
   rawDelta: unknown,
   options: ApplyWorkspaceDeltaOptions = {},
 ): Promise<AppliedWorkspaceDelta> {
+  const target = resolve(snapshot.workerRoot);
+  if (activeImports.has(target)) denied("another import already owns this Controller workspace");
+  activeImports.add(target);
+  try {
+    return await applyWorkspaceDeltaInternal(snapshot, rawInput, rawDelta, options);
+  } finally {
+    activeImports.delete(target);
+  }
+}
+async function applyWorkspaceDeltaInternal(
+  snapshot: WorkspaceSnapshot,
+  rawInput: unknown,
+  rawDelta: unknown,
+  options: ApplyWorkspaceDeltaOptions = {},
+): Promise<AppliedWorkspaceDelta> {
+  guard(options);
   const input = checkedManifest(rawInput, options);
   const result = plannedResult(input, rawDelta, options);
   const worker = await directory(snapshot.workerRoot),
@@ -553,6 +670,7 @@ export async function applyWorkspaceDelta(
   const cleanupWarnings: string[] = [];
   try {
     await populate(candidate, result, options);
+    guard(options);
     await assertSourceBaseline(snapshot, source);
     const candidateSnapshot = { ...snapshot, workerRoot: candidate };
     const changes = await inspectWorkspaceChanges(candidateSnapshot);
@@ -576,13 +694,20 @@ export async function applyWorkspaceDelta(
     )
       denied("Controller workspace changed before installation");
     await assertSourceBaseline(snapshot, source);
+    guard(options);
     await rename(worker, backup);
     backedUp = true;
     try {
+      guard(options);
       await rename(candidate, worker);
       installed = true;
+      guard(options);
     } catch (error: unknown) {
       try {
+        if (installed) {
+          await rename(worker, candidate);
+          installed = false;
+        }
         await rename(backup, worker);
         backedUp = false;
       } catch (rollback: unknown) {

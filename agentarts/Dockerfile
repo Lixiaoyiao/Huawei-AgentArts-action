@@ -17,6 +17,9 @@ RUN node scripts/build-agentarts.mjs --runtime-only
 FROM node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d
 WORKDIR /opt/app
 COPY package.json package-lock.json ./
+RUN apt-get update \
+    && apt-get install --no-install-recommends --yes bubblewrap=0.8.0-2+deb12u1 \
+    && rm -rf /var/lib/apt/lists/*
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund \
     && npm cache clean --force \
     && groupadd --gid 10001 dshworker \
@@ -29,7 +32,7 @@ COPY LICENSE THIRD_PARTY_NOTICES.md BUNDLED_DEPENDENCIES.md ./
 RUN find /opt/app \( -type d -o -type f \) -perm /022 -exec chmod go-w {} +
 ENV NODE_ENV=production PORT=8080
 EXPOSE 8080
-# Supervisor must retain root only to construct sealed workspaces and drop the
-# DSH subprocess to UID/GID 10001. No repository code or shell tool is enabled.
+# Supervisor constructs sealed task namespaces and mediates credentials.
+# Repository/tool processes run inside bwrap under UID/GID 10001.
 USER 0:0
 CMD ["node", "dist-agentarts/runtime/index.js"]

@@ -1,10 +1,36 @@
 # 验证记录
 
-日期：2026-10-04。项目 Huawei-AgentArts-action；上游基线 `891570ef2254334dff8de22af948f3f0105e933e`，DSH `0.2.0-rc.2`，Node `24.15.0`。完整上游源码、共同Git历史、许可和声明保留，原仓库未写入。下述验证完成时仅保留本地提交；本次源码和证据更新已获用户授权推送公开仓库。推送不会将本地记录升级为云端验收，未创建云资源。
+更新日期：2026-10-07。项目 Huawei-AgentArts-action；上游基线 `891570ef2254334dff8de22af948f3f0105e933e`，DSH `0.2.0-rc.2`，Node `24.15.0`。完整源码/共同历史/许可保留，原仓库未修改；真实AgentArts与GitHub发布未验收。本轮完整迁移与下方历史只读实现分开记录，不继承旧commit的通过状态。
+
+## 当前完整任务迁移：本地回归与待完成验收
+
+主Action已选择v3 FullEngine，五种operation、受检完整workspace/delta、原Controller验证/finalizer、controlled/native、扩展和原DSH Session均有主链路代码。代码接入与真实环境验收分别见 [能力表](capability-matrix.md)。以下结果对应本轮工作树；通用npm alias修复已独立提交为 `8f9dd60d1b654a57d8b54e79d53676dfbd7fa693`，完整迁移尚待提交，不能把这些测试声明为最终clean提交或镜像的证明。下方1890项与旧9场景镜像不能代替本轮验证。
+
+| 项目                         | 本次实际结果                                                   | 范围                                                                                                                                                                                                                                                                       |
+| ---------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Windows完整coverage回归      | 2025通过、32跳过；127测试文件通过、4文件跳过，118.70s          | 唯一最终idle完整运行，日志在仓库本地 `work/coverage-idle-final-20261007.log`；Linux专属测试另在下列真实Linux运行验证，不把Windows skip算通过                                                                                                                               |
+| 本轮覆盖率                   | statements82.47%、branches76.51%、functions89.97%、lines84.29% | 只表示当前源码测试覆盖，不能与旧源码覆盖率直接当作业务效果比较                                                                                                                                                                                                             |
+| Linux主链路定向回归          | 5文件、36通过，79.64s                                          | 真实固定DSH、五operation、生产bwrap/egress、Session与无凭据MCP；模型为确定性夹具，不调用AgentArts或真实模型，不发布GitHub                                                                                                                                                  |
+| Linux凭据/Session/默认安装   | 3文件、36通过，70.87s；默认安装69.932s                         | credential16、Session19、默认npm安装1；真实DSH/bwrap/HTTPS MCP与原lock audit，仅批准registry外网，无真实模型/云/GitHub。日志本地 `outputs/pr-review-validation/linux-mcp-installer-session.log`，SHA256 `edc74eb6d20564dee451025f4aba09a22b19bde0a9cc73f0d5e8383561e3e05e` |
+| 静态、生成与合同检查         | 通过                                                           | 最终typecheck、ESLint、Action生成合同、继承release contract与固定DSH配置；格式检查以文档冻结后的最终全仓检查为准                                                                                                                                                           |
+| 工作流安装器/Session定向回归 | Windows96通过，4文件，5.88s                                    | 原installer61、新AgentArts installer9、Session transfer19、原Controller Session7；生成模板/文件事务，不调用模型/云/GitHub                                                                                                                                                  |
+| Session真实save→resume       | Linux19通过，2文件，3.65s；实际DSH案例2.127s                   | 当次18项transfer加1项真实DSH/生产bwrap/fresh namespace；模型SSE夹具，合成Controller provenance；日志本地 `outputs/pr-review-validation/session-runtime-linux.log`。后加untrusted Session拒绝由上述Windows19项覆盖，不改旧日志                                              |
+| Demo写任务记录               | 51定向测试通过，5.79s；TypeScript通过                          | fix/implement、原validation、partial-success/GitHub链接、native名称独立于回执、严格export/CSP/原JSON字节；VM不当作视觉测试                                                                                                                                                 |
+| AgentArts编译入口独立检查    | 8项通过：5bundle独立加载/预期缺配置拒绝、3个CLI dry-run        | 无宿主node_modules；ncc适配仅固定DSH自身版本读取，版本/lock/源码hash/AST布局漂移拒绝。元数据在本地 `outputs/pr-review-validation/compiled-bundle-startup.json`；modelCalls为0，不执行云/GitHub，不代替容器及业务验收                                                       |
+
+Windows初轮在并发负载下实际为2022通过、32跳过、2失败，402.59s：大Buffer深比较超时，以及Session probe在既有总预算内未完成。前者改为等价的 `Buffer.equals` 字节检查，未削弱断言；后者未放宽deadline。随后两文件定向复测77通过、1跳过，37.33s，再完整idle重跑才得到上表2025/32；初轮失败保留在 `work/coverage-final-20261007.log`，不转写为通过。两组Linux回归各有Session覆盖，不相加成唯一用例数。
+
+最终clean生产容器、当前v3真实模型套件与原生ARM64仍待独立新证据。当前dirty候选和历史镜像不替代最终构建；原生ARM CI须推送本次候选后在匹配架构内核验证，旧QEMU记录不证明当前ARM BPF隔离。AgentArts与真实GitHub闭环仍未验收。
+
+Demo浏览器复现另用独立fresh-profile headless Edge，模拟写状态均明确标记simulation/历史回放，不调用Runtime、模型或GitHub；最终截图与浏览器元数据以本地 `outputs/pr-review-demo-qa/full-migration-20261007-final2/` 为准。内置Browser连接实际失败后采用独立Edge，不冒称内置浏览器通过。UI和源码测试不能代表华为云验收。
+
+## 历史只读阶段：2026-10-04源码与证据
+
+以下数据保留原运行与源码范围，包括真实模型首轮失败与后续复测；不转写为当前v3/write/native/MCP效果。历史推送授权不等于创建云资源或公开托管Demo。
 
 本轮保留通用修复 `aa05620a609f60e4cbe89dd0af87515e8bfafcce`（CI工作区固定失败run的commit）和华为适配 `ed1050067ad74fd533461cba793a3f7d8dc14f81`，随后补充有限失败诊断、只读skipped声明与镜像构建修正。各次测试、容器构建和模型评测分别记录源码，不能声称所有验证期间HEAD相同或工作树始终clean；真实模型记录的操作者source声明也不等于镜像attestation。
 
-## 本轮已经实际完成
+### 当时已经实际完成
 
 | 项目                          | 实际结果                                                                         | 证据与适用范围                                                                                                                                                                                                                                                                   |
 | ----------------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -23,7 +49,7 @@
 
 文件传输是实作原型，不是开放写能力：真实bytes/UTF-8或base64、SHA/mode、repository/commit/revision/digest、source baseline复查、保护路径、完整stage/rollback和上游strict完整性分类已测。它不含完整task/ref授权，不运行仓库测试/发布；fix、implement、task --write仍拒绝。范围见 [能力迁移表](capability-matrix.md)。
 
-## 最新生产容器候选：两架构独立实测通过
+## 历史只读候选容器：两架构独立实测通过
 
 两份smoke均为 `sourceDirty: false`，sourceTreeDigest（构建输入摘要）同为 `612909c530a4b17669d3d3a1fd6888bf0bbf1ffc235acc6b02380320af17b6cc`，保留各自实际source commit，不改写成同一HEAD。真实DSH/UID10001/native read使用确定性模型夹具，smoke未调用真实模型、云或GitHub。
 
@@ -51,7 +77,7 @@ Docker29首次dirty试运行默认生成OCI index/attestation；正式d9构建�
 
 **上述两架构证明只适用于d9源码和列出的镜像。** 后续诊断代码与最新候选的结果使用独立记录，不继承d9通过状态。
 
-## 真实DeepSeek固定四任务：自动rubric通过，人工未复核
+## 历史只读真实DeepSeek四任务：自动rubric通过，人工未复核
 
 用户明确批准最多4个固定case、每case最多6次provider请求和120000ms时限、每次provider请求最多2048输出tokens，每次套件执行1美元参考预算。key由受信supervisor从root0600单文件加载，worker仅获代理token；固定合成PR/context不向GitHub发表，也未调用AgentArts。美元批准值不是账单硬上限，actualCost始终unknown。
 
@@ -87,7 +113,7 @@ Docker29首次dirty试运行默认生成OCI index/attestation；正式d9构建�
 | AgentArts Runtime                          | 账号准入审批中，未部署或调用，无真实Session、LTS/运行分析证据                       |
 | GitHub→AgentArts→DSH→评论                  | 未验收；本地/模拟GitHub不能代替真实事件、Controller写前head复查、评论链接和平台记录 |
 | Gateway/MCP/平台评估                       | 已调查，未接入，不伪造工具接入或评分                                                |
-| 云端fix/Issue→PR/native/extensions/session | 原实现保留与适配边界明确，当前云入口未开放                                          |
+| 云端fix/Issue→PR/native/extensions/session | 当前v3代码已接入；生产环境与真实GitHub/AgentArts逐项验收，旧只读证据不替代          |
 
 真实云验收须核对固定SWR digest/架构、Runtime版本/单版本alias、UID/caps/元数据/出站、Session/taskId/base/head、实际工具回执、独立业务判定、GitHub结果、失败/过期head/权限拒绝/超时/取消/重复运行与清理状态。多轮Action记录汇总工具，但当前runtime/task/session/requestId保留最后一轮，不是完整平台Trace；未采集的轨迹留未知。步骤见 [部署手册](deployment.md)，业务判读见 [评测](evaluation.md)。
 

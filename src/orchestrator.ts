@@ -20,7 +20,7 @@ import {
 import { buildAuthorityAudit } from "./security/authority.js";
 import { ValidationIntegrityError } from "./write/validation-integrity.js";
 import { runAgentPhase } from "./orchestration/agent-phase.js";
-import { prepareExecution } from "./orchestration/execution.js";
+import { prepareExecution, type PreparedExecution } from "./orchestration/execution.js";
 import {
   createRunDeadline,
   failureFromSignal,
@@ -52,6 +52,7 @@ export interface RunActionOptions {
   readonly createEngine?: (
     run: AuthorizedRun,
     workspace: PreparedWorkspace,
+    execution: PreparedExecution,
   ) => NonNullable<AgentLoopDependencies["createEngine"]>;
 }
 
@@ -109,7 +110,7 @@ async function runActionInternal(
       ...(options.createEngine === undefined
         ? {}
         : {
-            createEngine: options.createEngine(preparation.run, workspace),
+            createEngine: options.createEngine(preparation.run, workspace, execution),
           }),
     });
   } catch (error: unknown) {

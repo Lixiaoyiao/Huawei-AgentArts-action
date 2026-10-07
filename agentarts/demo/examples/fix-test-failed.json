@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "mode": "simulation",
+  "task": {
+    "id": "simulation-fix-tests-failed",
+    "repository": "simulation/example",
+    "pullNumber": 1,
+    "headSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "baseSha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "url": "",
+    "kind": "pull_request",
+    "operation": "fix"
+  },
+  "stages": [
+    {
+      "name": "模拟独立测试失败（未执行任务）",
+      "status": "failed",
+      "startedAt": "2026-10-07T00:00:00Z",
+      "completedAt": "2026-10-07T00:00:01Z",
+      "message": "仅测试页面如何展示拒绝发布；时间和测试计数均为模拟示例。"
+    }
+  ],
+  "tools": [],
+  "validation": {
+    "status": "failed",
+    "checks": ["模拟示例：独立测试失败，禁止发布；未运行真实测试。"],
+    "original": { "status": "failed", "commandCount": 1 }
+  },
+  "result": {
+    "summary": "模拟 PR 修复因独立测试失败而停止。",
+    "error": "SIMULATION_ONLY: independent tests failed; no actual publication."
+  },
+  "durationMs": 1000,
+  "warnings": ["纯 UI 模拟数据；无 Runtime、DSH、模型、测试或 GitHub 调用，不代表任何执行通过。"],
+  "modelEvidence": { "kind": "unverified", "provider": "deepseek" }
+}

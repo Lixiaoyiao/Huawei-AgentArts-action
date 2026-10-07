@@ -1,8 +1,8 @@
 # PR Review：审批后部署与验收
 
-核对日期：2026-10-04。当前账号准入审批中，未部署或验收真实 AgentArts Runtime。公开仓库提供本地验证后的代码、配置和记录，尚未创建云资源或公开托管 Demo。以下云端步骤是审批后手册，不是已执行记录。
+核对日期：2026-10-07。当前账号准入审批中，未部署或验收真实 AgentArts Runtime。仓库保留各次源码、本地验证和原始记录；本轮完整任务迁移与旧只读证据分别记载，尚未创建云资源或公开托管 Demo。以下云端步骤是审批后手册，不是已执行记录。
 
-本手册覆盖迁移的第一阶段 PR Review。完整迁移目标和原能力状态见 [能力迁移表](capability-matrix.md)。事件与写权限留在 GitHub Controller；当前 Runtime 托管固定 DSH、只读工作区、模型代理与实际工具执行。第一轮不启用共享存储、文件传输、低代码 Agent、Gateway/MCP 或其他任务；这是阶段边界，不是对原能力的永久删除。
+本手册以PR Review为第一条真实云验收；当前代码的完整任务迁移见 [能力迁移表](capability-matrix.md)。事件、授权、独立Docker验证、GitHub写凭据与finalizer留在Controller；Runtime托管固定DSH、受检工作区、原工具/扩展和DSH Session传输。它必须通过强制namespace安全检查，不能仅有HTTP200就开放写任务。首次平台验收仍从只读Review开始，不启用共享持久存储、低代码Agent或未经验证的Gateway/MCP服务。
 
 ## 1. 准备账号、区域与受信配置
 
@@ -20,6 +20,8 @@ SDK 支持区域页当前只列西南-贵阳一 `cn-southwest-2`；这不是其�
 
 入站 API_KEY 使用 `Authorization: Bearer …`，从 Runtime 的权限与访问控制 URN 进入 AgentIdentity 获取。认证方式创建后不能改；选择 IAM/OAuth 会与本版客户端不匹配。创建 Runtime 前就选 API_KEY；不要把账号 AK/SK 当成 Runtime API Key。[入站身份认证](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_227.html)。
 
+生产`AGENTARTS_INBOUND_MODE=platform`（默认）依赖华为入站网关认证，cloud客户端只访问平台固定入口，禁止直接公开容器8080绕过网关。不能假设网关会将Authorization透传到应用；该行为仍待租户确认。普通本地容器没有该网关，必须显式`AGENTARTS_INBOUND_MODE=local`并配置仅本机试验使用的随机`AGENTARTS_LOCAL_API_KEY`：server在读取task body前验证Bearer，缺失/错误会拒绝。该key不复用真实AgentArts key、不进worker；健康`/ping`仍不要求该key，不能以ping成功证明任务已授权。
+
 模型 key 不能写进 Dockerfile、镜像 ENV、部署 JSON、命令参数、仓库文件或请求 body。按租户实际支持的敏感环境变量/安全注入交给 supervisor；项目没有实现 CSMS 自动取密钥。若平台配置/版本导出能显示明文，限制其管理访问，不将导出物作为演示附件。真实值不交给 DSH，DSH 环境中仅有单次代理 token。
 
 ## 2. 固定代码、镜像与版本关系
@@ -36,25 +38,60 @@ SDK 支持区域页当前只列西南-贵阳一 `cn-southwest-2`；这不是其�
 
 ## 3. Runtime 必须满足的部署边界
 
-| 设置/检查     | 本版要求                                                                      | 未满足时                             |
-| ------------- | ----------------------------------------------------------------------------- | ------------------------------------ |
-| HTTP          | `0.0.0.0:8080`；`GET /ping`、`POST /invocations`；标准精确匹配                | 不进行真实 PR 调用                   |
-| 启动身份      | root supervisor；DSH UID/GID10001；补充组清空                                 | 失败关闭；禁止测试豁免上线           |
-| capabilities  | supervisor 有 CHOWN、DAC_OVERRIDE、KILL、SETGID、SETUID                       | 不能声称凭据隔离/超时清理成立        |
-| 运行文件      | 镜像代码 root 所有、不可被 worker 写；每任务本地只读输入与私有状态            | 拒绝结果                             |
-| 存储          | 第一轮不挂会话/OBS/SFS 持久存储                                               | 先撤回设计，不把共享卷充当私有工作区 |
-| 网络          | supervisor 可访问操作者固定的 DeepSeek HTTPS；DSH 无任意网络工具              | 保留实际失败，不换成本地兜底         |
-| 云元数据/委托 | 审计最小委托；验证 worker 不可取得实际云身份凭据                              | 视为安全验收失败，停止发布验收       |
-| 生命周期      | Controller 1–10 分钟；平台最大生命周期留出冷启动/清理余量；每任务独立 Session | 不沿用/重放旧 Session                |
-| 日志          | 开启并能按 taskId/head 查询实际 Runtime JSON 日志                             | 云端链路证据不完整                   |
+默认server只接受v3，新Action统一走强制bwrap路径。生产不要设置`AGENTARTS_ENABLE_LEGACY_PROTOCOLS`；其值`true`只为旧v1/v2本地bench保留较弱隔离兼容入口。历史live-review与prove:local数据不能因此升级成v3验收。
+
+| 设置/检查         | 本版要求                                                                                 | 未满足时                             |
+| ----------------- | ---------------------------------------------------------------------------------------- | ------------------------------------ |
+| HTTP              | `0.0.0.0:8080`；`GET /ping`、`POST /invocations`；标准精确匹配                           | 不进行真实 PR 调用                   |
+| 启动身份          | root supervisor；DSH UID/GID10001；补充组清空                                            | 失败关闭；禁止测试豁免上线           |
+| capabilities      | supervisor 有 CHOWN、DAC_OVERRIDE、KILL、SETGID、SETUID                                  | 不能声称凭据隔离/超时清理成立        |
+| 运行文件          | 镜像代码 root 所有、不可被 worker 写；每任务本地只读输入与私有状态                       | 拒绝结果                             |
+| 存储              | 第一轮不挂会话/OBS/SFS 持久存储                                                          | 先撤回设计，不把共享卷充当私有工作区 |
+| namespace/seccomp | 固定bwrap；user/PID/network/IPC/UTS及文件namespace，允许受信setup后追加worker BPF        | 失败关闭，无UID-only或宿主执行兜底   |
+| 网络              | supervisor访问固定DeepSeek；DSH网络namespace仅loopback，经Unix socket模型/批准egress代理 | 保留实际失败，不放开任意外网         |
+| 云元数据/委托     | 审计最小委托；验证 worker 不可取得实际云身份凭据                                         | 视为安全验收失败，停止发布验收       |
+| 生命周期          | v3单轮最多30分钟，Controller总截止与平台时限共同满足；首次Review可用10分钟               | 不沿用旧Runtime Session重放任务      |
+| 日志              | 开启并能按 taskId/head 查询实际 Runtime JSON 日志                                        | 云端链路证据不完整                   |
 
 平台隔离不同 Session；同一 Session 内 supervisor 与 DSH 的 UID/文件/网络边界由本项目和租户条件共同保证。会话存储启用后不能关闭，其 FUSE 权限不保证运行时 chmod/chown 生效，故本版不使用它。生命周期范围见官方指南；客户端或示例中的 900 秒不是普通 HTTP 服务端硬上限。[会话管理](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_119.html)。
 
-本版没有给 worker 创建独立 network namespace，`networkIsolated` 为 false。只读工具清单不能自动证明元数据不可达。必须用受信诊断验证 DSH 身份对父进程环境、root 私有文件和元数据临时凭据入口的访问结果；诊断只记录拒绝/状态，不读取、展示或持久化凭据值。平台若不能提供要求的边界，停止该云端路线，不扩大委托或开放 shell 来绕过。[委托说明](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_226.html)。
+当前v3必须给worker创建独立user/PID/network等namespace，固定`/workspace`和`/dsh-home`只挂当前任务获准目录。worker为UID/GID10001、清空groups/capabilities，父进程环境、host文件、云网络不可直接访问；受信Unix socket桥只提供模型和批准出站入口。实际启动probe检查UID/cap/只有loopback，未通过即拒绝，无fallback。原只读v1/v2记录中的`networkIsolated:false`是历史实现，不能用来代表当前v3。
 
-普通调用总超时、断开传播和本项目所需 Linux capabilities 尚待真实租户验证。公开出站/VPC 配置也不能证明 DeepSeek 在目标区域可达。不要开 `--privileged`、挂 Docker socket、执行 PR 代码或使用 Docker-in-Docker。容器测试的受限 capabilities 与云平台实际允许项须逐一核对。
+Docker外层需使用固定 [seccomp-bwrap.json](../../agentarts/seccomp-bwrap.json)：它基于固定Moby Apache-2.0默认profile，仅新增`clone/unshare/mount/umount2/pivot_root/setns`的namespace setup能力；worker启动后追加项目BPF拒绝新的namespace创建并保留普通Node线程。无需CAP_SYS_ADMIN、privileged或开放Docker socket。目标AgentArts租户是否允许这些syscalls、unprivileged user namespace和自定义seccomp仍待验收，标准HTTP容器支持不保证满足该要求。来源/许可证见 [第三方声明](../../THIRD_PARTY_NOTICES.md)。
+
+网络扩展/包安装由监督进程`AGENTARTS_EGRESS_ALLOWED_ORIGINS`精确origin JSON白名单控制，默认空列表，默认拒绝私网、loopback、link-local/metadata等地址，DNS解析后再次核对。批准registry仅在确有安装需要时配置，例如`["https://registry.npmjs.org"]`；额外tarball/MCP origins需独立确认，不使用通配域名，不把URL内凭据带入请求。代理不能让不遵循代理的任意子进程自动联网；扩展需逐项验证。明文env/header secret不能放extension plan，credentialed扩展须受信Controller回调或监督进程专属代理，当前直接定义会拒绝。
+
+仍须真实租户验证对父环境、root文件、云元数据临时凭据入口与网络拒绝的结果；诊断只记拒绝/状态，不展示或持久化凭据。平台不能满足边界时停止部署验收，不扩大委托或降级宿主执行。[委托说明](https://support.huaweicloud.com/highcode-agentarts/agentarts_10_226.html)。
+
+普通HTTP调用总超时、32MiB body上限、断开传播、namespace/seccomp/capabilities与模型/registry出站尚待真实租户验证。审查不执行PR代码；写任务执行仅在获原trusted-write授权后于namespace内进行，独立测试仍在Controller无凭据容器，不使用Docker-in-Docker。生产镜像没有宿主执行降级。
+
+### 3.1 可选的只读 MCP 凭据代理
+
+[operator references示例](../../agentarts/examples/mcp-credential-references.example.json) 是一个数组，对应监督进程`AGENTARTS_MCP_CREDENTIAL_REFERENCES`。将`.invalid`占位URL替换为自己批准的真实HTTPS MCP endpoint；相同`serverId`和完整URL须与 [Controller MCP定义](../../agentarts/examples/mcp-conventions.example.json) 一致。示例工具读取版本化仓库约定，不授远端写权限；示例没有已部署服务。
+
+监督进程配置分三项，均由操作者选择，任务不能覆盖：
+
+```text
+AGENTARTS_MCP_CREDENTIAL_REFERENCES = operator JSON数组（不含secret值）
+AGENTARTS_EGRESS_ALLOWED_ORIGINS = ["https://tools.example.invalid"]
+AGENTARTS_TOOL_CONVENTIONS = 该工具服务专用、只读、可撤销凭据（敏感配置）
+```
+
+真实值通过平台受限敏感配置交给supervisor，不写Git、JSON示例、镜像、argv、task body、Profile、日志或Demo。当前MCP引用读取`AGENTARTS_TOOL_*`环境变量，不支持该引用的`*_FILE`或CSMS自动取值；模型key的`DEEPSEEK_API_KEY_FILE`是独立机制。部署者可见的环境导出须按secret处理，不作为演示材料。禁止复用GitHub写token、模型key或Runtime/local入站key，代码会检查已知主凭据值复用。
+
+`prefix`支持空字符串、`Bearer `和`Basic `。Basic的敏感变量必须是规范base64编码的UTF-8 `user:password`，用户名和密码都非空且无控制字符；编码值、解码后的整值和密码及其常见编码都会参与回显阻断，解码后的主凭据复用也拒绝。不要把base64当成加密或可公开材料。
+
+Controller的`mcp-config`使用上述无secret定义，controlled的`allowed-tools`加入`mcp.conventions.read`（以及确需的workspace工具）。不要添加Authorization/header/env中的真实key；task只有逻辑serverId/URL、当前有效工具grants与绑定摘要，supervisor自行匹配operator reference。原controlled/native Profile会被受信进程准确映射到密封Unix socket桥，模型只看到代理地址。controlled列表/调用均限定当前grant与operator只读名单的交集及预算；native清单由DSH负责，凭据代理仍仅暴露operator批准的只读工具。
+
+生产凭据传输强制HTTPS，精确origin/DNS/IP/元数据检查仍执行，禁止redirect。只支持Streamable HTTP POST、JSON或完整有限SSE，单请求≤256KiB、响应≤2MiB；GET/DELETE返回405，不支持OAuth、长订阅或任意stdio/Plugin凭据注入。凭据回显（含已知常见编码）会阻断整次任务，不把错误正文发模型或发布。MCP Session header只接受本任务上游实际产生的值，不复用旧Session。
+
+调用上限分别限制当前工具和同server整组：controlled取operator上限与当前grants上限的较小值，native仍受operator名单和上限约束。工具调用失败也消耗已预留的调用次数；初始化、列举等RPC另受每桥128请求、4并发上限和任务截止限制。调用次数不是服务费用或账单硬上限；MCP服务、Runtime和模型计费分别核对，缺少可靠计量时记录unknown。
+
+本地测试使用隔离namespace、确定性模型和MCP测试服务；HTTP豁免只存在受信test API seam，不能由环境/task启用。Linux实际DSH/MCP测试及后续拒绝负例按 [验证记录](verification.md) 保存各自范围；不能写成华为Gateway/MCP已接入。第一条云Review仍先验收Runtime安全，工具服务与凭据权限独立确认。
 
 ## 4. 本地预检与复现
+
+MCP配置与模型预算、入站认证分别管理；先检查下面配置和第3节namespace/网络边界，再执行任何任务。
 
 从 [配置示例](../../agentarts/examples/deployment-config.example.json) 复制到本地工作目录，填入非敏感的实际参数。示例刻意保留不可通过的占位 commit/digest/origin，防止把模板当成已部署配置。`readiness` 是操作者填写的状态，不是脚本生成的云端证据。
 
@@ -65,7 +102,7 @@ node agentarts/preflight.mjs --config /absolute/path/to/deployment-config.json -
 
 第一条只读本地 JSON；第二条可选查询本地 Docker 镜像的 Linux/架构/image ID/USER/RepoDigests 元数据，不读取镜像 ENV，不 pull、不 run。Linux 默认固定本地 `unix:///var/run/docker.sock`，Windows 固定本地 pipe；rootless 可显式传 `--docker-host unix:///run/user/1000/docker.sock`。拒绝 TCP/SSH 等远程 daemon。检查 Docker 时使用私有临时空配置和封闭环境，不加载操作者 registry 登录凭据，随后清理该临时目录。
 
-脚本不读取 key 值，只通过变量名称报告当前进程是否存在 `AGENTARTS_RUNTIME_API_KEY`、`DEEPSEEK_API_KEY`、`GITHUB_TOKEN`；存在不代表非空/正确，也不验证远程 Actions Secrets。不要为了这个检查把原本分属 Controller 与 supervisor 的 key 集中复制到同一环境。输出始终为 `cloudAcceptance: unverified`，不创建/修改资源，不调用 Runtime/模型/GitHub，不输出原始配置或 Docker 错误正文。
+脚本不读取key值，只按名称报告当前进程是否存在`AGENTARTS_RUNTIME_API_KEY`、`DEEPSEEK_API_KEY`、`GITHUB_TOKEN`；存在不代表正确，也不检查FILE注入或远程Secret。不要把分属Controller/supervisor的key集中复制。输出始终为`cloudAcceptance: unverified`，不创建资源或调用服务。该示例/preflight仍以首轮Review为范围，不自动验证新增v3 namespace/seccomp、extension egress、完整body/Session或写场景，必须另按本节检查。
 
 ### 4.1 最终镜像与确定性模型 smoke
 
@@ -75,13 +112,13 @@ node agentarts/preflight.mjs --config /absolute/path/to/deployment-config.json -
 bash agentarts/local-container.sh
 ```
 
-在仓库根目录运行。脚本固定只支持 linux/amd64、linux/arm64，构建后按实际 image ID 运行 smoke，覆盖 HTTP Runtime、UID、只读工具、重复拒绝和截止清理。测试容器无外网，夹具 HTTP服务在内部loopback；caps是同五项，未挂Docker socket或凭据。本地记录在 `work/container-x64/`（可由 `AGENTARTS_EVIDENCE_DIR` 更改），包含 descriptor/smoke、source commit、dirty状态、构建输入文件摘要；它们不构成源码/镜像签名证明。
+在仓库根目录运行。脚本固定只支持linux/amd64、linux/arm64，按实际image ID记录HTTP/UID/工具/重复/截止检查；具体case以当次smoke为准，旧9场景仅覆盖v1/v2。测试容器无外网、仅模型夹具loopback、五项caps，不挂Docker socket或凭据。v3必须额外使用本节固定seccomp策略并完成full-task场景，不能以旧smoke证明新写/native/Session。记录在`work/container-x64/`（可用AGENTARTS_EVIDENCE_DIR更改），source/dirty/digest不是签名证明。
 
 ```bash
 AGENTARTS_TEST_PLATFORM=linux/arm64 bash agentarts/local-container.sh
 ```
 
-ARM64 要有实际 ARM daemon，或已准备 QEMU 的测试宿主。脚本不会自动登记 QEMU；跨架构时将记录 emulated，必须复核宿主/daemon实际架构，不能把 emulated=false 冒充原生硬件。镜像workflow的QEMU仅作用于临时测试宿主，不能放到AgentArts Runtime内。Windows可在已配置Docker的Linux环境使用这些Bash命令。
+新v3的ARM64 namespace/BPF验收必须使用匹配架构的原生ARM64 Linux kernel/daemon；worker会检查AUDIT_ARCH，x64上的用户态QEMU不能证明ARM kernel seccomp。上述ARM命令须在原生ARM宿主执行。QEMU只可用于构建/旧只读smoke兼容检查，记录emulated，不把旧QEMU通过升级为本轮ARM安全验收。镜像CI使用原生`ubuntu-24.04-arm`，其实际结果以对应新run为准；当前不预先宣称ARM通过。Windows可在已配置Docker的Linux环境执行AMD64流程。[GitHub官方runner架构](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)。
 
 本轮统一构建导出格式为 `--provenance=false --sbom=false --output type=image,oci-mediatypes=false`，避免Docker新版默认OCI索引/attestation混入单架构SWR候选。需单独构建时使用同样参数：
 
@@ -93,7 +130,19 @@ docker build --platform linux/amd64 --file agentarts/Dockerfile \
 
 仍须检查实际 `image-descriptor.json`/registry manifest，而不只相信flag；构建工具/镜像存储方式可能改变结果。Docker官方将 `oci-mediatypes` 作为export格式参数；此处格式选择不保证目标SWR接受，真实上传/拉取尚未验证。[Docker image exporter](https://docs.docker.com/build/exporters/image-registry/)。
 
-### 4.2 固定 Review 任务与真实模型执行前的计划
+### 4.2 v3固定任务计划与历史Review benchmark
+
+新 [live-full CLI](../../src/agentarts/live-full.ts) 使用v3 FullEngine，固定Review/clean、diagnose、fix、写task、implement与native写任务。写候选在Controller执行冻结契约的独立Docker测试，不发布GitHub；真实模型仍须独立预算授权，dry-run不读取模型key、不调用服务。完成`build:agentarts`的live-full入口后可先查看单例计划：
+
+```bash
+node dist-agentarts/live-full/index.js --mode local-real-model --dry-run \
+  --runtime-origin http://127.0.0.1:18080 --max-cases 1 --case-ids fix-bounds \
+  --timeout-ms 120000 --max-model-requests-per-case 6 --max-output-tokens 2048
+```
+
+真实`--execute`仍需`--budget-usd`、`--confirm-budget I_ACCEPT_METERED_MODEL_CALLS`、实际`--image-digest`/`--source-commit`和新的`--out`，并核对受信模型policy与独立validation image digest。每case固定一轮，没有真实GitHub发布，人工判读和账单成本另记；不要把自动契约通过写成全部原能力或云通过。多轮修复由单独原Controller integration测试覆盖。Runtime与CLI使用同一**临时本地**`AGENTARTS_LOCAL_API_KEY`，不复用云key。
+
+以下`live-review`是旧v1只读四案例benchmark。要执行它，local supervisor必须单独显式启用`AGENTARTS_ENABLE_LEGACY_PROTOCOLS=true`；该兼容模式隔离较弱，不在云部署命令启用，不证明v3/write/native。默认生产配置会拒绝旧协议；dry-run本身仍可离线运行。
 
 构建后运行固定四任务的纯本地计划，不启动 Runtime、不读取凭据、不调用模型/GitHub：
 
@@ -138,21 +187,25 @@ unset agentarts_model_key
 ```bash
 agentarts_image_id="$(docker image inspect huawei-agentarts-action:local-x64 --format '{{.Id}}')"
 [[ "$agentarts_image_id" =~ ^sha256:[a-f0-9]{64}$ ]] || exit 1
+# Only a fresh, local test key; never copy the real AgentArts gateway key here.
+export AGENTARTS_LOCAL_API_KEY="$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('hex'))")"
 docker run --detach --name huawei-agentarts-review-local --init --read-only \
   --publish 127.0.0.1:18080:8080 \
   --cap-drop ALL --cap-add CHOWN --cap-add SETUID --cap-add SETGID \
   --cap-add DAC_OVERRIDE --cap-add KILL --security-opt no-new-privileges \
+  --security-opt "seccomp=$PWD/agentarts/seccomp-bwrap.json" \
   --pids-limit 256 --memory 1g --cpus 2 \
   --tmpfs /tmp:rw,noexec,nosuid,nodev,size=536870912 \
   --mount "type=bind,source=$agentarts_key_dir/deepseek_key,target=/run/secrets/deepseek_key,readonly" \
   --env DEEPSEEK_API_KEY_FILE=/run/secrets/deepseek_key \
+  --env AGENTARTS_INBOUND_MODE=local --env AGENTARTS_LOCAL_API_KEY \
   --env AGENTARTS_MODEL_EVIDENCE=live-provider \
   --env AGENTARTS_DEEPSEEK_MODEL=deepseek-v4-pro \
   --env AGENTARTS_MAX_MODEL_REQUESTS=6 --env AGENTARTS_MAX_OUTPUT_TOKENS=2048 \
   "$agentarts_image_id"
 ```
 
-真实模型需要实际网络出站；确定性smoke的 `--network none` 不能直接复用。此本地命令使用 Docker默认网络，不证明云端egress/元数据边界。启动后先检查有限的 `/ping` 状态及公开 modelPolicy，不打印完整容器ENV或请求/模型正文；尚未获得模型费用授权时，不运行任何 `--execute`。不要把只设置了 live-provider 的健康响应当成实际模型调用证据。
+真实模型需要supervisor实际出站；确定性smoke的`--network none`不能直接复用。本命令在仓库根目录运行，固定seccomp文件绝对路径；外层Docker默认网络不证明云边界，v3内层仍强制network namespace。首次`/ping`通过不证明模型调用、v3 namespace或云成功；真实Review调用前核对namespace拒绝检查，并遵守模型费用授权。不要打印容器ENV或模型正文。
 
 结束本地试验，先停止并删除本专用容器；停止失败须检查实际状态，不能接着宣称清理完成。确认挂载已解除后只删除先前生成的单文件和空私有目录，禁止批量/递归删除未知目录：
 
@@ -164,6 +217,7 @@ rm -- "$agentarts_key_dir/deepseek_key"
 rmdir -- "$agentarts_key_dir"
 unset agentarts_key_dir
 unset agentarts_image_id
+unset AGENTARTS_LOCAL_API_KEY
 ```
 
 ## 5. 审批后按顺序验收

@@ -31,6 +31,33 @@ The exact dependency graph, upstream contract changes, and residual dependency
 advisory are documented in
 [`docs/dsh-0.1.7-rc.2-migration.md`](docs/dsh-0.1.7-rc.2-migration.md).
 
+## AgentArts NCC dependency attribution adapter
+
+The AgentArts bundles consume the locked DeepSeek Harness `0.2.0-rc.2` package
+family. [`scripts/bundle-dsh-attribution.mjs`](scripts/bundle-dsh-attribution.mjs)
+adapts only the relocated `@deepseek-ai/dsh-llm` self-version lookup used by
+NCC `0.45.0`: its exact `createRequire(import.meta.url)("../package.json")`
+call is replaced in generated output with the installed package's own version.
+The pinned `lib/index.js` SHA256 is
+`9132c8a8053ee82b9fb1ded4f98c85cf557f288a15a85c552c6b1fb319ead120`.
+Package version, lockfile, complete module hash, AST call and NCC layout drift
+are rejected. Padding retains source-map character and line positions.
+The installed `node_modules` files are not changed; each adapted bundle records
+the change in `bundle-adaptations.json`. This generated-code compatibility
+adaptation does not change model selection, provider behavior or DSH permissions.
+
+## Moby seccomp profile
+
+The AgentArts container seccomp profile in
+[`agentarts/seccomp-bwrap.json`](agentarts/seccomp-bwrap.json) is derived from
+[`moby/profiles` default.json](https://github.com/moby/profiles/blob/6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef/seccomp/default.json)
+at commit `6fe7deb1b9fb7c0397a4593480d7d22b9ee8caef`, licensed under Apache-2.0.
+It adds permission for the six namespace setup syscalls required by the
+unprivileged bubblewrap launcher. The DSH worker then receives a separate
+project-authored BPF filter that rejects further namespace creation.
+The upstream Apache license is retained in
+[`agentarts/LICENSE.moby-seccomp`](agentarts/LICENSE.moby-seccomp).
+
 ## Claude Code Action
 
 MIT License

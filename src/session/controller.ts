@@ -206,6 +206,12 @@ export async function prepareControllerSession(options: {
         runtime.session = {
           bindingDigest: sessionBindingHash(prepared.binding),
           knownSecrets: new Set(secrets),
+          transport: {
+            binding: prepared.binding,
+            current: prepared.current,
+            generation: prepared.generation,
+            retentionDays: inputs.sessionRetentionDays,
+          },
         };
         if (prepared.checkpoint !== undefined) {
           if (prepared.source === undefined)
