@@ -1,4 +1,4 @@
-import { chmod, chown, lstat, readdir, readFile, realpath } from "node:fs/promises";
+import { lstat, readdir, readFile, realpath } from "node:fs/promises";
 import { delimiter, dirname, isAbsolute, join, relative, sep } from "node:path";
 import { dockerInstallerSpec } from "../dsh/docker-policy.js";
 import {
@@ -11,6 +11,7 @@ import type { DshRuntime } from "../dsh/runtime.js";
 import { throwIfCancelled } from "../lifecycle/cancellation.js";
 import { agentArtsNamespaceArgs, agentArtsNamespaceProcess } from "./sandbox.js";
 import { egressPolicy, startAgentArtsEgressProxy } from "./egress-proxy.js";
+import { privateEntryPermissions } from "./private-permissions.js";
 
 const UID = 10001;
 const PACKAGE = "/opt/dsh-action/package";
@@ -120,19 +121,16 @@ export async function installAgentArtsPackages(input: AgentArtsInstallerInput): 
     input.runtime.dshHome,
     dirname(input.runtime.packageRoot),
   ]) {
-    await chown(parent, 0, UID);
-    await chmod(parent, 0o710);
+    await privateEntryPermissions(parent, 0o710, 0, UID);
   }
   const writableTree = async (directory: string): Promise<void> => {
-    await chown(directory, UID, UID);
-    await chmod(directory, 0o750);
+    await privateEntryPermissions(directory, 0o750, UID, UID);
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       const path = join(directory, entry.name);
       if (entry.isDirectory()) await writableTree(path);
       else if (entry.isFile()) {
         const details = await lstat(path);
-        await chown(path, UID, UID);
-        await chmod(path, (details.mode & 0o111) | 0o640);
+        await privateEntryPermissions(path, (details.mode & 0o111) | 0o640, UID, UID);
       } else if (!entry.isSymbolicLink())
         throw new DshConfigurationError("Installer package directory contains a special entry");
     }

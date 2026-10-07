@@ -15,6 +15,7 @@ import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { privateEntryPermissions } from "./private-permissions.js";
 
 import { buildDshPrompt } from "../dsh/prompt.js";
 import {
@@ -242,8 +243,14 @@ async function permissions(
   workerOwned: boolean,
   testOnly: boolean,
 ): Promise<void> {
-  await chmod(path, mode);
-  if (!testOnly) await chown(path, workerOwned ? AGENTARTS_WORKER_UID : 0, AGENTARTS_WORKER_GID);
+  if (testOnly) await chmod(path, mode);
+  else
+    await privateEntryPermissions(
+      path,
+      mode,
+      workerOwned ? AGENTARTS_WORKER_UID : 0,
+      AGENTARTS_WORKER_GID,
+    );
 }
 
 async function sealDirectories(root: string, testOnly: boolean): Promise<void> {

@@ -28,6 +28,14 @@ docker build --platform "$platform" --file agentarts/Dockerfile \
   --build-arg HTTP_PROXY --build-arg HTTPS_PROXY --build-arg NO_PROXY \
   "${build_args[@]}" --tag "$test_tag" .
 image_id="$(docker image inspect "$test_tag" --format '{{.Id}}')"
+docker image inspect "$test_tag" --format '{{json .Descriptor}}' > "$output/image-descriptor.json"
+emulated=false
+case "$(uname -m):$platform" in
+  x86_64:linux/arm64|aarch64:linux/amd64) emulated=true ;;
+esac
+# Preserve candidate identity even when the first fixed namespace probe refuses setup.
+printf '{"schemaVersion":1,"sourceCommit":"%s","sourceDirty":%s,"buildInputDigest":"%s","imageId":"%s","architecture":"%s","emulated":%s}\n' \
+  "$source_commit" "$source_dirty" "$source_tree_digest" "$image_id" "$expected_arch" "$emulated" > "$output/source-bindings.json"
 if [[ "${AGENTARTS_CI_APPARMOR_SETUP:-false}" == true ]]; then
   bash agentarts/ci-apparmor.sh setup "$image_id"
 fi
@@ -36,11 +44,6 @@ if [[ -n "${AGENTARTS_APPARMOR_PROFILE:-}" ]]; then
   [[ "$AGENTARTS_APPARMOR_PROFILE" == agentarts-runtime-bwrap-v1 ]]
   apparmor_args+=(--security-opt "apparmor=$AGENTARTS_APPARMOR_PROFILE")
 fi
-docker image inspect "$test_tag" --format '{{json .Descriptor}}' > "$output/image-descriptor.json"
-emulated=false
-case "$(uname -m):$platform" in
-  x86_64:linux/arm64|aarch64:linux/amd64) emulated=true ;;
-esac
 timeout --signal=TERM --kill-after=5s 125s \
   docker run --platform "$platform" --rm --init --read-only --network none \
     --cap-drop ALL --cap-add CHOWN --cap-add SETUID --cap-add SETGID --cap-add DAC_OVERRIDE --cap-add KILL \
