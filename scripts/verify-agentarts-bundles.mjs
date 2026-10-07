@@ -7,7 +7,14 @@ import { basename, join, resolve, sep } from "node:path";
 // Explicit post-build loading probe. No model, cloud, Docker or GitHub operation
 // is attempted: each executable intentionally receives missing configuration.
 const root = resolve(import.meta.dirname, "..");
-const entries = ["controller", "runtime", "local-proof", "live-review", "live-full"];
+const entries = [
+  "controller",
+  "runtime",
+  "local-proof",
+  "live-review",
+  "live-full",
+  "local-github",
+];
 const temporary = await mkdtemp(join(tmpdir(), "agentarts-bundle-start-"));
 const checks = [];
 try {
@@ -57,6 +64,59 @@ try {
       hostNodeModulesAvailable: false,
       adaptation: metadata.adaptations[0],
     });
+    if (entry === "local-github") {
+      const out = join(temporary, "local-github-not-created"),
+        state = join(temporary, "ledger-not-created");
+      const planned = spawnSync(
+        process.execPath,
+        [
+          join(destination, "index.js"),
+          "--dry-run",
+          "--repository",
+          "Lixiaoyiao/Huawei-AgentArts-action",
+          "--pull-number",
+          "1",
+          "--expected-head",
+          "a".repeat(40),
+          "--expected-base",
+          "b".repeat(40),
+          "--source-commit",
+          "c".repeat(40),
+          "--image-digest",
+          `sha256:${"d".repeat(64)}`,
+          "--trusted-local-runtime",
+          "--runtime-origin",
+          "http://127.0.0.1:8080",
+          "--out",
+          out,
+          "--state-dir",
+          state,
+        ],
+        {
+          cwd: temporary,
+          env,
+          timeout: 10_000,
+          maxBuffer: 512 * 1024,
+          encoding: "utf8",
+          windowsHide: true,
+        },
+      );
+      if (planned.error) throw planned.error;
+      assert.equal(planned.status, 0);
+      assert.equal(planned.stderr, "");
+      const document = JSON.parse(planned.stdout);
+      assert.equal(document.status, "dry-run");
+      assert.equal(document.plan.execute, false);
+      assert.equal(document.plan.cloudVerification, "not-performed");
+      await assert.rejects(stat(out), { code: "ENOENT" });
+      await assert.rejects(stat(state), { code: "ENOENT" });
+      checks.push({
+        bundle: entry,
+        status: "passed",
+        scope: "single-cli-dry-run-no-side-effects",
+        exitCode: 0,
+      });
+    }
     if (entry === "live-full" || entry === "live-review") {
       for (const count of entry === "live-full" ? [2, 7] : [4]) {
         const planned = spawnSync(

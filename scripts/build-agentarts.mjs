@@ -11,6 +11,7 @@ const entries = [
   ["src/agentarts/local-proof.ts", "local-proof"],
   ["src/agentarts/live-review-main.ts", "live-review"],
   ["src/agentarts/live-full-main.ts", "live-full"],
+  ["src/agentarts/local-github-main.ts", "local-github"],
 ];
 const selected =
   args.length === 1 && args[0] === "--runtime-only"
