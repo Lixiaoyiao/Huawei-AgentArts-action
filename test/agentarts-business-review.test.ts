@@ -1,18 +1,28 @@
 import { createHash } from "node:crypto";
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import { runValidationCommandsInDocker } from "../src/write/validate.js";
 import { runCommand } from "../src/security/argv.js";
 
-const runId = "c00d93fd-9cd4-4f48-83db-dd2fda770454";
-const evidence = join(process.cwd(), "agentarts/evidence/full-v3/live-model");
+const enabled =
+  process.platform === "linux" && process.env.AGENTARTS_RUN_BUSINESS_REVIEW === "true";
+// Trusted audit-only overrides select immutable evidence, never product inputs or task code.
+const runId = enabled
+  ? (process.env.AGENTARTS_BUSINESS_REVIEW_RUN_ID ?? "c00d93fd-9cd4-4f48-83db-dd2fda770454")
+  : "c00d93fd-9cd4-4f48-83db-dd2fda770454";
+const evidence =
+  (enabled ? process.env.AGENTARTS_BUSINESS_REVIEW_EVIDENCE : undefined) ??
+  join(process.cwd(), "agentarts/evidence/full-v3/live-model");
+if (
+  !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/u.test(runId) ||
+  !isAbsolute(evidence)
+)
+  throw new Error("Independent audit evidence must use an absolute directory and exact run UUID");
 const image =
   "docker.io/library/node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d";
 const cases = ["fix-bounds", "task-write-roles", "implement-roles", "native-write-bounds"] as const;
-const enabled =
-  process.platform === "linux" && process.env.AGENTARTS_RUN_BUSINESS_REVIEW === "true";
 const results: unknown[] = [];
 interface Candidate {
   runId: string;
