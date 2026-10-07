@@ -40,9 +40,12 @@ it("packs the actual tracked derivative repository and faithfully restores large
     });
     trace("pack-complete-manifest");
     expect(manifest.files.length).toBe(snapshot.baseline.size);
-    expect(Buffer.byteLength(JSON.stringify(manifest))).toBeLessThanOrEqual(
-      WORKSPACE_TRANSFER_LIMITS.maxPayloadBytes,
-    );
+    const payloadBytes = Buffer.byteLength(JSON.stringify(manifest));
+    if (process.env.AGENTARTS_TRACE_CAPACITY === "1")
+      process.stdout.write(
+        `${JSON.stringify({ event: "capacity.measurement", sourceCommit: headSha, files: manifest.files.length, payloadBytes, maxPayloadBytes: WORKSPACE_TRANSFER_LIMITS.maxPayloadBytes })}\n`,
+      );
+    expect(payloadBytes).toBeLessThanOrEqual(WORKSPACE_TRANSFER_LIMITS.maxPayloadBytes);
     expect(
       manifest.files.some(
         (file) => file.path === "dist/index.js.map" && file.encoding === "gzip-base64",
