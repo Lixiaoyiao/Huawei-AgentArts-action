@@ -619,6 +619,111 @@ describe("Workspace transfer prototype (offline actual files, no cloud fix integ
     expect((await readFile(join(copied, "large.bin"))).equals(binary)).toBe(true);
     expect(input.files.find((file) => file.path === "large.txt")?.sha256).toBe(hash(text));
   });
+  it("faithfully transfers medium escaped JSON text and binary without retaining the old large-file threshold", async () => {
+    const snapshot = await fixture(),
+      text = (JSON.stringify({ 说明: '会议\\路径\n"quoted"' }) + "\n").repeat(500),
+      binary = Buffer.alloc(12_000, 0xff),
+      entropy = Buffer.concat(
+        Array.from({ length: 512 }, (_, index) =>
+          createHash("sha256")
+            .update(`json-wire-${String(index)}`)
+            .digest(),
+        ),
+      ),
+      alphabet =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789" +
+        ['"', "\\", "\n"].join("").repeat(7),
+      escaped = Array.from(entropy, (value) => alphabet[value % alphabet.length] ?? "").join("");
+    await writeFile(join(snapshot.workerRoot, "medium.json"), text);
+    await writeFile(join(snapshot.workerRoot, "medium.bin"), binary);
+    // Fixed high-entropy text: JSON escaping changes the useful wire saving,
+    // rather than relying only on a highly repetitive string compressing well.
+    await writeFile(join(snapshot.workerRoot, "medium-escaped.txt"), escaped);
+    expect(Buffer.byteLength(text)).toBeLessThan(256 * 1024);
+    const input = await packWorkspaceSnapshot(snapshot, binding);
+    expect(
+      input.files.filter((file) => file.path.startsWith("medium")).map((file) => file.encoding),
+    ).toEqual(["gzip-base64", "gzip-base64", "gzip-base64"]);
+    expect(input.files).toHaveLength(snapshot.baseline.size + 3);
+    const copied = await remote(input);
+    expect((await readFile(join(copied, "medium.json"))).equals(Buffer.from(text))).toBe(true);
+    expect((await readFile(join(copied, "medium.bin"))).equals(binary)).toBe(true);
+    expect((await readFile(join(copied, "medium-escaped.txt"))).equals(Buffer.from(escaped))).toBe(
+      true,
+    );
+    expect((await createWorkspaceDelta(input, copied)).changes).toEqual([]);
+  });
+  it("keeps unchanged file representations stable when an edited file crosses the compression threshold in both directions", async () => {
+    const source = join(root, "source"),
+      small = "a".repeat(4095),
+      large = "a".repeat(16_000),
+      stable = (JSON.stringify({ unchanged: '真实记录\n"quoted"' }) + "\n").repeat(400);
+    await mkdir(join(source, "src"), { recursive: true });
+    await writeFile(join(source, "src/edited.txt"), small);
+    await writeFile(join(source, "stable.json"), stable);
+    const snapshot = await createWorkspaceSnapshot(
+      { kind: "materialized-tree", root: source },
+      join(root, "worker"),
+    );
+    const sourceBefore = await fingerprintWorkspace(source),
+      input = await packWorkspaceSnapshot(snapshot, binding),
+      worker = await remote(input);
+    expect(input.files.find((file) => file.path === "src/edited.txt")?.encoding).toBe("utf8");
+    await writeFile(join(worker, "src/edited.txt"), large);
+    const delta = await createWorkspaceDelta(input, worker);
+    expect(
+      delta.changes.map((change) =>
+        change.kind === "deleted" ? change.original.path : change.file.path,
+      ),
+    ).toEqual(["src/edited.txt"]);
+    const first = await applyWorkspaceDelta(snapshot, input, delta);
+    expect(first.manifest.files.find((file) => file.path === "src/edited.txt")?.encoding).toBe(
+      "gzip-base64",
+    );
+    expect(first.manifest.files.find((file) => file.path === "stable.json")).toEqual(
+      input.files.find((file) => file.path === "stable.json"),
+    );
+    const secondWorker = join(root, "remote-second");
+    await materializeWorkspaceManifest(first.manifest, secondWorker);
+    await writeFile(join(secondWorker, "src/edited.txt"), small);
+    const secondDelta = await createWorkspaceDelta(first.manifest, secondWorker),
+      second = await applyWorkspaceDelta(snapshot, first.manifest, secondDelta);
+    expect(second.manifest.files.find((file) => file.path === "src/edited.txt")?.encoding).toBe(
+      "utf8",
+    );
+    expect(second.manifest.files.find((file) => file.path === "stable.json")).toEqual(
+      input.files.find((file) => file.path === "stable.json"),
+    );
+    expect(
+      (await readFile(join(snapshot.workerRoot, "src/edited.txt"))).equals(Buffer.from(small)),
+    ).toBe(true);
+    expect(second.changes.all).toEqual([]);
+    expect(await fingerprintWorkspace(source)).toBe(sourceBefore);
+  });
+  it("retains incompressible binary bytes and still refuses the bounded wire envelope", async () => {
+    const snapshot = await fixture(),
+      binary = Buffer.concat(
+        Array.from({ length: 256 }, (_, index) =>
+          createHash("sha256")
+            .update(`fixed-public-capacity-fixture:${String(index)}`)
+            .digest(),
+        ),
+      );
+    await writeFile(join(snapshot.workerRoot, "incompressible.bin"), binary);
+    const input = await packWorkspaceSnapshot(snapshot, binding);
+    expect(input.files.find((file) => file.path === "incompressible.bin")?.encoding).toBe("base64");
+    const copied = await remote(input);
+    expect((await readFile(join(copied, "incompressible.bin"))).equals(binary)).toBe(true);
+    await expect(
+      packWorkspaceSnapshot(snapshot, binding, { limits: { maxPayloadBytes: 4096 } }),
+    ).rejects.toThrow(/byte limit/u);
+    await expect(
+      materializeWorkspaceManifest(input, join(root, "over-budget"), {
+        limits: { maxPayloadBytes: 4096 },
+      }),
+    ).rejects.toThrow(/byte limit/u);
+    expect(await readdir(root)).not.toContain("over-budget");
+  });
   it("rejects gzip bombs and cumulative expansion before creating any destination", async () => {
     const snapshot = await fixture(),
       input = await packWorkspaceSnapshot(snapshot, binding),
